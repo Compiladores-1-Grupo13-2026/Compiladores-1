@@ -1,0 +1,41 @@
+name: Documentação
+description: Sugira uma criação ou alteração na documentação.
+title: "[Docs]: "
+labels:
+  - documentation
+body:
+  - type: markdown
+    attributes:
+      value: "🤗 Obrigado por contribuir! Preencha os campos abaixo para documentar a alteração."
+
+  - type: textarea
+    id: descricao
+    attributes:
+      label: Descrição
+      description: Explique o que precisa ser documentado ou corrigido.
+      placeholder: Documentar as estruturas da linguagem aceitas pelo interpretador.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: tipo
+    attributes:
+      label: Tipo de documentação
+      options:
+        - README
+        - Instalação e execução
+        - Linguagem suportada
+        - Código-fonte
+        - Outro
+    validations:
+      required: true
+
+  - type: textarea
+    id: proposta
+    attributes:
+      label: Alteração proposta
+      description: Descreva de forma breve como a documentação deve ficar.
+      placeholder: Adicionar ao README uma lista das estruturas já suportadas.
+    validations:
+      required: true
+

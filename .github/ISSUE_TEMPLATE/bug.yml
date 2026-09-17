@@ -1,0 +1,60 @@
+name: Relato de bug
+description: Informe um problema encontrado no interpretador.
+title: "[Bug]: "
+labels:
+  - bug
+body:
+  - type: markdown
+    attributes:
+      value: "🤗 Obrigado por contribuir! Preencha os campos abaixo para documentar o bug."
+
+  - type: textarea
+    id: descricao
+    attributes:
+      label: Descrição
+      description: Explique de forma breve o problema encontrado.
+      placeholder: O interpretador avalia a soma antes da multiplicação.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: componente
+    attributes:
+      label: Componente
+      options:
+        - Lexer
+        - Parser / AST
+        - Análise semântica
+        - Interpretador
+        - Não sei
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproducao
+    attributes:
+      label: Como reproduzir
+      description: Mostre o código que apresenta o problema.
+      placeholder: |
+        ```python
+        print(2 + 3 * 4)
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: esperado
+    attributes:
+      label: Comportamento esperado
+      placeholder: A saída deveria ser `14`.
+    validations:
+      required: true
+
+  - type: textarea
+    id: atual
+    attributes:
+      label: Comportamento atual
+      placeholder: A saída obtida é `20`.
+    validations:
+      required: true
+

@@ -1,0 +1,56 @@
+name: Nova funcionalidade
+description: Sugira uma funcionalidade para o interpretador.
+title: "[Feature]: "
+labels:
+  - feature
+body:
+  - type: markdown
+    attributes:
+      value: "🤗 Obrigado por contribuir! Preencha os campos abaixo para documentar a feature."
+
+  - type: textarea
+    id: descricao
+    attributes:
+      label: Descrição
+      description: Explique de forma breve a funcionalidade desejada.
+      placeholder: Adicionar suporte a estruturas condicionais.
+    validations:
+      required: true
+
+  - type: dropdown
+    id: componente
+    attributes:
+      label: Componente
+      options:
+        - Lexer
+        - Parser / AST
+        - Análise semântica
+        - Interpretador
+        - Outro
+    validations:
+      required: true
+
+  - type: textarea
+    id: exemplo
+    attributes:
+      label: Exemplo
+      description: Mostre um exemplo de como a funcionalidade deverá funcionar.
+      placeholder: |
+        ```python
+        if 2 > 1:
+            print("sim")
+        ```
+    validations:
+      required: true
+
+  - type: textarea
+    id: criterios
+    attributes:
+      label: Critérios de aceitação
+      description: Liste o que precisa funcionar para concluir a feature.
+      placeholder: |
+        - [ ] Aceita blocos `if` e `else`.
+        - [ ] Possui testes.
+    validations:
+      required: true
+
