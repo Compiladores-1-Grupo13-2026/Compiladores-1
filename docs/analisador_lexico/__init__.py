@@ -1,0 +1,1 @@
+"""Analisador léxico do interpretador."""
