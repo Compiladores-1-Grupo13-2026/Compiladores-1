@@ -13,12 +13,4 @@ Interpretador para um subconjunto da linguagem C, implementado em Python — Equ
 
 ## Documentação
 
-A documentação é gerada com [MkDocs Material](https://squidfunk.github.io/mkdocs-material/)
-e publicada automaticamente no GitHub Pages a cada push na branch `main`.
-
-Para rodar localmente:
-
-```bash
-pip install -r requirements-docs.txt
-mkdocs serve
-```
+escrever aqui .... 
