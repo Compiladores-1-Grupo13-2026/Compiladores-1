@@ -1,0 +1,8 @@
+# Arquivos gerados pelo Bison e pelo Flex.
+parser.tab.c
+parser.tab.h
+lex.yy.c
+
+# Executaveis do parser e do modo SO_TOKENS.
+/parser
+/tokens

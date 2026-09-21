@@ -47,7 +47,19 @@ static int aninhamento = 0;
 
 
 
- /* =========== PARTE 1: NOME DO TEMA =========== */
+ /* =========== PARTE 1: EXPRESSOES E LITERAIS =========== */
+
+ /* Literais MiniPy: aspas simples ou duplas, com escapes e sem quebra de linha. */
+\"([^\"\\\n]|\\[^\n])*\"    { return STRING; }
+\'([^\'\\\n]|\\[^\n])*\'    { return STRING; }
+"True"      { return TRUE; }
+"False"     { return FALSE; }
+"None"      { return NONE; }
+
+ /* Operadores da P1, antes das regras genericas da base. */
+"//"        { return FLOORDIV; }
+"%"         { return MOD; }
+"**"        { return POWER; }
 
  /* =========== PARTE 2: NOME DO TEMA =========== */
  
@@ -84,3 +96,41 @@ static int aninhamento = 0;
 .           { fprintf(stderr, "Erro lexico na linha %d: caractere invalido '%s'\n", yylineno, yytext); }
 
 %%
+
+/* Imprime os tokens somente no modo make tokens. */
+#ifdef SO_TOKENS
+YYSTYPE yylval;
+
+int main(void)
+{
+    int token;
+    while ((token = yylex()) != 0) {
+        const char *nome;
+        switch (token) {
+#define NOME_TOKEN(t) case t: nome = #t; break
+            NOME_TOKEN(NUM); NOME_TOKEN(ID);
+            NOME_TOKEN(PLUS); NOME_TOKEN(MINUS);
+            NOME_TOKEN(TIMES); NOME_TOKEN(DIVIDE);
+            NOME_TOKEN(LPAREN); NOME_TOKEN(RPAREN);
+            NOME_TOKEN(LBRACE); NOME_TOKEN(RBRACE);
+            NOME_TOKEN(COMMA); NOME_TOKEN(SEMICOLON); NOME_TOKEN(NEWLINE);
+            NOME_TOKEN(STRING); NOME_TOKEN(TRUE); NOME_TOKEN(FALSE);
+            NOME_TOKEN(NONE); NOME_TOKEN(FLOORDIV); NOME_TOKEN(MOD);
+            NOME_TOKEN(POWER);
+            NOME_TOKEN(EQ); NOME_TOKEN(NE); NOME_TOKEN(LT); NOME_TOKEN(GT);
+            NOME_TOKEN(LE); NOME_TOKEN(GE); NOME_TOKEN(AND); NOME_TOKEN(OR);
+            NOME_TOKEN(NOT); NOME_TOKEN(IF); NOME_TOKEN(ELIF); NOME_TOKEN(ELSE);
+            NOME_TOKEN(WHILE); NOME_TOKEN(FOR); NOME_TOKEN(IN);
+            NOME_TOKEN(BREAK); NOME_TOKEN(CONTINUE);
+            NOME_TOKEN(ASSIGN); NOME_TOKEN(PLUSEQ); NOME_TOKEN(MINUSEQ);
+            NOME_TOKEN(TIMESEQ); NOME_TOKEN(DIVEQ);
+            NOME_TOKEN(LBRACKET); NOME_TOKEN(RBRACKET);
+            NOME_TOKEN(DEF); NOME_TOKEN(RETURN);
+#undef NOME_TOKEN
+            default: nome = "TOKEN_DESCONHECIDO"; break;
+        }
+        printf("%s(%s)\n", nome, token == NEWLINE ? "\\n" : yytext);
+    }
+    return 0;
+}
+#endif
