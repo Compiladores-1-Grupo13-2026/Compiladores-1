@@ -5,6 +5,7 @@
 
 %{
 #include <stdio.h>
+#include <stdlib.h>
 #include "parser.tab.h"   /* nomes dos tokens, gerado pelo Bison */
 
 /* 1 se a linha atual ja teve algum token (usado pelo NEWLINE) */
@@ -52,8 +53,21 @@ static int aninhamento = 0;
  /* =========== PARTE 2: NOME DO TEMA =========== */
  
 
- /* =========== PARTE 3: NOME DO TEMA =========== */
+ /* =========== PARTE 3: Laços =========== */
+/* Laços: while, for, in, break, continue */
+"while"                 { return WHILE; }
+"for"                   { return FOR; }
+"in"                    { return IN; }
+"break"                 { return BREAK; }
+"continue"              { return CONTINUE; }
 
+/* Delimitadores: ; { } */
+";"                     { return SEMICOLON; }
+"{"                     { return LBRACE; }
+"}"                     { return RBRACE; }
+
+/* Identificador: letra ou "_" seguido de letras, digitos ou "_". */
+[a-zA-Z_][a-zA-Z0-9_]*  { return ID; }
 
  /* =========== PARTE 4: ATRIBUICAO, LISTAS E COMENTARIOS =========== */
  /* Comentario: de "#" ate o fim da linha. Nao gera token. */
