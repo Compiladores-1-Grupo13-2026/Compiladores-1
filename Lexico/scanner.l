@@ -94,8 +94,9 @@ static int aninhamento = 0;
 
 
  /* ======================== ERRO ======================== */
-
- /* Caractere que nenhuma regra acima reconheceu. Deve ser o ultimo bloco. */
-.           { fprintf(stderr, "Erro lexico na linha %d: caractere invalido '%s'\n", yylineno, yytext); }
-
-%%
+{
+    fprintf(stderr,
+            "Erro léxico na linha %d: caractere inválido '%s'\n",
+            yylineno,
+            yytext);
+}
