@@ -30,7 +30,33 @@ void yyerror(const char *mensagem);
 %right UMINUS
 %right POWER
 
+/* Define o ponto de entrada principal do interpretador */
+%start programa
+
 %%
+
+/* ===== ESTRUTURA GERAL DE EXECUCAO ===== */
+programa:
+      /* vazio */
+    | programa elemento
+    ;
+
+elemento:
+      comando
+    | NEWLINE
+    ;
+
+comando:
+      laco_while       /* P3 */
+    | laco_for         /* P3 */
+    | comando_break    /* P3 */
+    | comando_continue /* P3 */
+    | expr             /* P1 */
+    ;
+
+bloco:
+      LBRACE programa RBRACE
+    ;
 
 /* ===== [P1] EXPRESSOES E LITERAIS ===== */
 expr:
@@ -71,7 +97,21 @@ expr:
 /* Comparacoes, operadores logicos e comandos if / elif / else. */
 
 /* ===== [P3] LACOS ===== */
-/* Comandos while, for, break e continue. */
+laco_while:
+      WHILE expr bloco
+    ;
+
+laco_for:
+      FOR ID IN expr bloco
+    ;
+
+comando_break:
+      BREAK
+    ;
+
+comando_continue:
+      CONTINUE
+    ;
 
 /* ===== [P4] ATRIBUICAO, LISTAS E COMENTARIOS ===== */
 /* Atribuicoes, listas e indexacao. Comentarios sao ignorados no scanner. */
@@ -80,3 +120,7 @@ expr:
 /* Definicoes de funcoes, parametros, return e chamadas com argumentos. */
 
 %%
+
+void yyerror(const char *mensagem) {
+    /* Funcao auxiliar de erro */
+}
