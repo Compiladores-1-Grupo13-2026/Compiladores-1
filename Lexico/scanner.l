@@ -49,8 +49,23 @@ static int aninhamento = 0;
 
  /* =========== PARTE 1: NOME DO TEMA =========== */
 
- /* =========== PARTE 2: NOME DO TEMA =========== */
- 
+
+ /* ===== [P2] CONDIÇÕES E LÓGICA - início ===== */
+
+"=="        { TOK(EQ); }
+"!="        { TOK(NE); }
+"<="        { TOK(LE); }
+">="        { TOK(GE); }
+"<"         { TOK(LT); }
+">"         { TOK(GT); }
+
+"and"       { TOK(AND); }
+"or"        { TOK(OR); }
+"not"       { TOK(NOT); }
+
+"if"        { TOK(IF); }
+"elif"      { TOK(ELIF); }
+"else"      { TOK(ELSE); }
 
  /* =========== PARTE 3: NOME DO TEMA =========== */
 
