@@ -98,6 +98,18 @@ static int aninhamento = 0;
 "["         { aninhamento++; return LBRACKET; }
 "]"         { if (aninhamento > 0) aninhamento--; return RBRACKET; }
 
+ /* Lista sem "]": dentro de [ ] uma linha que comeca com atribuicao
+  * (x = ..., x += ...) nao pode ser elemento. Fecha o aninhamento e devolve
+  * o NEWLINE que a quebra de linha ignorada nao gerou. Fora de [ ] a regra
+  * e recusada (REJECT) e a linha e lida normalmente. */
+^[ \t]*[a-zA-Z_][a-zA-Z0-9_]*[ \t]*(=[^=]|[-+*/]=)  {
+    if (aninhamento == 0) REJECT;
+    aninhamento = 0;
+    linha_tem_token = 0;
+    yyless(0);
+    return NEWLINE;
+}
+
  /* =========== PARTE N: NOME DO TEMA =========== */
 
 
