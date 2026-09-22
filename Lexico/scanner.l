@@ -51,6 +51,7 @@ static int aninhamento = 0;
 
 
  /* ===== [P2] CONDIÇÕES E LÓGICA - início ===== */
+ /*att*/
 
 "=="        { TOK(EQ); }
 "!="        { TOK(NE); }
