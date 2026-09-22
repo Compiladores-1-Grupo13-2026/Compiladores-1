@@ -92,9 +92,6 @@ static int aninhamento = 0;
 "{"                     { return LBRACE; }
 "}"                     { return RBRACE; }
 
- /* Identificador: letra ou "_" seguido de letras, digitos ou "_". */
-[a-zA-Z_][a-zA-Z0-9_]*  { return ID; }
-
  /* =========== PARTE 4: ATRIBUICAO, LISTAS E COMENTARIOS =========== */
  /* Comentario: de "#" ate o fim da linha. Nao gera token. */
 "#".*       { }
@@ -112,20 +109,28 @@ static int aninhamento = 0;
 "["         { aninhamento++; return LBRACKET; }
 "]"         { if (aninhamento > 0) aninhamento--; return RBRACKET; }
 
- /* =========== PARTE N: NOME DO TEMA =========== */
+ /* =========== PARTE 5: FUNÇÕES E CHAMADAS =========== */
+"def"                   { return DEF; }
+"return"                { return RETURN; }
 
  /* ======================== BASE ======================== */
- /* Operadores e delimitadores compartilhados. */
-"+"         { return PLUS; }
-"-"         { return MINUS; }
-"*"         { return TIMES; }
-"/"         { return DIVIDE; }
-"("         { return LPAREN; }
-")"         { return RPAREN; }
-","         { return COMMA; }
+ /* Operadores e delimitadores basicos */
+"+"                     { return PLUS; }
+"-"                     { return MINUS; }
+"*"                     { return TIMES; }
+"/"                     { return DIVIDE; }
+"("                     { return LPAREN; }
+")"                     { return RPAREN; }
+","                     { return COMMA; }
 
- /* Literais numericos inteiros ou decimais. */
-[0-9]+(\.[0-9]+)? { yylval.numero = atof(yytext); return NUM; }
+ /* Literais numericos: inteiros ou decimais */
+[0-9]+(\.[0-9]+)?       { yylval.numero = atof(yytext); return NUM; }
+
+ /* Identificador: letra ou "_" seguido de letras, digitos ou "_".
+  * Posicionado apos as palavras reservadas (P1 a P5) para evitar que
+  * palavras-chave como def ou return sejam classificadas como ID. */
+[a-zA-Z_][a-zA-Z0-9_]*  { return ID; }
+
  /* ======================== ERRO ======================== */
  /* Caractere que nenhuma regra acima reconheceu. Deve ser o ultimo bloco. */
 .           {

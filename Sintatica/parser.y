@@ -1,10 +1,12 @@
 %{
+#include <stdio.h>
 #include <math.h>
 #include <stdio.h>
 
 int yylex(void);
 void yyerror(const char *mensagem);
 extern int yylineno;
+extern char *yytext;
 static int erros_p1 = 0;
 
 static void erro_divisao_zero(void) {
@@ -26,7 +28,7 @@ static void erro_divisao_zero(void) {
 %token WHILE FOR IN BREAK CONTINUE
 %token ASSIGN PLUSEQ MINUSEQ TIMESEQ DIVEQ LBRACKET RBRACKET
 %token DEF RETURN
-%type <numero> expr
+%type <numero> expr chamada_funcao
 
 /* Contrato de precedencia da Sprint 0, na ordem exata do plano. */
 %left OR
@@ -142,6 +144,80 @@ comando_continue:
 
 /* ===== [P5] FUNCOES E CHAMADAS ===== */
 /* Definicoes de funcoes, parametros, return e chamadas com argumentos. */
+
+comando:
+      def_funcao
+    | comando_return
+    | chamada_funcao SEMICOLON
+    | ID LPAREN args_opt error SEMICOLON {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: chamada de funcao sem fecha parenteses ')' antes de ';'\n", yylineno);
+          yyerrok;
+      }
+    ;
+
+def_funcao:
+      DEF ID LPAREN params_opt RPAREN bloco {
+          printf("[OK] def reconhecido\n");
+      }
+    | DEF error LPAREN params_opt RPAREN bloco {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: definicao de funcao sem identificador (esperado nome antes de '(')\n", yylineno);
+          yyerrok;
+      }
+    | DEF error bloco {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: definicao de funcao malformada (esperado nome e parametros antes do bloco)\n", yylineno);
+          yyerrok;
+      }
+    | DEF ID LPAREN error RPAREN bloco {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: parametros mal formados na definicao de funcao. Recuperado apos ')'.\n", yylineno);
+          yyerrok;
+      }
+    ;
+
+params_opt:
+      %empty
+    | params
+    ;
+
+params:
+      ID
+    | params COMMA ID
+    ;
+
+comando_return:
+      RETURN expr SEMICOLON {
+          printf("[OK] return reconhecido\n");
+      }
+    | RETURN SEMICOLON {
+          printf("[OK] return reconhecido\n");
+      }
+    | RETURN ID LPAREN args_opt error SEMICOLON {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: chamada de funcao sem fecha parenteses ')' no return antes de ';'\n", yylineno);
+          yyerrok;
+      }
+    ;
+
+expr:
+      chamada_funcao { $$ = $1; }
+    | NUM            { $$ = $1; }
+    | ID             { $$ = 0.0; }
+    ;
+
+chamada_funcao:
+      ID LPAREN args_opt RPAREN {
+          printf("[OK] chamada de funcao reconhecida\n");
+          $$ = 0.0;
+      }
+    ;
+
+args_opt:
+      %empty
+    | args
+    ;
+
+args:
+      expr
+    | args COMMA expr
+    ;
 
 %%
 
