@@ -102,6 +102,19 @@ static int aninhamento = 0;
 "def"                   { return DEF; }
 "return"                { return RETURN; }
 
+ /* ======================== BASE ======================== */
+ /* Operadores e delimitadores basicos */
+"+"                     { return PLUS; }
+"-"                     { return MINUS; }
+"*"                     { return TIMES; }
+"/"                     { return DIVIDE; }
+"("                     { return LPAREN; }
+")"                     { return RPAREN; }
+","                     { return COMMA; }
+
+ /* Literais numericos: inteiros ou decimais */
+[0-9]+(\.[0-9]+)?       { yylval.numero = atof(yytext); return NUM; }
+
  /* ======================== ERRO ======================== */
 
  /* Caractere que nenhuma regra acima reconheceu. Deve ser o ultimo bloco. */
