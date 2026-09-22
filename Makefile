@@ -32,5 +32,14 @@ test:
 	$(MAKE) parser tokens
 	sh "$(TEST_SCRIPT)"
 
+# ===== [P4] Atribuicao, listas e comentarios =====
+# make p4 ARQ=arquivo.py: gera o parser (valida a gramatica da P4) e mostra os
+# tokens do tema (ASSIGN, PLUSEQ, MINUSEQ, TIMESEQ, DIVEQ, LBRACKET, RBRACKET).
+.PHONY: p4
+
+p4: parser.tab.c tokens
+	@test -n "$(ARQ)" || { echo 'Uso: make p4 ARQ=arquivo.py' >&2; exit 1; }
+	./tokens < "$(ARQ)"
+
 clean:
 	$(RM) parser.tab.c parser.tab.h lex.yy.c parser tokens
