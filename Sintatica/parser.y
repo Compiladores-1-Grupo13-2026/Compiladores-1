@@ -199,12 +199,5 @@ args:
 %%
 
 void yyerror(const char *mensagem) {
-    /* Diagnostico com linha e token; a estruturacao global e transversal de yyerror cabe a P2 */
-    fprintf(stderr, "[ERRO SINTATICO] Linha %d: %s (proximo ao token '%s')\n", yylineno, mensagem, yytext ? yytext : "");
+    /* Funcao auxiliar de erro */
 }
-
-#ifndef SO_TOKENS
-int main(void) {
-    return yyparse();
-}
-#endif
