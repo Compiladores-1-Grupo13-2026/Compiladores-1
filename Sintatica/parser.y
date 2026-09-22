@@ -154,6 +154,8 @@ comando_return:
 
 expr:
       chamada_funcao { $$ = $1; }
+    | NUM            { $$ = $1; }
+    | ID             { $$ = 0.0; }
     ;
 
 chamada_funcao:
