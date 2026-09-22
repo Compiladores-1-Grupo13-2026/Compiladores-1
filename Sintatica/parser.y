@@ -152,6 +152,27 @@ comando_return:
       }
     ;
 
+expr:
+      chamada_funcao { $$ = $1; }
+    ;
+
+chamada_funcao:
+      ID LPAREN args_opt RPAREN {
+          printf("[OK] chamada de funcao reconhecida\n");
+          $$ = 0.0;
+      }
+    ;
+
+args_opt:
+      %empty
+    | args
+    ;
+
+args:
+      expr
+    | args COMMA expr
+    ;
+
 %%
 
 void yyerror(const char *mensagem) {
