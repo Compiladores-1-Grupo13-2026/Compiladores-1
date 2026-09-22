@@ -98,11 +98,9 @@ static int aninhamento = 0;
 "["         { aninhamento++; return LBRACKET; }
 "]"         { if (aninhamento > 0) aninhamento--; return RBRACKET; }
 
- /* =========== PARTE N: NOME DO TEMA =========== */
-
-
-
-
+ /* =========== PARTE 5: FUNÇÕES E CHAMADAS =========== */
+"def"                   { return DEF; }
+"return"                { return RETURN; }
 
  /* ======================== ERRO ======================== */
 
