@@ -62,8 +62,22 @@ static int aninhamento = 0;
 "%"         { return MOD; }
 "**"        { return POWER; }
 
- /* =========== PARTE 2: NOME DO TEMA =========== */
- 
+
+ /* ===== [P2] CONDIÇÕES E LÓGICA ===== */
+"=="        { return EQ; }
+"!="        { return NE; }
+"<="        { return LE; }
+">="        { return GE; }
+"<"         { return LT; }
+">"         { return GT; }
+
+"and"       { return AND; }
+"or"        { return OR; }
+"not"       { return NOT; }
+
+"if"        { return IF; }
+"elif"      { return ELIF; }
+"else"      { return ELSE; }
 
  /* =========== PARTE 3: Laços =========== */
  /* Laços: while, for, in, break, continue */
@@ -118,9 +132,11 @@ static int aninhamento = 0;
 [a-zA-Z_][a-zA-Z0-9_]*  { return ID; }
 
  /* ======================== ERRO ======================== */
-
  /* Caractere que nenhuma regra acima reconheceu. Deve ser o ultimo bloco. */
-.           { fprintf(stderr, "Erro lexico na linha %d: caractere invalido '%s'\n", yylineno, yytext); }
+.           {
+    fprintf(stderr, "Erro lexico na linha %d: caractere invalido '%s'\n", yylineno, yytext);
+    return YYUNDEF;
+}
 
 %%
 
@@ -153,6 +169,7 @@ int main(void)
             NOME_TOKEN(TIMESEQ); NOME_TOKEN(DIVEQ);
             NOME_TOKEN(LBRACKET); NOME_TOKEN(RBRACKET);
             NOME_TOKEN(DEF); NOME_TOKEN(RETURN);
+            case YYUNDEF: nome = "CARACTERE_INVALIDO"; break;
 #undef NOME_TOKEN
             default: nome = "TOKEN_DESCONHECIDO"; break;
         }
