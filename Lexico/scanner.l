@@ -66,14 +66,14 @@ static int aninhamento = 0;
  
 
  /* =========== PARTE 3: Laços =========== */
-/* Laços: while, for, in, break, continue */
+ /* Laços: while, for, in, break, continue */
 "while"                 { return WHILE; }
 "for"                   { return FOR; }
 "in"                    { return IN; }
 "break"                 { return BREAK; }
 "continue"              { return CONTINUE; }
 
-/* Delimitadores: ; { } */
+ /* Delimitadores: ; { } */
 ";"                     { return SEMICOLON; }
 "{"                     { return LBRACE; }
 "}"                     { return RBRACE; }
