@@ -95,6 +95,7 @@ expr:
 
 /* ===== [P2] CONDICOES E LOGICA ===== */
 /* Comparacoes, operadores logicos e comandos if / elif / else. */
+/*atualização ver 2.0*/
 
   /* Comparacoes */
   | expr EQ expr
