@@ -62,8 +62,22 @@ static int aninhamento = 0;
 "%"         { return MOD; }
 "**"        { return POWER; }
 
- /* =========== PARTE 2: NOME DO TEMA =========== */
- 
+
+ /* ===== [P2] CONDIÇÕES E LÓGICA ===== */
+"=="        { return EQ; }
+"!="        { return NE; }
+"<="        { return LE; }
+">="        { return GE; }
+"<"         { return LT; }
+">"         { return GT; }
+
+"and"       { return AND; }
+"or"        { return OR; }
+"not"       { return NOT; }
+
+"if"        { return IF; }
+"elif"      { return ELIF; }
+"else"      { return ELSE; }
 
  /* =========== PARTE 3: Laços =========== */
 /* Laços: while, for, in, break, continue */
@@ -105,7 +119,6 @@ static int aninhamento = 0;
 
 
  /* ======================== ERRO ======================== */
-
  /* Caractere que nenhuma regra acima reconheceu. Deve ser o ultimo bloco. */
 .           { fprintf(stderr, "Erro lexico na linha %d: caractere invalido '%s'\n", yylineno, yytext); }
 
