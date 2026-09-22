@@ -51,6 +51,7 @@ comando:
     | laco_for         /* P3 */
     | comando_break    /* P3 */
     | comando_continue /* P3 */
+    | comando_if       /* P2 */
     | expr             /* P1 */
     ;
 
@@ -61,6 +62,7 @@ bloco:
 /* ===== [P1] EXPRESSOES E LITERAIS ===== */
 expr:
     MINUS expr %prec UMINUS { $$ = -$2; }
+
   /* Divisao da base com a verificacao de zero prevista para P1. */
   | expr DIVIDE expr {
         if ($3 == 0) {
@@ -69,6 +71,7 @@ expr:
         }
         $$ = $1 / $3;
     }
+
   | expr FLOORDIV expr {
         if ($3 == 0) {
             yyerror("divisao por zero");
@@ -76,6 +79,7 @@ expr:
         }
         $$ = floor($1 / $3);
     }
+
   | expr MOD expr {
         if ($3 == 0) {
             yyerror("divisao por zero");
@@ -83,18 +87,53 @@ expr:
         }
         $$ = $1 - floor($1 / $3) * $3;
     }
+
   | expr POWER expr {
         $$ = (isnan($1) || isnan($3)) ? NAN : pow($1, $3);
     }
+
   /* STRING e NONE sao reconhecidos, sem valor numerico (NAN). */
   | STRING                  { $$ = NAN; }
   | TRUE                    { $$ = 1; }
   | FALSE                   { $$ = 0; }
   | NONE                    { $$ = NAN; }
-;
 
-/* ===== [P2] CONDICOES E LOGICA ===== */
-/* Comparacoes, operadores logicos e comandos if / elif / else. */
+  /* ===== [P2] CONDICOES E LOGICA ===== */
+
+  /* Comparacoes */
+  | expr EQ expr            { $$ = ($1 == $3); }
+  | expr NE expr            { $$ = ($1 != $3); }
+  | expr LT expr            { $$ = ($1 < $3); }
+  | expr GT expr            { $$ = ($1 > $3); }
+  | expr LE expr            { $$ = ($1 <= $3); }
+  | expr GE expr            { $$ = ($1 >= $3); }
+
+  /* Operadores logicos */
+  | expr AND expr           { $$ = ($1 != 0 && $3 != 0); }
+  | expr OR expr            { $$ = ($1 != 0 || $3 != 0); }
+  | NOT expr                { $$ = ($2 == 0); }
+
+  /* Agrupamento de expressoes */
+  | LPAREN expr RPAREN      { $$ = $2; }
+  ;
+
+/* ===== FIM [P2] CONDICOES E LOGICA ===== */
+
+/* ===== [P2] COMANDOS CONDICIONAIS ===== */
+
+comando_if:
+      IF expr bloco
+    | IF expr bloco ELSE bloco
+    | IF expr bloco lista_elif
+    | IF expr bloco lista_elif ELSE bloco
+    ;
+
+lista_elif:
+      ELIF expr bloco
+    | lista_elif ELIF expr bloco
+    ;
+
+/* ===== FIM [P2] COMANDOS CONDICIONAIS ===== */
 
 /* ===== [P3] LACOS ===== */
 laco_while:
