@@ -5,6 +5,7 @@
 int yylex(void);
 void yyerror(const char *mensagem);
 extern int yylineno;
+extern char *yytext;
 %}
 
 %union {
@@ -125,11 +126,27 @@ comando:
       def_funcao
     | comando_return
     | chamada_funcao SEMICOLON
+    | ID LPAREN args_opt error SEMICOLON {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: chamada de funcao sem fecha parenteses ')' antes de ';'\n", yylineno);
+          yyerrok;
+      }
     ;
 
 def_funcao:
       DEF ID LPAREN params_opt RPAREN bloco {
           printf("[OK] def reconhecido\n");
+      }
+    | DEF error LPAREN params_opt RPAREN bloco {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: definicao de funcao sem identificador (esperado nome antes de '(')\n", yylineno);
+          yyerrok;
+      }
+    | DEF error bloco {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: definicao de funcao malformada (esperado nome e parametros antes do bloco)\n", yylineno);
+          yyerrok;
+      }
+    | DEF ID LPAREN error RPAREN bloco {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: parametros mal formados na definicao de funcao. Recuperado apos ')'.\n", yylineno);
+          yyerrok;
       }
     ;
 
@@ -149,6 +166,10 @@ comando_return:
       }
     | RETURN SEMICOLON {
           printf("[OK] return reconhecido\n");
+      }
+    | RETURN ID LPAREN args_opt error SEMICOLON {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: chamada de funcao sem fecha parenteses ')' no return antes de ';'\n", yylineno);
+          yyerrok;
       }
     ;
 
@@ -178,7 +199,8 @@ args:
 %%
 
 void yyerror(const char *mensagem) {
-    /* Funcao auxiliar de erro */
+    /* Diagnostico com linha e token; a estruturacao global e transversal de yyerror cabe a P2 */
+    fprintf(stderr, "[ERRO SINTATICO] Linha %d: %s (proximo ao token '%s')\n", yylineno, mensagem, yytext ? yytext : "");
 }
 
 #ifndef SO_TOKENS
