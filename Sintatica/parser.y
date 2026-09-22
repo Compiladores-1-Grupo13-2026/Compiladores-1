@@ -1,8 +1,10 @@
 %{
+#include <stdio.h>
 #include <math.h>
 
 int yylex(void);
 void yyerror(const char *mensagem);
+extern int yylineno;
 %}
 
 %union {
@@ -18,7 +20,7 @@ void yyerror(const char *mensagem);
 %token WHILE FOR IN BREAK CONTINUE
 %token ASSIGN PLUSEQ MINUSEQ TIMESEQ DIVEQ LBRACKET RBRACKET
 %token DEF RETURN
-%type <numero> expr
+%type <numero> expr chamada_funcao
 
 /* Contrato de precedencia da Sprint 0, na ordem exata do plano. */
 %left OR
@@ -119,8 +121,36 @@ comando_continue:
 /* ===== [P5] FUNCOES E CHAMADAS ===== */
 /* Definicoes de funcoes, parametros, return e chamadas com argumentos. */
 
+comando:
+      def_funcao
+    | comando_return
+    | chamada_funcao SEMICOLON
+    ;
+
+def_funcao:
+      DEF ID LPAREN params_opt RPAREN bloco {
+          printf("[OK] def reconhecido\n");
+      }
+    ;
+
+params_opt:
+      %empty
+    | params
+    ;
+
+params:
+      ID
+    | params COMMA ID
+    ;
+
 %%
 
 void yyerror(const char *mensagem) {
     /* Funcao auxiliar de erro */
 }
+
+#ifndef SO_TOKENS
+int main(void) {
+    return yyparse();
+}
+#endif
