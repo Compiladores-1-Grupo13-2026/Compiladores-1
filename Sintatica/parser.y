@@ -1,8 +1,18 @@
 %{
+#include <stdio.h>
 #include <math.h>
+#include <stdio.h>
 
 int yylex(void);
 void yyerror(const char *mensagem);
+extern int yylineno;
+extern char *yytext;
+static int erros_p1 = 0;
+
+static void erro_divisao_zero(void) {
+    fprintf(stderr, "Erro na linha %d: divisao por zero\n", yylineno);
+    erros_p1++;
+}
 %}
 
 %union {
@@ -18,7 +28,7 @@ void yyerror(const char *mensagem);
 %token WHILE FOR IN BREAK CONTINUE
 %token ASSIGN PLUSEQ MINUSEQ TIMESEQ DIVEQ LBRACKET RBRACKET
 %token DEF RETURN
-%type <numero> expr
+%type <numero> expr chamada_funcao
 
 /* Contrato de precedencia da Sprint 0, na ordem exata do plano. */
 %left OR
@@ -59,7 +69,7 @@ comando:
     | comando_break    /* P3 */
     | comando_continue /* P3 */
     | atribuicao       /* P4 */
-    | expr             /* P1 */
+    | expr terminador  { if (!isnan($1)) printf("Resultado: %.15g\n", $1); } /* P1 */
     ;
 
 bloco:
@@ -67,27 +77,43 @@ bloco:
     ;
 
 /* ===== [P1] EXPRESSOES E LITERAIS ===== */
+terminador:
+    SEMICOLON
+  | NEWLINE
+;
+
+/* Recupera no fim do comando sem descartar as expressoes seguintes. */
+comando:
+    error SEMICOLON { erros_p1++; yyerrok; }
+  | error NEWLINE   { erros_p1++; yyerrok; }
+;
+
 expr:
-    MINUS expr %prec UMINUS { $$ = -$2; }
+    NUM                     { $$ = $1; }
+  | LPAREN expr RPAREN      { $$ = $2; }
+  | expr PLUS expr          { $$ = $1 + $3; }
+  | expr MINUS expr         { $$ = $1 - $3; }
+  | expr TIMES expr         { $$ = $1 * $3; }
+  | MINUS expr %prec UMINUS { $$ = -$2; }
   /* Divisao da base com a verificacao de zero prevista para P1. */
   | expr DIVIDE expr {
         if ($3 == 0) {
-            yyerror("divisao por zero");
-            YYABORT;
+            erro_divisao_zero();
+            YYERROR;
         }
         $$ = $1 / $3;
     }
   | expr FLOORDIV expr {
         if ($3 == 0) {
-            yyerror("divisao por zero");
-            YYABORT;
+            erro_divisao_zero();
+            YYERROR;
         }
         $$ = floor($1 / $3);
     }
   | expr MOD expr {
         if ($3 == 0) {
-            yyerror("divisao por zero");
-            YYABORT;
+            erro_divisao_zero();
+            YYERROR;
         }
         $$ = $1 - floor($1 / $3) * $3;
     }
@@ -180,8 +206,88 @@ indexacao:
 /* ===== [P5] FUNCOES E CHAMADAS ===== */
 /* Definicoes de funcoes, parametros, return e chamadas com argumentos. */
 
+comando:
+      def_funcao
+    | comando_return
+    | chamada_funcao SEMICOLON
+    | ID LPAREN args_opt error SEMICOLON {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: chamada de funcao sem fecha parenteses ')' antes de ';'\n", yylineno);
+          yyerrok;
+      }
+    ;
+
+def_funcao:
+      DEF ID LPAREN params_opt RPAREN bloco {
+          printf("[OK] def reconhecido\n");
+      }
+    | DEF error LPAREN params_opt RPAREN bloco {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: definicao de funcao sem identificador (esperado nome antes de '(')\n", yylineno);
+          yyerrok;
+      }
+    | DEF error bloco {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: definicao de funcao malformada (esperado nome e parametros antes do bloco)\n", yylineno);
+          yyerrok;
+      }
+    | DEF ID LPAREN error RPAREN bloco {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: parametros mal formados na definicao de funcao. Recuperado apos ')'.\n", yylineno);
+          yyerrok;
+      }
+    ;
+
+params_opt:
+      %empty
+    | params
+    ;
+
+params:
+      ID
+    | params COMMA ID
+    ;
+
+comando_return:
+      RETURN expr SEMICOLON {
+          printf("[OK] return reconhecido\n");
+      }
+    | RETURN SEMICOLON {
+          printf("[OK] return reconhecido\n");
+      }
+    | RETURN ID LPAREN args_opt error SEMICOLON {
+          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: chamada de funcao sem fecha parenteses ')' no return antes de ';'\n", yylineno);
+          yyerrok;
+      }
+    ;
+
+expr:
+      chamada_funcao { $$ = $1; }
+    | NUM            { $$ = $1; }
+    | ID             { $$ = 0.0; }
+    ;
+
+chamada_funcao:
+      ID LPAREN args_opt RPAREN {
+          printf("[OK] chamada de funcao reconhecida\n");
+          $$ = 0.0;
+      }
+    ;
+
+args_opt:
+      %empty
+    | args
+    ;
+
+args:
+      expr
+    | args COMMA expr
+    ;
+
 %%
 
 void yyerror(const char *mensagem) {
     /* Funcao auxiliar de erro */
+}
+
+/* Ponto de entrada do build; as mensagens gerais de yyerror cabem a P2. */
+int main(void) {
+    int status = yyparse();
+    return status != 0 || erros_p1 != 0;
 }
