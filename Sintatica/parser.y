@@ -143,6 +143,15 @@ params:
     | params COMMA ID
     ;
 
+comando_return:
+      RETURN expr SEMICOLON {
+          printf("[OK] return reconhecido\n");
+      }
+    | RETURN SEMICOLON {
+          printf("[OK] return reconhecido\n");
+      }
+    ;
+
 %%
 
 void yyerror(const char *mensagem) {
