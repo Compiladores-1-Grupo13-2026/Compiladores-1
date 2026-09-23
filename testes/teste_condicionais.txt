@@ -1,5 +1,3 @@
-/* Teste basico condicionais */
-
 if (1) {
     x = 1
 }

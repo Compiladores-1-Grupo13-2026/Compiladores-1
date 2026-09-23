@@ -1,5 +1,3 @@
-/* Teste basico funções */
-
 def soma(a) {
     return a
 }
