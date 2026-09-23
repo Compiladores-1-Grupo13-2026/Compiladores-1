@@ -1,7 +1,6 @@
 %{
 #include <stdio.h>
 #include <math.h>
-#include <stdio.h>
 
 int yylex(void);
 void yyerror(const char *mensagem);
@@ -9,9 +8,16 @@ extern int yylineno;
 extern char *yytext;
 static int erros_p1 = 0;
 
-static void erro_divisao_zero(void) {
-    fprintf(stderr, "Erro na linha %d: divisao por zero\n", yylineno);
+/* Diagnosticos numericos locais da P1; yyerror e a recuperacao sao preservados. */
+static void erro_numerico_p1(const char *mensagem) {
+    fprintf(stderr, "Erro na linha %d: %s\n", yylineno, mensagem);
     erros_p1++;
+}
+
+/* NAN ja representa valores apenas reconhecidos, como STRING e NONE.
+ * Nao confundir esse marcador com um erro produzido por operandos numericos. */
+static int resultado_finito_p1(double resultado, double esquerda, double direita) {
+    return isnan(esquerda) || isnan(direita) || isfinite(resultado);
 }
 %}
 
@@ -89,36 +95,91 @@ comando:
 ;
 
 expr:
-    NUM                     { $$ = $1; }
+    NUM {
+        if (!isfinite($1)) {
+            erro_numerico_p1("literal numerico fora do intervalo suportado");
+            YYERROR;
+        }
+        $$ = $1;
+    }
   | LPAREN expr RPAREN      { $$ = $2; }
-  | expr PLUS expr          { $$ = $1 + $3; }
-  | expr MINUS expr         { $$ = $1 - $3; }
-  | expr TIMES expr         { $$ = $1 * $3; }
+  | expr PLUS expr {
+        $$ = $1 + $3;
+        if (!resultado_finito_p1($$, $1, $3)) {
+            erro_numerico_p1("resultado de soma fora do intervalo suportado");
+            YYERROR;
+        }
+    }
+  | expr MINUS expr {
+        $$ = $1 - $3;
+        if (!resultado_finito_p1($$, $1, $3)) {
+            erro_numerico_p1("resultado de subtracao fora do intervalo suportado");
+            YYERROR;
+        }
+    }
+  | expr TIMES expr {
+        $$ = $1 * $3;
+        if (!resultado_finito_p1($$, $1, $3)) {
+            erro_numerico_p1("resultado de multiplicacao fora do intervalo suportado");
+            YYERROR;
+        }
+    }
   | MINUS expr %prec UMINUS { $$ = -$2; }
-  /* Divisao da base com a verificacao de zero prevista para P1. */
   | expr DIVIDE expr {
         if ($3 == 0) {
-            erro_divisao_zero();
+            erro_numerico_p1("divisao por zero");
             YYERROR;
         }
         $$ = $1 / $3;
+        if (!resultado_finito_p1($$, $1, $3)) {
+            erro_numerico_p1("resultado de divisao fora do intervalo suportado");
+            YYERROR;
+        }
     }
   | expr FLOORDIV expr {
         if ($3 == 0) {
-            erro_divisao_zero();
+            erro_numerico_p1("divisao por zero");
             YYERROR;
         }
         $$ = floor($1 / $3);
+        if (!resultado_finito_p1($$, $1, $3)) {
+            erro_numerico_p1("resultado de divisao inteira fora do intervalo suportado");
+            YYERROR;
+        }
     }
   | expr MOD expr {
         if ($3 == 0) {
-            erro_divisao_zero();
+            erro_numerico_p1("divisao por zero");
             YYERROR;
         }
-        $$ = $1 - floor($1 / $3) * $3;
+        $$ = fmod($1, $3);
+        /* fmod evita overflow no quociente intermediario e cancelamento
+         * na subtracao. O resto segue o sinal do divisor, inclusive em zero. */
+        if ($$ == 0.0) $$ = copysign(0.0, $3);
+        else if (($$ < 0.0) != ($3 < 0.0)) $$ += $3;
+        if (!resultado_finito_p1($$, $1, $3)) {
+            erro_numerico_p1("resultado de modulo fora do intervalo suportado");
+            YYERROR;
+        }
     }
   | expr POWER expr {
-        $$ = (isnan($1) || isnan($3)) ? NAN : pow($1, $3);
+        if (isnan($1) || isnan($3)) {
+            $$ = NAN;
+        } else {
+            if ($1 == 0.0 && $3 < 0.0) {
+                erro_numerico_p1("divisao por zero em potencia com expoente negativo");
+                YYERROR;
+            }
+            $$ = pow($1, $3);
+            if (isnan($$)) {
+                erro_numerico_p1("potencia sem resultado real");
+                YYERROR;
+            }
+            if (!isfinite($$)) {
+                erro_numerico_p1("resultado de potencia fora do intervalo suportado");
+                YYERROR;
+            }
+        }
     }
   /* STRING e NONE sao reconhecidos, sem valor numerico (NAN). */
   | STRING                  { $$ = NAN; }

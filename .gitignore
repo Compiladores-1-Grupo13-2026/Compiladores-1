@@ -6,3 +6,6 @@ lex.yy.c
 # Executaveis do parser e do modo SO_TOKENS.
 /parser
 /tokens
+
+# Relatorio opcional do Bison (bison -v).
+/parser.output
