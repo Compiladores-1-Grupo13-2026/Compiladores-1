@@ -9,3 +9,7 @@ lex.yy.c
 
 # Relatorio opcional do Bison (bison -v).
 /parser.output
+
+# Documentacao gerada e ambiente Python local.
+/site/
+/.venv-docs/

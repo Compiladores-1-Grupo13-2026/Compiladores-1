@@ -1,0 +1,5 @@
+def soma(a, b) { return a + b }
+def vazia() { return; }
+soma(1, 2);
+print(5)
+def externa(x) { return soma(x, 2) }

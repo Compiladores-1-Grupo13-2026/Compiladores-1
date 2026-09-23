@@ -1,0 +1,6 @@
+[ERRO SINTATICO] Linha 1, coluna 1: definicao de funcao sem identificador (esperado nome antes de '(') (proximo a '(')
+[OK] return reconhecido
+[ERRO SINTATICO] Linha 2, coluna 1: parametros mal formados na definicao de funcao. Recuperado apos ')'. (proximo a ',')
+[OK] return reconhecido
+[ERRO SINTATICO] Linha 3, coluna 1: chamada de funcao sem fecha parenteses ')' antes do terminador (proximo a ';')
+Resultado: 4

@@ -1,1 +1,0 @@
-"""Analisador semântico do interpretador."""

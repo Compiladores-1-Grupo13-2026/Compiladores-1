@@ -1,96 +1,102 @@
-# comp1-2026-02-grupo13
+# MiniPy — Equipe 13
 
-Interpretador de Python — um subconjunto da linguagem, apelidado de
-"MiniPy" —, implementado em C com Flex (análise léxica) e Bison (análise
-sintática). Equipe 13.
+MiniPy é um interpretador didático de um subconjunto de Python, com blocos
+delimitados por `{ }`, implementado em **C + Flex + Bison** pela Equipe 13.
+O objetivo é estudar a construção incremental do léxico e da gramática antes
+de implementar AST, tabela de símbolos e execução.
 
-Você também pode ver a documentação completa no GitHub Pages: <!-- TODO: link do GitHub Pages -->
+Esta entrega fecha o escopo técnico da **Semana 5: parser e recuperação de erros**.
+Expressões numéricas são calculadas; as cinco fatias reconhecem as demais
+construções e mostram `[OK]`.
 
-## Linguagens e ferramentas usadas
+[Documentação no GitHub Pages](https://compiladores-1-grupo13-2026.github.io/Compiladores-1/)
 
-- **C** — linguagem de implementação do interpretador
-- **Flex** — geração do analisador léxico (`scanner.l`)
-- **Bison** — geração do analisador sintático (`parser.y`)
-- **Make** — automação do build
-- **Python (subconjunto)** — linguagem-alvo interpretada ("MiniPy")
+## Tecnologias
 
-## Requisitos
+C implementa o projeto; Flex gera o scanner e Bison gera o parser. Make automatiza o build. MkDocs com Material publica esta documentação no GitHub Pages.
 
-- `gcc` >= 16.2.0
-- `flex` >= 2.6.4
-- `bison` >= 3.8.2
-- `make` >= 4.4.1
+## Regras da linguagem
 
-## Estrutura do projeto
+- MiniPy é sensível a maiúsculas e minúsculas. Identificadores usam letras ASCII, dígitos e `_`, sem dígito inicial.
+- Blocos de `if`, `elif`, `else`, `while`, `for` e `def` usam sempre `{ }`.
+- Comandos simples terminam com `;` ou quebra de linha. Antes de `}` e no EOF,
+  o scanner fornece um terminador quando necessário, inclusive em `if x { y = 1 }`.
+  Comandos de bloco não precisam de terminador; um `;` isolado não é comando vazio.
+- `else` e `elif` devem estar na mesma linha do `}` anterior. A quebra de linha
+  encerra o condicional; `else` na linha seguinte é diagnosticado como `else sem if`.
+- Listas podem ocupar várias linhas dentro de `[ ]`; seus elementos precisam de vírgulas.
+- `print` e `range` são identificadores comuns. Chamadas são reconhecidas, sem execução.
+- Comentários começam com `#` e vão até o fim da linha.
+- Números são inteiros ou decimais, sem notação exponencial; o sinal é operador unário.
+  Strings aceitam escapes e uma única linha. Não há indentação significativa.
 
-- `Lexico/` — analisador léxico (Flex, `scanner.l`)
-- `Sintatica/` — analisador sintático (Bison, `parser.y`)
-- `Semantica/` — analisador semântico e AST (ainda não implementados)
-- `src/` — ponto de entrada do interpretador (esqueleto, ainda não integrado)
-- `testes/` — testes automatizados
-- `docs/` — documentação complementar do projeto
+## Como rodar o projeto
 
-## Status desta entrega
-
-Esta primeira entrega do interpretador cobre apenas o **léxico**, o
-**sintático** e o **Makefile** de build. Semântica, AST e execução ainda
-não existem.
-
-| Etapa | Conteúdo | Status |
-|---|---|---|
-| Expressões e literais | números, strings, `True`/`False`/`None`, aritmética | ✅ |
-| Condições e lógica | comparações, `if`/`elif`/`else` | 🚧 reservado na gramática, não implementado |
-| Laços | `while`, `for`, `break`, `continue` | ✅ (reconhecimento sintático; sem execução) |
-| Atribuição, listas e comentários | `=`, `+=`/`-=`/`*=`/`/=`, `[...]`, `l[i]`, `#` | ✅ |
-| Funções e chamadas | `def`, `return`, chamadas com argumentos | 🚧 reservado na gramática, não implementado |
-
-## Como compilar
+Ambiente validado: GCC 13.3.0, Flex 2.6.4, Bison 3.8.2, GNU Make e GNU coreutils
+(`timeout`, usado para detectar travamentos nos testes). É necessário o pacote de
+desenvolvimento de libfl e libm. Em Debian/Ubuntu, instale as dependências e execute os comandos na raiz do repositório:
 
 ```sh
-make parser   # gera o parser (bison + flex + gcc)
-make tokens   # gera um binário que só imprime os tokens lidos
+sudo apt install build-essential flex bison libfl-dev python3-venv
 ```
 
-`make clean` remove os artefatos gerados (`parser.tab.c/.h`, `lex.yy.c`,
-`parser`, `tokens`).
-
-## Como executar
+Se ainda não tiver o projeto na máquina:
 
 ```sh
-./parser < caminho/para/arquivo.py   # valida a gramática do arquivo
-./tokens < caminho/para/arquivo.py   # imprime a lista de tokens lidos
+git clone https://github.com/Compiladores-1-Grupo13-2026/Compiladores-1.git
+cd Compiladores-1
 ```
 
-## Como gerar um arquivo Python de teste
-
-Como o interpretador ainda cobre só léxico e sintático, "gerar Python"
-aqui significa escrever um arquivo `.py` de teste usando o subconjunto
-já suportado (expressões, laços, atribuição, listas e comentários):
-
-```python
-# exemplo.py
-x = 0
-lista = [1, 2, 3]
-while x < 3 {
-    x += 1
-}
-```
-
-## Como compilar e executar o Python gerado
-
-Com o arquivo `.py` de teste em mãos, compile o interpretador e rode-o
-sobre esse arquivo:
+Compile e execute:
 
 ```sh
-make parser
-./parser < exemplo.py
+make clean
+make
+make tokens
+./tokens < testes/validos/base_programa_referencia.txt
+./parser < testes/validos/base_programa_referencia.txt
+make test
 ```
 
-## Documentação
+`make` gera `parser.tab.c/.h`, `parser.output`, `lex.yy.c` e `parser`.
+`make tokens` compila o mesmo scanner com `SO_TOKENS`; `make clean` remove os
+artefatos. Eles são ignorados pelo Git. Para ver a recuperação e o código de saída:
 
-- [Analisador Léxico](docs/analisador_lexico/analisador-lexico.md)
-- [Analisador Sintático](docs/analisador_sintatico/analisador-sintatico.md)
-- [Analisador Semântico](docs/analisador_semantico/analisador-semantico.md) (futuro)
+```sh
+./parser < testes/invalidos/base_multiplos_erros.txt 2>&1
+echo "$?"  # 1
+```
+
+Para construir a documentação:
+
+```sh
+python3 -m venv .venv-docs
+.venv-docs/bin/pip install -r requirements-docs.txt
+.venv-docs/bin/mkdocs build --strict
+```
+
+O workflow `.github/workflows/gh-pages.yml` constrói e publica `site/` quando
+as mudanças chegam a `main`. O build local não confirma a publicação remota.
+
+Para visualizar a documentação localmente:
+
+```sh
+.venv-docs/bin/mkdocs serve
+```
+
+Abra <http://127.0.0.1:8000/Compiladores-1/>. Use `Ctrl+C` para encerrar.
+
+## Escopo e limitações
+
+A entrega cobre léxico, parser e recuperação de erros da Semana 5. AST, tabela
+de símbolos e execução de variáveis, laços e funções ficam para a Semana 6 em
+diante. O parser lê stdin; arquivos de teste usam `.txt`.
+
+A [página Início](docs/index.md) apresenta a linguagem e a equipe. O
+[léxico](docs/analisador_lexico/analisador-lexico.md) documenta o catálogo de tokens,
+e o [sintático](docs/analisador_sintatico/analisador-sintatico.md) detalha a
+gramática EBNF, a precedência, o tratamento de erros e as limitações. O [registro das sprints](docs/sprints.md) detalha o planejamento,
+as entregas e as pendências da equipe.
 
 ## Membros
 
@@ -120,6 +126,11 @@ make parser
         <sub><b>Karoline Luz</b></sub>
       </a>
     </td>
+    <td align="center">
+      <a href="https://github.com/Antedeguemon21">
+        <img src="https://github.com/Antedeguemon21.png" width="100" alt="Antedeguemon21"/><br />
+        <sub><b>Antedeguemon21</b></sub>
+      </a>
+    </td>
   </tr>
 </table>
-

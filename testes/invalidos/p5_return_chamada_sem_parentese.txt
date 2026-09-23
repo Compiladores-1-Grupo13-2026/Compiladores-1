@@ -1,0 +1,2 @@
+def soma() { return print(5; }
+2 + 2;

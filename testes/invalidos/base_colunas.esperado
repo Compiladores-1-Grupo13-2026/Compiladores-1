@@ -1,0 +1,6 @@
+[ERRO SINTATICO] Linha 3, coluna 5: condicao vazia no if (proximo a '{')
+[ERRO SINTATICO] Linha 4, coluna 5: atribuicao invalida: o lado esquerdo deve ser variavel ou l[i] (proximo a '\n')
+[ERRO SINTATICO] Linha 5, coluna 5: syntax error (proximo a '\n')
+Resultado: 4
+[ERRO SINTATICO] Linha 7, coluna 4: syntax error (proximo a '\n')
+Resultado: 4

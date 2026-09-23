@@ -1,0 +1,3 @@
+[ERRO SINTATICO] Linha 1, coluna 9: lista mal formada: faltou ']' (ou ',' entre elementos) (proximo a '\n')
+[OK] atribuicao reconhecida
+Resultado: 4

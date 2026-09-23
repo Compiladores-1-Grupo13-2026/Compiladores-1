@@ -1,0 +1,3 @@
+[OK] if reconhecido
+[ERRO SINTATICO] Linha 2, coluna 1: else sem if correspondente (proximo a '}')
+Resultado: 4

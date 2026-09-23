@@ -2,7 +2,7 @@ CC = gcc
 BISON = bison
 FLEX = flex
 CFLAGS ?= -Wall -Wextra
-BISONFLAGS = -Wall -Wcounterexamples
+BISONFLAGS = -Wall -Werror -v
 LDLIBS = -lfl -lm
 
 # Remove alvos incompletos quando uma receita falha.

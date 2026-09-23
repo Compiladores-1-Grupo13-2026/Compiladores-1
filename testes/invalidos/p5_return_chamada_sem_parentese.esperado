@@ -1,0 +1,3 @@
+[ERRO SINTATICO] Linha 1, coluna 14: chamada de funcao sem fecha parenteses ')' no return antes do terminador (proximo a ';')
+[OK] def reconhecido
+Resultado: 4

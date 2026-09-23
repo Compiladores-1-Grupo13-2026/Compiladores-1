@@ -4,13 +4,28 @@
 
 int yylex(void);
 void yyerror(const char *mensagem);
-extern int yylineno;
 extern char *yytext;
+extern int erros_lexicos;
+void encerrar_lista_invalida(void);
+static void sincronizar_lista(void);
 static int erros_p1 = 0;
+int erros_sintaticos = 0;
 
-/* Diagnosticos numericos locais da P1; yyerror e a recuperacao sao preservados. */
-static void erro_numerico_p1(const char *mensagem) {
-    fprintf(stderr, "Erro na linha %d: %s\n", yylineno, mensagem);
+/* P2: guarda a deteccao para permitir um diagnostico especifico na recuperacao.
+ * Copiar o lexema evita consultar yytext depois que o scanner ja avancou. */
+static int erro_pendente = 0, erro_linha, erro_coluna;
+static char erro_lexema[128];
+static const char *erro_mensagem = "syntax error";
+static void preparar_diagnostico(int linha, int coluna, const char *mensagem);
+static void emitir_pendente(void);
+static void diagnostico(int linha, int coluna, const char *mensagem);
+#define ERRO_SINTATICO(loc, mensagem) \
+    diagnostico((loc).first_line, (loc).first_column, (mensagem))
+#define RECONHECIDO(mensagem) do { emitir_pendente(); puts(mensagem); } while (0)
+
+static void erro_numerico_p1(int linha, const char *mensagem) {
+    emitir_pendente();
+    fprintf(stderr, "[ERRO SEMANTICO] Linha %d: %s\n", linha, mensagem);
     erros_p1++;
 }
 
@@ -21,6 +36,10 @@ static int resultado_finito_p1(double resultado, double esquerda, double direita
 }
 %}
 
+%locations
+/* Os dois conflitos intencionais sao ELSE do if versus ELSE sem if. */
+%expect 2
+
 %union {
     double numero;
 }
@@ -28,6 +47,7 @@ static int resultado_finito_p1(double resultado, double esquerda, double direita
 /* Declaracoes compartilhadas previstas no contrato da Sprint 0. */
 %token <numero> NUM
 %token ID PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON
+%token FIM 0 "fim do arquivo"
 %token NEWLINE
 %token STRING TRUE FALSE NONE FLOORDIV MOD POWER
 %token EQ NE LT GT LE GE AND OR NOT IF ELIF ELSE
@@ -39,19 +59,12 @@ static int resultado_finito_p1(double resultado, double esquerda, double direita
 /* Contrato de precedencia da Sprint 0, na ordem exata do plano. */
 %left OR
 %left AND
-%right NOT
+%precedence NOT
 %left EQ NE LT GT LE GE
 %left PLUS MINUS
 %left TIMES DIVIDE FLOORDIV MOD
-%right UMINUS
+%precedence UMINUS
 %right POWER
-
-/* [P4] Apoio para as mensagens de erro de atribuicao e listas. */
-%{
-#include <stdio.h>
-extern int yylineno;
-#define ERRO_P4(msg) fprintf(stderr, "Erro sintatico na linha %d: %s\n", yylineno, msg)
-%}
 
 /* Define o ponto de entrada principal do interpretador */
 %start programa
@@ -60,7 +73,7 @@ extern int yylineno;
 
 /* ===== ESTRUTURA GERAL DE EXECUCAO ===== */
 programa:
-      /* vazio */
+      %empty
     | programa elemento
     ;
 
@@ -72,14 +85,24 @@ elemento:
 comando:
       laco_while       /* P3 */
     | laco_for         /* P3 */
-    | comando_break    /* P3 */
-    | comando_continue /* P3 */
-    | atribuicao       /* P4 */
-    | expr terminador  { if (!isnan($1)) printf("Resultado: %.15g\n", $1); } /* P1 */
+    | comando_break terminador    /* P3 */
+    | comando_continue terminador /* P3 */
+    | atribuicao terminador       /* P4 */
+    | expr terminador  { emitir_pendente(); if (!isnan($1)) printf("Resultado: %.15g\n", $1); } /* P1 */
     ;
 
 bloco:
-      LBRACE programa RBRACE
+      LBRACE inicio_bloco programa RBRACE
+    | LBRACE inicio_bloco programa error FIM {
+          ERRO_SINTATICO(@1, "bloco aberto sem '}'");
+          yyerrok;
+      }
+    ;
+
+/* A abertura e a ancora dos erros de cabecalho. So aqui imprimimos o
+ * diagnostico e voltamos ao modo normal: antes disso ainda ha tokens a descartar. */
+inicio_bloco:
+      %empty { emitir_pendente(); yyerrok; }
     ;
 
 /* ===== [P1] EXPRESSOES E LITERAIS ===== */
@@ -90,14 +113,13 @@ terminador:
 
 /* Recupera no fim do comando sem descartar as expressoes seguintes. */
 comando:
-    error SEMICOLON { erros_p1++; yyerrok; }
-  | error NEWLINE   { erros_p1++; yyerrok; }
+    error terminador { emitir_pendente(); yyerrok; }
 ;
 
 expr:
     NUM {
         if (!isfinite($1)) {
-            erro_numerico_p1("literal numerico fora do intervalo suportado");
+            erro_numerico_p1(@1.first_line, "literal numerico fora do intervalo suportado");
             YYERROR;
         }
         $$ = $1;
@@ -106,50 +128,50 @@ expr:
   | expr PLUS expr {
         $$ = $1 + $3;
         if (!resultado_finito_p1($$, $1, $3)) {
-            erro_numerico_p1("resultado de soma fora do intervalo suportado");
+            erro_numerico_p1(@1.first_line, "resultado de soma fora do intervalo suportado");
             YYERROR;
         }
     }
   | expr MINUS expr {
         $$ = $1 - $3;
         if (!resultado_finito_p1($$, $1, $3)) {
-            erro_numerico_p1("resultado de subtracao fora do intervalo suportado");
+            erro_numerico_p1(@1.first_line, "resultado de subtracao fora do intervalo suportado");
             YYERROR;
         }
     }
   | expr TIMES expr {
         $$ = $1 * $3;
         if (!resultado_finito_p1($$, $1, $3)) {
-            erro_numerico_p1("resultado de multiplicacao fora do intervalo suportado");
+            erro_numerico_p1(@1.first_line, "resultado de multiplicacao fora do intervalo suportado");
             YYERROR;
         }
     }
   | MINUS expr %prec UMINUS { $$ = -$2; }
   | expr DIVIDE expr {
         if ($3 == 0) {
-            erro_numerico_p1("divisao por zero");
+            erro_numerico_p1(@1.first_line, "divisao por zero");
             YYERROR;
         }
         $$ = $1 / $3;
         if (!resultado_finito_p1($$, $1, $3)) {
-            erro_numerico_p1("resultado de divisao fora do intervalo suportado");
+            erro_numerico_p1(@1.first_line, "resultado de divisao fora do intervalo suportado");
             YYERROR;
         }
     }
   | expr FLOORDIV expr {
         if ($3 == 0) {
-            erro_numerico_p1("divisao por zero");
+            erro_numerico_p1(@1.first_line, "divisao por zero");
             YYERROR;
         }
         $$ = floor($1 / $3);
         if (!resultado_finito_p1($$, $1, $3)) {
-            erro_numerico_p1("resultado de divisao inteira fora do intervalo suportado");
+            erro_numerico_p1(@1.first_line, "resultado de divisao inteira fora do intervalo suportado");
             YYERROR;
         }
     }
   | expr MOD expr {
         if ($3 == 0) {
-            erro_numerico_p1("divisao por zero");
+            erro_numerico_p1(@1.first_line, "divisao por zero");
             YYERROR;
         }
         $$ = fmod($1, $3);
@@ -158,7 +180,7 @@ expr:
         if ($$ == 0.0) $$ = copysign(0.0, $3);
         else if (($$ < 0.0) != ($3 < 0.0)) $$ += $3;
         if (!resultado_finito_p1($$, $1, $3)) {
-            erro_numerico_p1("resultado de modulo fora do intervalo suportado");
+            erro_numerico_p1(@1.first_line, "resultado de modulo fora do intervalo suportado");
             YYERROR;
         }
     }
@@ -167,16 +189,16 @@ expr:
             $$ = NAN;
         } else {
             if ($1 == 0.0 && $3 < 0.0) {
-                erro_numerico_p1("divisao por zero em potencia com expoente negativo");
+                erro_numerico_p1(@1.first_line, "divisao por zero em potencia com expoente negativo");
                 YYERROR;
             }
             $$ = pow($1, $3);
             if (isnan($$)) {
-                erro_numerico_p1("potencia sem resultado real");
+                erro_numerico_p1(@1.first_line, "potencia sem resultado real");
                 YYERROR;
             }
             if (!isfinite($$)) {
-                erro_numerico_p1("resultado de potencia fora do intervalo suportado");
+                erro_numerico_p1(@1.first_line, "resultado de potencia fora do intervalo suportado");
                 YYERROR;
             }
         }
@@ -194,31 +216,31 @@ expr:
 /* Operadores de comparacao e logica. */
 expr:
       expr EQ expr {
-          $$ = ($1 == $3);
+          $$ = isnan($1) || isnan($3) ? NAN : ($1 == $3);
       }
     | expr NE expr {
-          $$ = ($1 != $3);
+          $$ = isnan($1) || isnan($3) ? NAN : ($1 != $3);
       }
     | expr LT expr {
-          $$ = ($1 < $3);
+          $$ = isnan($1) || isnan($3) ? NAN : ($1 < $3);
       }
     | expr GT expr {
-          $$ = ($1 > $3);
+          $$ = isnan($1) || isnan($3) ? NAN : ($1 > $3);
       }
     | expr LE expr {
-          $$ = ($1 <= $3);
+          $$ = isnan($1) || isnan($3) ? NAN : ($1 <= $3);
       }
     | expr GE expr {
-          $$ = ($1 >= $3);
+          $$ = isnan($1) || isnan($3) ? NAN : ($1 >= $3);
       }
     | expr AND expr {
-          $$ = ($1 != 0 && $3 != 0);
+          $$ = isnan($1) || isnan($3) ? NAN : ($1 != 0 && $3 != 0);
       }
     | expr OR expr {
-          $$ = ($1 != 0 || $3 != 0);
+          $$ = isnan($1) || isnan($3) ? NAN : ($1 != 0 || $3 != 0);
       }
     | NOT expr {
-          $$ = ($2 == 0);
+          $$ = isnan($2) ? NAN : ($2 == 0);
       }
     ;
 
@@ -228,57 +250,31 @@ comando:
     ;
 
 comando_if:
-      IF expr bloco
-    | IF expr bloco ELSE bloco
-    | IF expr bloco lista_elif
-    | IF expr bloco lista_elif ELSE bloco
-
-    /* IF sem condicao. */
-    | IF bloco {
-          yyerror("condicao vazia no if");
-          yyerrok;
+      IF expr bloco { RECONHECIDO("[OK] if reconhecido"); }
+    | IF expr bloco ELSE bloco { RECONHECIDO("[OK] if reconhecido"); }
+    | IF expr bloco lista_elif { RECONHECIDO("[OK] if reconhecido"); }
+    | IF expr bloco lista_elif ELSE bloco { RECONHECIDO("[OK] if reconhecido"); }
+    | IF { ERRO_SINTATICO(@1, "condicao vazia no if"); } bloco
+    | IF error {
+          preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no if");
+      } bloco { yyerrok; }
+    /* Nao aceitar IF expr error: interceptava expressoes incompletas e
+     * confundia a abertura do bloco com a ausencia de bloco. */
+    | IF error terminador {
+          ERRO_SINTATICO(@1, "bloco ausente no if (esperado '{')"); yyerrok;
       }
-
-    /* IF com condicao invalida. */
-    | IF error bloco {
-          yyerror("condicao invalida no if");
-          yyerrok;
-      }
-
-    /* IF sem bloco. */
-    | IF expr error {
-          yyerror("bloco ausente no if");
-          yyerrok;
-      }
-
-    /* ELSE sem IF correspondente. */
-    | ELSE bloco {
-          yyerror("else sem if correspondente");
-          yyerrok;
-      }
+    | ELSE bloco { ERRO_SINTATICO(@1, "else sem if correspondente"); }
     ;
 
-/* Sequencia de elif. */
 lista_elif:
       ELIF expr bloco
     | lista_elif ELIF expr bloco
-
-    /* ELIF sem condicao. */
-    | ELIF bloco {
-          yyerror("condicao vazia no elif");
-          yyerrok;
-      }
-
-    /* ELIF com condicao invalida. */
-    | ELIF error bloco {
-          yyerror("condicao invalida no elif");
-          yyerrok;
-      }
-
-    /* ELIF sem bloco. */
-    | ELIF expr error {
-          yyerror("bloco ausente no elif");
-          yyerrok;
+    | ELIF { ERRO_SINTATICO(@1, "condicao vazia no elif"); } bloco
+    | ELIF error {
+          preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no elif");
+      } bloco { yyerrok; }
+    | ELIF error terminador {
+          ERRO_SINTATICO(@1, "bloco ausente no elif (esperado '{')"); yyerrok;
       }
     ;
 
@@ -286,19 +282,29 @@ lista_elif:
 
 /* ===== [P3] LACOS ===== */
 laco_while:
-      WHILE expr bloco
+      WHILE expr bloco { RECONHECIDO("[OK] while reconhecido"); }
+    | WHILE { ERRO_SINTATICO(@1, "condicao vazia no while"); } bloco
+    | WHILE error {
+          preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no while");
+      } bloco { yyerrok; }
     ;
 
 laco_for:
-      FOR ID IN expr bloco
+      FOR ID IN expr bloco { RECONHECIDO("[OK] for reconhecido"); }
+    | FOR ID error {
+          preparar_diagnostico(@1.first_line, @1.first_column, "for sem a palavra 'in' ou expressao iteravel invalida");
+      } bloco { yyerrok; }
+    | FOR error {
+          preparar_diagnostico(@1.first_line, @1.first_column, "for sem variavel de controle");
+      } bloco { yyerrok; }
     ;
 
 comando_break:
-      BREAK
+      BREAK { RECONHECIDO("[OK] break reconhecido"); }
     ;
 
 comando_continue:
-      CONTINUE
+      CONTINUE { RECONHECIDO("[OK] continue reconhecido"); }
     ;
 
 /* ===== [P4] ATRIBUICAO, LISTAS E COMENTARIOS ===== */
@@ -306,10 +312,10 @@ comando_continue:
 
 /* Atribuicao simples e composta: x = 1, x += 1, l[0] = 1 */
 atribuicao:
-      alvo op_atrib expr
+      alvo op_atrib expr { RECONHECIDO("[OK] atribuicao reconhecida"); }
     | literal op_atrib expr {
-        ERRO_P4("atribuicao invalida: o lado esquerdo deve ser variavel ou l[i]");
-        YYABORT;
+        ERRO_SINTATICO(@1, "atribuicao invalida: o lado esquerdo deve ser variavel ou l[i]");
+        yyerrok;
     }
     ;
 
@@ -338,12 +344,14 @@ lista:
       LBRACKET RBRACKET
     | LBRACKET elementos RBRACKET
     | LBRACKET elementos error {
-        ERRO_P4("lista mal formada: faltou ']' (ou ',' entre elementos)");
-        YYABORT;
+        ERRO_SINTATICO(@1, "lista mal formada: faltou ']' (ou ',' entre elementos)");
+        sincronizar_lista();
+        yyerrok;
     }
     | LBRACKET error {
-        ERRO_P4("lista mal formada: faltou ']'");
-        YYABORT;
+        ERRO_SINTATICO(@1, "lista mal formada: faltou ']'");
+        sincronizar_lista();
+        yyerrok;
     }
     ;
 
@@ -363,29 +371,27 @@ indexacao:
 comando:
       def_funcao
     | comando_return
-    | chamada_funcao SEMICOLON
-    | ID LPAREN args_opt error SEMICOLON {
-          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: chamada de funcao sem fecha parenteses ')' antes de ';'\n", yylineno);
+    | ID LPAREN args_opt error terminador {
+          ERRO_SINTATICO(@1, "chamada de funcao sem fecha parenteses ')' antes do terminador");
           yyerrok;
       }
     ;
 
 def_funcao:
       DEF ID LPAREN params_opt RPAREN bloco {
-          printf("[OK] def reconhecido\n");
+          RECONHECIDO("[OK] def reconhecido");
       }
-    | DEF error LPAREN params_opt RPAREN bloco {
-          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: definicao de funcao sem identificador (esperado nome antes de '(')\n", yylineno);
+    | DEF error LPAREN params_opt RPAREN {
+          ERRO_SINTATICO(@1, "definicao de funcao sem identificador (esperado nome antes de '(')");
           yyerrok;
-      }
-    | DEF error bloco {
-          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: definicao de funcao malformada (esperado nome e parametros antes do bloco)\n", yylineno);
+      } bloco
+    | DEF error {
+          preparar_diagnostico(@1.first_line, @1.first_column, "definicao de funcao malformada (esperado nome e parametros antes do bloco)");
+      } bloco { yyerrok; }
+    | DEF ID LPAREN error RPAREN {
+          ERRO_SINTATICO(@1, "parametros mal formados na definicao de funcao. Recuperado apos ')'.");
           yyerrok;
-      }
-    | DEF ID LPAREN error RPAREN bloco {
-          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: parametros mal formados na definicao de funcao. Recuperado apos ')'.\n", yylineno);
-          yyerrok;
-      }
+      } bloco
     ;
 
 params_opt:
@@ -399,28 +405,27 @@ params:
     ;
 
 comando_return:
-      RETURN expr SEMICOLON {
-          printf("[OK] return reconhecido\n");
+      RETURN expr terminador {
+          RECONHECIDO("[OK] return reconhecido");
       }
-    | RETURN SEMICOLON {
-          printf("[OK] return reconhecido\n");
+    | RETURN terminador {
+          RECONHECIDO("[OK] return reconhecido");
       }
-    | RETURN ID LPAREN args_opt error SEMICOLON {
-          fprintf(stderr, "[ERRO SINTATICO P5] Linha %d: chamada de funcao sem fecha parenteses ')' no return antes de ';'\n", yylineno);
+    | RETURN ID LPAREN args_opt error terminador {
+          ERRO_SINTATICO(@1, "chamada de funcao sem fecha parenteses ')' no return antes do terminador");
           yyerrok;
       }
     ;
 
 expr:
       chamada_funcao { $$ = $1; }
-    | NUM            { $$ = $1; }
-    | ID             { $$ = 0.0; }
+    | ID             { $$ = NAN; }
     ;
 
 chamada_funcao:
       ID LPAREN args_opt RPAREN {
-          printf("[OK] chamada de funcao reconhecida\n");
-          $$ = 0.0;
+          RECONHECIDO("[OK] chamada de funcao reconhecida");
+          $$ = NAN;
       }
     ;
 
@@ -436,15 +441,58 @@ args:
 
 %%
 
-void yyerror(const char *mensagem) {
-    fprintf(stderr,
-            "Erro sintatico na linha %d: %s\n",
-            yylineno,
-            mensagem);
+/* P4: preserva o terminador para a regra externa e consome um eventual ']'. */
+static void sincronizar_lista(void) {
+    while (yychar != FIM && yychar != NEWLINE && yychar != SEMICOLON &&
+           yychar != RBRACE && yychar != RBRACKET) yychar = yylex();
+    if (yychar == RBRACKET) yychar = YYEMPTY;
+    encerrar_lista_invalida();
 }
 
-/* Ponto de entrada do build; as mensagens gerais de yyerror cabem a P2. */
+static const char *lexema_atual(void) {
+    if (yychar == NEWLINE) return "\\n";
+    if (yychar == FIM || !yytext || !*yytext) return "EOF";
+    if (*yytext == '\n') return "\\n";
+    return yytext;
+}
+
+static void emitir_pendente(void) {
+    if (!erro_pendente) return;
+    fprintf(stderr, "[ERRO SINTATICO] Linha %d, coluna %d: %s (proximo a '%s')\n",
+            erro_linha, erro_coluna, erro_mensagem, erro_lexema);
+    erro_pendente = 0;
+}
+
+static void preparar_diagnostico(int linha, int coluna, const char *mensagem) {
+    erro_linha = linha;
+    erro_coluna = coluna;
+    erro_mensagem = mensagem;
+}
+
+static void diagnostico(int linha, int coluna, const char *mensagem) {
+    /* A regra especifica substitui a mensagem generica ainda pendente. */
+    const char *lexema = erro_pendente ? erro_lexema : lexema_atual();
+    if (!erro_pendente) erros_sintaticos++;
+    fprintf(stderr, "[ERRO SINTATICO] Linha %d, coluna %d: %s (proximo a '%s')\n",
+            linha, coluna, mensagem, lexema);
+    erro_pendente = 0;
+}
+
+void yyerror(const char *mensagem) {
+    (void) mensagem;
+    emitir_pendente();
+    erros_sintaticos++;
+    erro_pendente = 1;
+    erro_mensagem = "syntax error";
+    erro_linha = yylloc.first_line;
+    erro_coluna = yylloc.first_column;
+    snprintf(erro_lexema, sizeof erro_lexema, "%s", lexema_atual());
+}
+
+/* Semana 5: o ponto de entrada continua aqui, sem integrar src/main.c. */
 int main(void) {
+    setvbuf(stdout, NULL, _IONBF, 0);
     int status = yyparse();
-    return status != 0 || erros_p1 != 0;
+    emitir_pendente();
+    return status != 0 || erros_p1 != 0 || erros_sintaticos != 0 || erros_lexicos != 0;
 }
