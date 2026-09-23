@@ -1,1 +1,0 @@
-"""Analisador sintático do interpretador."""
