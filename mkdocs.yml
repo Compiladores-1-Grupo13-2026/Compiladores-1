@@ -1,0 +1,20 @@
+site_name: MiniPy — Equipe 13
+site_description: Especificação, documentação e execução da MiniPy — Equipe 13 de Compiladores 1.
+docs_dir: docs
+site_url: https://compiladores-1-grupo13-2026.github.io/Compiladores-1/
+repo_url: https://github.com/Compiladores-1-Grupo13-2026/Compiladores-1
+theme:
+  name: material
+  language: pt-BR
+nav:
+  - Início: index.md
+  - Analisador léxico: analisador_lexico/analisador-lexico.md
+  - Analisador sintático: analisador_sintatico/analisador-sintatico.md
+  - Analisador semântico: analisador_semantico/analisador-semantico.md
+  - Código-fonte: src.md
+  - Testes: testes.md
+  - Sprints: sprints.md
+validation:
+  links:
+    not_found: warn
+    anchors: warn
