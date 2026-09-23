@@ -130,6 +130,99 @@ expr:
 /* ===== [P2] CONDICOES E LOGICA ===== */
 /* Comparacoes, operadores logicos e comandos if / elif / else. */
 
+/* Operadores de comparacao e logica. */
+expr:
+      expr EQ expr {
+          $$ = ($1 == $3);
+      }
+    | expr NE expr {
+          $$ = ($1 != $3);
+      }
+    | expr LT expr {
+          $$ = ($1 < $3);
+      }
+    | expr GT expr {
+          $$ = ($1 > $3);
+      }
+    | expr LE expr {
+          $$ = ($1 <= $3);
+      }
+    | expr GE expr {
+          $$ = ($1 >= $3);
+      }
+    | expr AND expr {
+          $$ = ($1 != 0 && $3 != 0);
+      }
+    | expr OR expr {
+          $$ = ($1 != 0 || $3 != 0);
+      }
+    | NOT expr {
+          $$ = ($2 == 0);
+      }
+    ;
+
+/* Comandos condicionais. */
+comando:
+      comando_if
+    ;
+
+comando_if:
+      IF expr bloco
+    | IF expr bloco ELSE bloco
+    | IF expr bloco lista_elif
+    | IF expr bloco lista_elif ELSE bloco
+
+    /* IF sem condicao. */
+    | IF bloco {
+          yyerror("condicao vazia no if");
+          yyerrok;
+      }
+
+    /* IF com condicao invalida. */
+    | IF error bloco {
+          yyerror("condicao invalida no if");
+          yyerrok;
+      }
+
+    /* IF sem bloco. */
+    | IF expr error {
+          yyerror("bloco ausente no if");
+          yyerrok;
+      }
+
+    /* ELSE sem IF correspondente. */
+    | ELSE bloco {
+          yyerror("else sem if correspondente");
+          yyerrok;
+      }
+    ;
+
+/* Sequencia de elif. */
+lista_elif:
+      ELIF expr bloco
+    | lista_elif ELIF expr bloco
+
+    /* ELIF sem condicao. */
+    | ELIF bloco {
+          yyerror("condicao vazia no elif");
+          yyerrok;
+      }
+
+    /* ELIF com condicao invalida. */
+    | ELIF error bloco {
+          yyerror("condicao invalida no elif");
+          yyerrok;
+      }
+
+    /* ELIF sem bloco. */
+    | ELIF expr error {
+          yyerror("bloco ausente no elif");
+          yyerrok;
+      }
+    ;
+
+/* ===== FIM [P2] CONDICOES E LOGICA ===== */
+
 /* ===== [P3] LACOS ===== */
 laco_while:
       WHILE expr bloco
@@ -283,7 +376,10 @@ args:
 %%
 
 void yyerror(const char *mensagem) {
-    /* Funcao auxiliar de erro */
+    fprintf(stderr,
+            "Erro sintatico na linha %d: %s\n",
+            yylineno,
+            mensagem);
 }
 
 /* Ponto de entrada do build; as mensagens gerais de yyerror cabem a P2. */
