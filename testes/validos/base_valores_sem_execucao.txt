@@ -1,0 +1,15 @@
+x;
+x + 1;
+x > 0;
+x == x;
+x != 0;
+x <= 0;
+x >= 0;
+x < 0;
+x and True;
+x or False;
+not x;
+x ** 0;
+1 ** x;
+print(5);
+range(3)

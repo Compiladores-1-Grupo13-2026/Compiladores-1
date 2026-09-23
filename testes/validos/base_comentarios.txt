@@ -1,0 +1,5 @@
+# comentario
+
+  # comentario indentado
+x = 1 # fim de comando
+if x { y = 1 } # bloco

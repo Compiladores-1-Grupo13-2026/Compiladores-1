@@ -1,0 +1,4 @@
+[ERRO SINTATICO] Linha 1, coluna 10: condicao invalida no elif (proximo a '{')
+[OK] atribuicao reconhecida
+[OK] if reconhecido
+Resultado: 4

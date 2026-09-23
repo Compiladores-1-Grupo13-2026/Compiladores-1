@@ -1,0 +1,6 @@
+Resultado: 7
+[ERRO SINTATICO] Linha 2, coluna 5: syntax error (proximo a ';')
+Resultado: 42
+[ERRO SINTATICO] Linha 4, coluna 7: syntax error (proximo a ';')
+Resultado: 8
+[ERRO SEMANTICO] Linha 6: divisao por zero
