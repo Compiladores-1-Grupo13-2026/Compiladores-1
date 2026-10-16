@@ -46,3 +46,21 @@ p4: parser.tab.c tokens
 
 clean:
 	$(RM) parser.tab.c parser.tab.h lex.yy.c parser tokens parser.output
+
+# ===== [P3] Testes: memcheck (valgrind) =====
+# make memcheck: roda o parser sob valgrind em cada testes/validos/*.txt e
+# falha se algum teste tiver vazamento, erro de memoria ou codigo de saida != 0.
+.PHONY: memcheck
+memcheck: parser
+	@command -v valgrind >/dev/null 2>&1 || { echo 'valgrind nao encontrado: sudo apt install valgrind' >&2; exit 1; }
+	@falhas=0; \
+	for f in testes/validos/*.txt; do \
+	  if valgrind -q --leak-check=full --error-exitcode=2 ./parser < "$$f" >/dev/null 2>&1; then \
+	    echo "OK    $$f"; \
+	  else \
+	    echo "FALHA $$f"; falhas=$$((falhas + 1)); \
+	  fi; \
+	done; \
+	if [ "$$falhas" -ne 0 ]; then \
+	  echo "$$falhas teste(s) com problema. Detalhe: valgrind --leak-check=full ./parser < arquivo" >&2; exit 1; \
+	fi
