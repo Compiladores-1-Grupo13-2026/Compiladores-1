@@ -1,14 +1,26 @@
+%code requires {
+#include "Semantica/Ast/ast.h"
+typedef struct {
+    double numero;
+    NoAST *ast;
+} ValorExpressao;
+}
+
 %{
-#include <stdio.h>
+#include <limits.h>
 #include <math.h>
+#include <stdio.h>
+#include <stdlib.h>
+
+#include "Semantica/semantico.h"
 
 int yylex(void);
 void yyerror(const char *mensagem);
 extern char *yytext;
 extern int erros_lexicos;
+void lexer_liberar_textos(void);
 void encerrar_lista_invalida(void);
 static void sincronizar_lista(void);
-static int erros_p1 = 0;
 int erros_sintaticos = 0;
 
 /* P2: guarda a deteccao para permitir um diagnostico especifico na recuperacao.
@@ -23,17 +35,16 @@ static void diagnostico(int linha, int coluna, const char *mensagem);
     diagnostico((loc).first_line, (loc).first_column, (mensagem))
 #define RECONHECIDO(mensagem) do { emitir_pendente(); puts(mensagem); } while (0)
 
-static void erro_numerico_p1(int linha, const char *mensagem) {
-    emitir_pendente();
-    fprintf(stderr, "[ERRO SEMANTICO] Linha %d: %s\n", linha, mensagem);
-    erros_p1++;
+/* O contrato da AST guarda inteiros em valor; a API P1 preserva numeros reais
+ * em um registro auxiliar sem alterar a struct compartilhada. */
+/* ===== [P1] Conversao de literais numericos para nos AST ===== */
+static NoAST *criar_numero_p1(double valor, int linha) {
+    if (isfinite(valor) && valor >= INT_MIN && valor <= INT_MAX &&
+        trunc(valor) == valor)
+        return ast_criar_numero((int) valor, linha);
+    return ast_criar_numero_real(valor, linha);
 }
-
-/* NAN ja representa valores apenas reconhecidos, como STRING e NONE.
- * Nao confundir esse marcador com um erro produzido por operandos numericos. */
-static int resultado_finito_p1(double resultado, double esquerda, double direita) {
-    return isnan(esquerda) || isnan(direita) || isfinite(resultado);
-}
+/* ===== FIM [P1] Conversao de literais numericos para nos AST ===== */
 %}
 
 %locations
@@ -42,19 +53,23 @@ static int resultado_finito_p1(double resultado, double esquerda, double direita
 
 %union {
     double numero;
+    char *texto;
+    ValorExpressao expr;
 }
 
 /* Declaracoes compartilhadas previstas no contrato da Sprint 0. */
 %token <numero> NUM
-%token ID PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON
+%token <texto> ID STRING
+%token PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON
 %token FIM 0 "fim do arquivo"
 %token NEWLINE
-%token STRING TRUE FALSE NONE FLOORDIV MOD POWER
+%token TRUE FALSE NONE FLOORDIV MOD POWER
 %token EQ NE LT GT LE GE AND OR NOT IF ELIF ELSE
 %token WHILE FOR IN BREAK CONTINUE
 %token ASSIGN PLUSEQ MINUSEQ TIMESEQ DIVEQ LBRACKET RBRACKET
 %token DEF RETURN
-%type <numero> expr chamada_funcao
+%type <expr> expr chamada_funcao
+%destructor { ast_liberar($$.ast); } <expr>
 
 /* Contrato de precedencia da Sprint 0, na ordem exata do plano. */
 %left OR
@@ -88,7 +103,11 @@ comando:
     | comando_break terminador    /* P3 */
     | comando_continue terminador /* P3 */
     | atribuicao terminador       /* P4 */
-    | expr terminador  { emitir_pendente(); if (!isnan($1)) printf("Resultado: %.15g\n", $1); } /* P1 */
+    | expr terminador  {
+          emitir_pendente();
+          if ($1.ast) semantico_registrar_expressao($1.ast, 1);
+          else if (!isnan($1.numero)) printf("Resultado: %.15g\n", $1.numero);
+      } /* [P1] Encaminha a expressao para analise e impressao; P2 mantem sua saida numerica. */
     ;
 
 bloco:
@@ -106,6 +125,7 @@ inicio_bloco:
     ;
 
 /* ===== [P1] EXPRESSOES E LITERAIS ===== */
+/* Terminadores e recuperacao abaixo sao apoio compartilhado do parser. */
 terminador:
     SEMICOLON
   | NEWLINE
@@ -118,97 +138,73 @@ comando:
 
 expr:
     NUM {
-        if (!isfinite($1)) {
-            erro_numerico_p1(@1.first_line, "literal numerico fora do intervalo suportado");
-            YYERROR;
-        }
-        $$ = $1;
+        $$.numero = $1;
+        $$.ast = criar_numero_p1($1, @1.first_line);
     }
-  | LPAREN expr RPAREN      { $$ = $2; }
+  | LPAREN expr RPAREN { $$ = $2; }
   | expr PLUS expr {
-        $$ = $1 + $3;
-        if (!resultado_finito_p1($$, $1, $3)) {
-            erro_numerico_p1(@1.first_line, "resultado de soma fora do intervalo suportado");
-            YYERROR;
-        }
+        $$.numero = $1.numero + $3.numero;
+        $$.ast = ast_criar(AST_SOMA, $1.ast, $3.ast, NULL, @2.first_line);
     }
   | expr MINUS expr {
-        $$ = $1 - $3;
-        if (!resultado_finito_p1($$, $1, $3)) {
-            erro_numerico_p1(@1.first_line, "resultado de subtracao fora do intervalo suportado");
-            YYERROR;
-        }
+        $$.numero = $1.numero - $3.numero;
+        $$.ast = ast_criar(AST_SUBTRACAO, $1.ast, $3.ast, NULL, @2.first_line);
     }
   | expr TIMES expr {
-        $$ = $1 * $3;
-        if (!resultado_finito_p1($$, $1, $3)) {
-            erro_numerico_p1(@1.first_line, "resultado de multiplicacao fora do intervalo suportado");
-            YYERROR;
-        }
+        $$.numero = $1.numero * $3.numero;
+        $$.ast = ast_criar(AST_MULTIPLICACAO, $1.ast, $3.ast, NULL, @2.first_line);
     }
-  | MINUS expr %prec UMINUS { $$ = -$2; }
+  | MINUS expr %prec UMINUS {
+        $$.numero = -$2.numero;
+        $$.ast = ast_criar(AST_NEGATIVO, $2.ast, NULL, NULL, @1.first_line);
+    }
   | expr DIVIDE expr {
-        if ($3 == 0) {
-            erro_numerico_p1(@1.first_line, "divisao por zero");
-            YYERROR;
-        }
-        $$ = $1 / $3;
-        if (!resultado_finito_p1($$, $1, $3)) {
-            erro_numerico_p1(@1.first_line, "resultado de divisao fora do intervalo suportado");
-            YYERROR;
-        }
+        $$.numero = $3.numero == 0.0 ? NAN : $1.numero / $3.numero;
+        $$.ast = ast_criar(AST_DIVISAO, $1.ast, $3.ast, NULL, @2.first_line);
     }
   | expr FLOORDIV expr {
-        if ($3 == 0) {
-            erro_numerico_p1(@1.first_line, "divisao por zero");
-            YYERROR;
-        }
-        $$ = floor($1 / $3);
-        if (!resultado_finito_p1($$, $1, $3)) {
-            erro_numerico_p1(@1.first_line, "resultado de divisao inteira fora do intervalo suportado");
-            YYERROR;
-        }
+        $$.numero = $3.numero == 0.0 ? NAN : floor($1.numero / $3.numero);
+        $$.ast = ast_criar(AST_DIVINT, $1.ast, $3.ast, NULL, @2.first_line);
     }
   | expr MOD expr {
-        if ($3 == 0) {
-            erro_numerico_p1(@1.first_line, "divisao por zero");
-            YYERROR;
+        if ($3.numero == 0.0) {
+            $$.numero = NAN;
+        } else {
+            $$.numero = fmod($1.numero, $3.numero);
+            if ($$.numero == 0.0) $$.numero = copysign(0.0, $3.numero);
+            else if (($$.numero < 0.0) != ($3.numero < 0.0)) $$.numero += $3.numero;
         }
-        $$ = fmod($1, $3);
-        /* fmod evita overflow no quociente intermediario e cancelamento
-         * na subtracao. O resto segue o sinal do divisor, inclusive em zero. */
-        if ($$ == 0.0) $$ = copysign(0.0, $3);
-        else if (($$ < 0.0) != ($3 < 0.0)) $$ += $3;
-        if (!resultado_finito_p1($$, $1, $3)) {
-            erro_numerico_p1(@1.first_line, "resultado de modulo fora do intervalo suportado");
-            YYERROR;
-        }
+        $$.ast = ast_criar(AST_MODULO, $1.ast, $3.ast, NULL, @2.first_line);
     }
   | expr POWER expr {
-        if (isnan($1) || isnan($3)) {
-            $$ = NAN;
-        } else {
-            if ($1 == 0.0 && $3 < 0.0) {
-                erro_numerico_p1(@1.first_line, "divisao por zero em potencia com expoente negativo");
-                YYERROR;
-            }
-            $$ = pow($1, $3);
-            if (isnan($$)) {
-                erro_numerico_p1(@1.first_line, "potencia sem resultado real");
-                YYERROR;
-            }
-            if (!isfinite($$)) {
-                erro_numerico_p1(@1.first_line, "resultado de potencia fora do intervalo suportado");
-                YYERROR;
-            }
-        }
+        $$.numero = (isnan($1.numero) || isnan($3.numero)) ? NAN :
+                    pow($1.numero, $3.numero);
+        $$.ast = ast_criar(AST_POTENCIA, $1.ast, $3.ast, NULL, @2.first_line);
     }
-  /* STRING e NONE sao reconhecidos, sem valor numerico (NAN). */
-  | STRING                  { $$ = NAN; }
-  | TRUE                    { $$ = 1; }
-  | FALSE                   { $$ = 0; }
-  | NONE                    { $$ = NAN; }
+  | STRING {
+        $$.numero = NAN;
+        $$.ast = ast_criar_texto(AST_STRING, $1, @1.first_line);
+    }
+  | TRUE {
+        $$.numero = 1.0;
+        $$.ast = ast_criar(AST_BOOL, NULL, NULL, NULL, @1.first_line);
+        if ($$.ast) $$.ast->valor = 1;
+    }
+  | FALSE {
+        $$.numero = 0.0;
+        $$.ast = ast_criar(AST_BOOL, NULL, NULL, NULL, @1.first_line);
+        if ($$.ast) $$.ast->valor = 0;
+    }
+  | NONE {
+        $$.numero = NAN;
+        $$.ast = ast_criar(AST_NONE, NULL, NULL, NULL, @1.first_line);
+    }
+  | ID {
+        $$.numero = NAN;
+        $$.ast = ast_criar_texto(AST_IDENTIFICADOR, $1, @1.first_line);
+    }
 ;
+/* ===== FIM [P1] EXPRESSOES E LITERAIS ===== */
 
 /* ===== [P2] CONDICOES E LOGICA ===== */
 /* Comparacoes, operadores logicos e comandos if / elif / else. */
@@ -216,31 +212,57 @@ expr:
 /* Operadores de comparacao e logica. */
 expr:
       expr EQ expr {
-          $$ = isnan($1) || isnan($3) ? NAN : ($1 == $3);
+          semantico_registrar_expressao($1.ast, 0);
+          semantico_registrar_expressao($3.ast, 0);
+          $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero == $3.numero);
+          $$.ast = NULL;
       }
     | expr NE expr {
-          $$ = isnan($1) || isnan($3) ? NAN : ($1 != $3);
+          semantico_registrar_expressao($1.ast, 0);
+          semantico_registrar_expressao($3.ast, 0);
+          $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero != $3.numero);
+          $$.ast = NULL;
       }
     | expr LT expr {
-          $$ = isnan($1) || isnan($3) ? NAN : ($1 < $3);
+          semantico_registrar_expressao($1.ast, 0);
+          semantico_registrar_expressao($3.ast, 0);
+          $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero < $3.numero);
+          $$.ast = NULL;
       }
     | expr GT expr {
-          $$ = isnan($1) || isnan($3) ? NAN : ($1 > $3);
+          semantico_registrar_expressao($1.ast, 0);
+          semantico_registrar_expressao($3.ast, 0);
+          $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero > $3.numero);
+          $$.ast = NULL;
       }
     | expr LE expr {
-          $$ = isnan($1) || isnan($3) ? NAN : ($1 <= $3);
+          semantico_registrar_expressao($1.ast, 0);
+          semantico_registrar_expressao($3.ast, 0);
+          $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero <= $3.numero);
+          $$.ast = NULL;
       }
     | expr GE expr {
-          $$ = isnan($1) || isnan($3) ? NAN : ($1 >= $3);
+          semantico_registrar_expressao($1.ast, 0);
+          semantico_registrar_expressao($3.ast, 0);
+          $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero >= $3.numero);
+          $$.ast = NULL;
       }
     | expr AND expr {
-          $$ = isnan($1) || isnan($3) ? NAN : ($1 != 0 && $3 != 0);
+          semantico_registrar_expressao($1.ast, 0);
+          semantico_registrar_expressao($3.ast, 0);
+          $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero != 0 && $3.numero != 0);
+          $$.ast = NULL;
       }
     | expr OR expr {
-          $$ = isnan($1) || isnan($3) ? NAN : ($1 != 0 || $3 != 0);
+          semantico_registrar_expressao($1.ast, 0);
+          semantico_registrar_expressao($3.ast, 0);
+          $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero != 0 || $3.numero != 0);
+          $$.ast = NULL;
       }
     | NOT expr {
-          $$ = isnan($2) ? NAN : ($2 == 0);
+          semantico_registrar_expressao($2.ast, 0);
+          $$.numero = isnan($2.numero) ? NAN : ($2.numero == 0);
+          $$.ast = NULL;
       }
     ;
 
@@ -250,10 +272,10 @@ comando:
     ;
 
 comando_if:
-      IF expr bloco { RECONHECIDO("[OK] if reconhecido"); }
-    | IF expr bloco ELSE bloco { RECONHECIDO("[OK] if reconhecido"); }
-    | IF expr bloco lista_elif { RECONHECIDO("[OK] if reconhecido"); }
-    | IF expr bloco lista_elif ELSE bloco { RECONHECIDO("[OK] if reconhecido"); }
+      IF expr bloco { semantico_registrar_expressao($2.ast, 0); RECONHECIDO("[OK] if reconhecido"); }
+    | IF expr bloco ELSE bloco { semantico_registrar_expressao($2.ast, 0); RECONHECIDO("[OK] if reconhecido"); }
+    | IF expr bloco lista_elif { semantico_registrar_expressao($2.ast, 0); RECONHECIDO("[OK] if reconhecido"); }
+    | IF expr bloco lista_elif ELSE bloco { semantico_registrar_expressao($2.ast, 0); RECONHECIDO("[OK] if reconhecido"); }
     | IF { ERRO_SINTATICO(@1, "condicao vazia no if"); } bloco
     | IF error {
           preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no if");
@@ -267,8 +289,8 @@ comando_if:
     ;
 
 lista_elif:
-      ELIF expr bloco
-    | lista_elif ELIF expr bloco
+      ELIF expr bloco { semantico_registrar_expressao($2.ast, 0); }
+    | lista_elif ELIF expr bloco { semantico_registrar_expressao($3.ast, 0); }
     | ELIF { ERRO_SINTATICO(@1, "condicao vazia no elif"); } bloco
     | ELIF error {
           preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no elif");
@@ -282,7 +304,7 @@ lista_elif:
 
 /* ===== [P3] LACOS ===== */
 laco_while:
-      WHILE expr bloco { RECONHECIDO("[OK] while reconhecido"); }
+      WHILE expr bloco { semantico_registrar_expressao($2.ast, 0); RECONHECIDO("[OK] while reconhecido"); }
     | WHILE { ERRO_SINTATICO(@1, "condicao vazia no while"); } bloco
     | WHILE error {
           preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no while");
@@ -290,7 +312,7 @@ laco_while:
     ;
 
 laco_for:
-      FOR ID IN expr bloco { RECONHECIDO("[OK] for reconhecido"); }
+      FOR ID IN expr bloco { semantico_registrar_expressao($4.ast, 0); RECONHECIDO("[OK] for reconhecido"); }
     | FOR ID error {
           preparar_diagnostico(@1.first_line, @1.first_column, "for sem a palavra 'in' ou expressao iteravel invalida");
       } bloco { yyerrok; }
@@ -312,8 +334,9 @@ comando_continue:
 
 /* Atribuicao simples e composta: x = 1, x += 1, l[0] = 1 */
 atribuicao:
-      alvo op_atrib expr { RECONHECIDO("[OK] atribuicao reconhecida"); }
+      alvo op_atrib expr { semantico_registrar_expressao($3.ast, 0); RECONHECIDO("[OK] atribuicao reconhecida"); }
     | literal op_atrib expr {
+        (void) $3;
         ERRO_SINTATICO(@1, "atribuicao invalida: o lado esquerdo deve ser variavel ou l[i]");
         yyerrok;
     }
@@ -336,8 +359,8 @@ literal:
 
 /* Lista [a, b]. Como STRING e NONE, seu valor numerico e NAN. */
 expr:
-      lista       { $$ = NAN; }
-    | indexacao   { $$ = NAN; }
+      lista       { $$.numero = NAN; $$.ast = NULL; }
+    | indexacao   { $$.numero = NAN; $$.ast = NULL; }
     ;
 
 lista:
@@ -356,13 +379,13 @@ lista:
     ;
 
 elementos:
-      expr
-    | elementos COMMA expr
+      expr { semantico_registrar_expressao($1.ast, 0); }
+    | elementos COMMA expr { semantico_registrar_expressao($3.ast, 0); }
     ;
 
 /* Indexacao l[0]. */
 indexacao:
-      ID LBRACKET expr RBRACKET
+      ID LBRACKET expr RBRACKET { semantico_registrar_expressao($3.ast, 0); }
     ;
 
 /* ===== [P5] FUNCOES E CHAMADAS ===== */
@@ -406,6 +429,7 @@ params:
 
 comando_return:
       RETURN expr terminador {
+          semantico_registrar_expressao($2.ast, 0);
           RECONHECIDO("[OK] return reconhecido");
       }
     | RETURN terminador {
@@ -419,13 +443,13 @@ comando_return:
 
 expr:
       chamada_funcao { $$ = $1; }
-    | ID             { $$ = NAN; }
     ;
 
 chamada_funcao:
       ID LPAREN args_opt RPAREN {
           RECONHECIDO("[OK] chamada de funcao reconhecida");
-          $$ = NAN;
+          $$.numero = NAN;
+          $$.ast = NULL;
       }
     ;
 
@@ -435,8 +459,8 @@ args_opt:
     ;
 
 args:
-      expr
-    | args COMMA expr
+      expr { semantico_registrar_expressao($1.ast, 0); }
+    | args COMMA expr { semantico_registrar_expressao($3.ast, 0); }
     ;
 
 %%
@@ -494,5 +518,14 @@ int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
     int status = yyparse();
     emitir_pendente();
-    return status != 0 || erros_p1 != 0 || erros_sintaticos != 0 || erros_lexicos != 0;
+
+    NoAST *raiz = semantico_ast();
+    if (raiz) ast_imprimir(raiz, 0);
+    int erros_semanticos = semantico_analisar(raiz);
+
+    semantico_liberar(raiz);
+    ast_liberar(raiz);
+    lexer_liberar_textos();
+    return status != 0 || erros_semanticos != 0 ||
+           erros_sintaticos != 0 || erros_lexicos != 0;
 }
