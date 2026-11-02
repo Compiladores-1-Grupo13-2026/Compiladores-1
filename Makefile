@@ -44,5 +44,15 @@ p4: parser.tab.c tokens
 	@test -n "$(ARQ)" || { echo 'Uso: make p4 ARQ=arquivo.py' >&2; exit 1; }
 	./tokens < "$(ARQ)"
 
+# [P4] Sprint 3: verifica a fatia contra o contrato sem implementar a base
+# pendente de P1/P2/P5. O script P3 continua responsavel pela suite anterior.
+PYTHON ?= python3
+.PHONY: test-p4 memcheck-p4
+test-p4:
+	$(PYTHON) testes/testar_p4.py
+
+memcheck-p4:
+	$(PYTHON) testes/testar_p4.py --memcheck
+
 clean:
 	$(RM) parser.tab.c parser.tab.h lex.yy.c parser tokens parser.output

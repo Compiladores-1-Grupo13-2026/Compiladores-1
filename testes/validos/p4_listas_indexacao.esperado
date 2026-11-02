@@ -1,0 +1,30 @@
+PROGRAMA
+  ATRIBUICAO [linha 1]
+    IDENTIFICADOR 'vazia' [linha 1]
+    LISTA [linha 1]
+  ATRIBUICAO [linha 2]
+    IDENTIFICADOR 'lista' [linha 2]
+    LISTA [linha 2]
+      NUMERO 1 [linha 2]
+      STRING 'texto' [linha 2]
+      BOOL 1 [linha 2]
+      NONE [linha 2]
+      LISTA [linha 2]
+        NUMERO 2 [linha 2]
+        BOOL 0 [linha 2]
+  ATRIBUICAO [linha 3]
+    INDEXACAO [linha 3]
+      IDENTIFICADOR 'lista' [linha 3]
+      NUMERO 0 [linha 3]
+    NUMERO 9 [linha 3]
+  ATRIBUICAO [linha 4]
+    IDENTIFICADOR 'item' [linha 4]
+    INDEXACAO [linha 4]
+      IDENTIFICADOR 'lista' [linha 4]
+      NUMERO 1 [linha 4]
+NOME	CATEGORIA	TIPO	ESCOPO	LINHA
+print	builtin	funcao	0	0
+range	builtin	funcao	0	0
+vazia	variavel	lista	0	1
+lista	variavel	lista	0	2
+item	variavel	?	0	4

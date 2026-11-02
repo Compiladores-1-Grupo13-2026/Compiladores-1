@@ -1,0 +1,4 @@
+vazia = []
+lista = [1, "texto", True, None, [2, False]]
+lista[0] = 9
+item = lista[1]

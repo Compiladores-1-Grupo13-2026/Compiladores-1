@@ -1,0 +1,14 @@
+PROGRAMA
+  ATRIBUICAO [linha 1]
+    IDENTIFICADOR 'x' [linha 1]
+    NUMERO 1 [linha 1]
+  ATRIBUICAO [linha 2]
+    IDENTIFICADOR 'y' [linha 2]
+    SOMA [linha 2]
+      IDENTIFICADOR 'x' [linha 2]
+      NUMERO 2 [linha 2]
+NOME	CATEGORIA	TIPO	ESCOPO	LINHA
+print	builtin	funcao	0	0
+range	builtin	funcao	0	0
+x	variavel	int	0	1
+y	variavel	int	0	2

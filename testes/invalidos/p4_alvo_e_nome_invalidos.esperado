@@ -1,0 +1,2 @@
+Erro semântico (linha 1): alvo inválido de atribuição: esperado identificador ou indexação
+Erro semântico (linha 1): variável 'x' usada antes de ser atribuída

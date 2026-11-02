@@ -5,9 +5,15 @@ delimitados por `{ }`, implementado em **C + Flex + Bison** pela Equipe 13.
 O objetivo é estudar a construção incremental do léxico e da gramática antes
 de implementar AST, tabela de símbolos e execução.
 
-Esta entrega fecha o escopo técnico da **Semana 5: parser e recuperação de erros**.
+O parser principal fecha o escopo técnico da **Semana 5: parser e recuperação de erros**.
 Expressões numéricas são calculadas; as cinco fatias reconhecem as demais
 construções e mostram `[OK]`.
+
+Esta branch acrescenta a **P4 da Sprint 3**: tabela de símbolos e seções de AST
+e semântica de atribuição/listas/indexação nos arquivos compartilhados, além de
+testes próprios. A base comum
+de AST e a integração do parser ainda serão entregues pelo grupo. O
+[guia da P4](docs/p4.md) explica os arquivos, os testes e os pontos de integração.
 
 [Documentação no GitHub Pages](https://compiladores-1-grupo13-2026.github.io/Compiladores-1/)
 
@@ -89,8 +95,27 @@ Abra <http://127.0.0.1:8000/Compiladores-1/>. Use `Ctrl+C` para encerrar.
 ## Escopo e limitações
 
 A entrega cobre léxico, parser e recuperação de erros da Semana 5. AST, tabela
-de símbolos e execução de variáveis, laços e funções ficam para a Semana 6 em
-diante. O parser lê stdin; arquivos de teste usam `.txt`.
+de símbolos e semântica da P4 estão implementadas em seções dos arquivos comuns, com
+validação pelo contrato da Sprint 3. O parser principal ainda não as aciona.
+A execução e as fatias dos demais integrantes permanecem fora desta contribuição.
+O parser lê stdin; arquivos de teste da entrega anterior usam `.txt`.
+
+Para validar os módulos P4 no Windows (GCC e Python no PATH):
+
+```powershell
+python testes/testar_p4.py
+```
+
+Em Linux, use `python3` ou `make test-p4`. O comando executa somente os dois
+testes unitários da P4. A suíte geral `make test` continua com a P3.
+As novas entradas `.mpy` e saídas esperadas estão em `testes/validos/` e
+`testes/invalidos/`, preparadas
+para integração futura; elas não são executadas pelo runner unitário.
+Para conferir memória dos módulos testados em Linux com Valgrind:
+`make memcheck-p4`. Os testes usam nós pré-montados e simulações mínimas das
+dependências; não fornecem o núcleo de AST, parser ou semântica dos colegas.
+A contribuição fica identificada por comentários `[P4]` em `ast.c`, `ast.h`,
+`semantico.c` e `semantico.h`. Os tipos e o núcleo comum da AST aguardam a P1.
 
 A [página Início](docs/index.md) apresenta a linguagem e a equipe. O
 [léxico](docs/analisador_lexico/analisador-lexico.md) documenta o catálogo de tokens,
