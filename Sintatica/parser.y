@@ -9,6 +9,7 @@ typedef struct {
 %{
 #include <limits.h>
 #include <math.h>
+
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -23,8 +24,7 @@ void encerrar_lista_invalida(void);
 static void sincronizar_lista(void);
 int erros_sintaticos = 0;
 
-/* P2: guarda a deteccao para permitir um diagnostico especifico na recuperacao.
- * Copiar o lexema evita consultar yytext depois que o scanner ja avancou. */
+/* P2: guarda a deteccao para permitir um diagnostico especifico na recuperacao. */
 static int erro_pendente = 0, erro_linha, erro_coluna;
 static char erro_lexema[128];
 static const char *erro_mensagem = "syntax error";
@@ -43,6 +43,7 @@ static NoAST *criar_numero_p1(double valor, int linha) {
         trunc(valor) == valor)
         return ast_criar_numero((int) valor, linha);
     return ast_criar_numero_real(valor, linha);
+
 }
 /* ===== FIM [P1] Conversao de literais numericos para nos AST ===== */
 %}
@@ -54,12 +55,16 @@ static NoAST *criar_numero_p1(double valor, int linha) {
 %union {
     double numero;
     char *texto;
+
     ValorExpressao expr;
+
 }
 
-/* Declaracoes compartilhadas previstas no contrato da Sprint 0. */
+/* Declaracoes compartilhadas */
 %token <numero> NUM
+
 %token <texto> ID STRING
+
 %token PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON
 %token FIM 0 "fim do arquivo"
 %token NEWLINE
@@ -68,6 +73,11 @@ static NoAST *criar_numero_p1(double valor, int linha) {
 %token WHILE FOR IN BREAK CONTINUE
 %token ASSIGN PLUSEQ MINUSEQ TIMESEQ DIVEQ LBRACKET RBRACKET
 %token DEF RETURN
+
+/* Tipos retornados pelas regras */
+%type <numero> expr chamada_funcao
+%type <no> programa elemento bloco while_stmt for_stmt break_stmt continue_stmt comando def_funcao comando_return atribuicao
+
 %type <expr> expr chamada_funcao
 %destructor { ast_liberar($$.ast); } <expr>
 
@@ -88,20 +98,20 @@ static NoAST *criar_numero_p1(double valor, int linha) {
 
 /* ===== ESTRUTURA GERAL DE EXECUCAO ===== */
 programa:
-      %empty
-    | programa elemento
+      %empty { $$ = NULL; }
+    | programa elemento { $$ = $1; }
     ;
 
 elemento:
-      comando
-    | NEWLINE
+      comando { $$ = $1; }
+    | NEWLINE { $$ = NULL; }
     ;
 
 comando:
-      laco_while       /* P3 */
-    | laco_for         /* P3 */
-    | comando_break terminador    /* P3 */
-    | comando_continue terminador /* P3 */
+      while_stmt                   /* P3 */
+    | for_stmt                     /* P3 */
+    | break_stmt                   /* P3 */
+    | continue_stmt                /* P3 */
     | atribuicao terminador       /* P4 */
     | expr terminador  {
           emitir_pendente();
@@ -111,15 +121,16 @@ comando:
     ;
 
 bloco:
-      LBRACE inicio_bloco programa RBRACE
+      LBRACE inicio_bloco programa RBRACE { $$ = $3; }
     | LBRACE inicio_bloco programa error FIM {
           ERRO_SINTATICO(@1, "bloco aberto sem '}'");
           yyerrok;
+          $$ = NULL;
       }
     ;
 
 /* A abertura e a ancora dos erros de cabecalho. So aqui imprimimos o
- * diagnostico e voltamos ao modo normal: antes disso ainda ha tokens a descartar. */
+- diagnostico e voltamos ao modo normal: antes disso ainda ha tokens a descartar. */
 inicio_bloco:
       %empty { emitir_pendente(); yyerrok; }
     ;
@@ -167,6 +178,7 @@ expr:
         $$.ast = ast_criar(AST_DIVINT, $1.ast, $3.ast, NULL, @2.first_line);
     }
   | expr MOD expr {
+
         if ($3.numero == 0.0) {
             $$.numero = NAN;
         } else {
@@ -281,7 +293,7 @@ comando_if:
           preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no if");
       } bloco { yyerrok; }
     /* Nao aceitar IF expr error: interceptava expressoes incompletas e
-     * confundia a abertura do bloco com a ausencia de bloco. */
+- confundia a abertura do bloco com a ausencia de bloco. */
     | IF error terminador {
           ERRO_SINTATICO(@1, "bloco ausente no if (esperado '{')"); yyerrok;
       }
@@ -302,6 +314,15 @@ lista_elif:
 
 /* ===== FIM [P2] CONDICOES E LOGICA ===== */
 
+
+/* ===== [P3] LAÇOS ===== */
+
+while_stmt:
+    WHILE expr bloco {
+        $$ = ast_criar(AST_WHILE, $2, $3, NULL, @1.first_line);
+    }
+;
+
 /* ===== [P3] LACOS ===== */
 laco_while:
       WHILE expr bloco { semantico_registrar_expressao($2.ast, 0); RECONHECIDO("[OK] while reconhecido"); }
@@ -321,14 +342,26 @@ laco_for:
       } bloco { yyerrok; }
     ;
 
-comando_break:
-      BREAK { RECONHECIDO("[OK] break reconhecido"); }
-    ;
+for_stmt:
+    FOR ID IN expr bloco {
+        $$ = ast_criar_texto(AST_FOR, $2, @1.first_line);
+        $$->a = $4; /* Iterável */
+        $$->b = $5; /* Corpo */
+        free($2);
+    }
+;
 
-comando_continue:
-      CONTINUE { RECONHECIDO("[OK] continue reconhecido"); }
-    ;
+break_stmt:
+    BREAK terminador {
+        $$ = ast_criar(AST_BREAK, NULL, NULL, NULL, @1.first_line);
+    }
+;
 
+continue_stmt:
+    CONTINUE terminador {
+        $$ = ast_criar(AST_CONTINUE, NULL, NULL, NULL, @1.first_line);
+    }
+;
 /* ===== [P4] ATRIBUICAO, LISTAS E COMENTARIOS ===== */
 /* Atribuicoes, listas e indexacao. Comentarios sao ignorados no scanner. */
 

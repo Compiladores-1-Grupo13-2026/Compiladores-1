@@ -211,3 +211,39 @@ void ast_liberar(NoAST *raiz) {
     free(raiz->texto);
     free(raiz);
 }
+
+/* ============================================================================
+ * P3 (Gabriel) - LACOS - trecho de Semantica/Ast/ast.c
+ * ========================================================================== */
+
+
+/* ---------- PEDACO 1: dentro do switch de ast_nome_tipo() ------------------ */
+    /* ===== [P3] LACOS ===== */
+    case AST_WHILE:    return "WHILE";
+    case AST_FOR:      return "FOR";
+    case AST_BREAK:    return "BREAK";
+    case AST_CONTINUE: return "CONTINUE";
+    /* (se P1 usou um vetor de nomes em vez de switch, acrescente "WHILE",
+     *  "FOR", "BREAK", "CONTINUE" na posicao da secao [P3] do enum) */
+
+
+/* ===== [P3] LAÇOS ===== */
+case AST_WHILE:
+    printf("%*sWHILE [linha %d]\n", nivel * 2, "", raiz->linha);
+    if (raiz->a) ast_imprimir(raiz->a, nivel + 1);
+    if (raiz->b) ast_imprimir(raiz->b, nivel + 1);
+    break;
+
+case AST_FOR:
+    printf("%*sFOR '%s' [linha %d]\n", nivel * 2, "", raiz->texto ? raiz->texto : "", raiz->linha);
+    if (raiz->a) ast_imprimir(raiz->a, nivel + 1);
+    if (raiz->b) ast_imprimir(raiz->b, nivel + 1);
+    break;
+
+case AST_BREAK:
+    printf("%*sBREAK [linha %d]\n", nivel * 2, "", raiz->linha);
+    break;
+
+case AST_CONTINUE:
+    printf("%*sCONTINUE [linha %d]\n", nivel * 2, "", raiz->linha);
+    break;
