@@ -1,6 +1,7 @@
 %{
 #include <stdio.h>
 #include <math.h>
+#include "ast.h" /* ESSENCIAL: Permite que o Bison conheça o tipo NoAST */
 
 int yylex(void);
 void yyerror(const char *mensagem);
@@ -11,8 +12,7 @@ static void sincronizar_lista(void);
 static int erros_p1 = 0;
 int erros_sintaticos = 0;
 
-/* P2: guarda a deteccao para permitir um diagnostico especifico na recuperacao.
- * Copiar o lexema evita consultar yytext depois que o scanner ja avancou. */
+/* P2: guarda a deteccao para permitir um diagnostico especifico na recuperacao. */
 static int erro_pendente = 0, erro_linha, erro_coluna;
 static char erro_lexema[128];
 static const char *erro_mensagem = "syntax error";
@@ -29,8 +29,6 @@ static void erro_numerico_p1(int linha, const char *mensagem) {
     erros_p1++;
 }
 
-/* NAN ja representa valores apenas reconhecidos, como STRING e NONE.
- * Nao confundir esse marcador com um erro produzido por operandos numericos. */
 static int resultado_finito_p1(double resultado, double esquerda, double direita) {
     return isnan(esquerda) || isnan(direita) || isfinite(resultado);
 }
@@ -42,11 +40,14 @@ static int resultado_finito_p1(double resultado, double esquerda, double direita
 
 %union {
     double numero;
+    char *texto;
+    struct NoAST *no;
 }
 
-/* Declaracoes compartilhadas previstas no contrato da Sprint 0. */
+/* Declaracoes compartilhadas */
 %token <numero> NUM
-%token ID PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON
+%token <texto> ID
+%token PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON
 %token FIM 0 "fim do arquivo"
 %token NEWLINE
 %token STRING TRUE FALSE NONE FLOORDIV MOD POWER
@@ -54,7 +55,10 @@ static int resultado_finito_p1(double resultado, double esquerda, double direita
 %token WHILE FOR IN BREAK CONTINUE
 %token ASSIGN PLUSEQ MINUSEQ TIMESEQ DIVEQ LBRACKET RBRACKET
 %token DEF RETURN
+
+/* Tipos retornados pelas regras */
 %type <numero> expr chamada_funcao
+%type <no> programa elemento bloco while_stmt for_stmt break_stmt continue_stmt comando def_funcao comando_return atribuicao
 
 /* Contrato de precedencia da Sprint 0, na ordem exata do plano. */
 %left OR
@@ -73,13 +77,13 @@ static int resultado_finito_p1(double resultado, double esquerda, double direita
 
 /* ===== ESTRUTURA GERAL DE EXECUCAO ===== */
 programa:
-      %empty
-    | programa elemento
+      %empty { $$ = NULL; }
+    | programa elemento { $$ = $1; }
     ;
 
 elemento:
-      comando
-    | NEWLINE
+      comando { $$ = $1; }
+    | NEWLINE { $$ = NULL; }
     ;
 
 comando:
@@ -92,15 +96,16 @@ comando:
     ;
 
 bloco:
-      LBRACE inicio_bloco programa RBRACE
+      LBRACE inicio_bloco programa RBRACE { $$ = $3; }
     | LBRACE inicio_bloco programa error FIM {
           ERRO_SINTATICO(@1, "bloco aberto sem '}'");
           yyerrok;
+          $$ = NULL;
       }
     ;
 
 /* A abertura e a ancora dos erros de cabecalho. So aqui imprimimos o
- * diagnostico e voltamos ao modo normal: antes disso ainda ha tokens a descartar. */
+- diagnostico e voltamos ao modo normal: antes disso ainda ha tokens a descartar. */
 inicio_bloco:
       %empty { emitir_pendente(); yyerrok; }
     ;
@@ -176,7 +181,7 @@ expr:
         }
         $$ = fmod($1, $3);
         /* fmod evita overflow no quociente intermediario e cancelamento
-         * na subtracao. O resto segue o sinal do divisor, inclusive em zero. */
+- na subtracao. O resto segue o sinal do divisor, inclusive em zero. */
         if ($$ == 0.0) $$ = copysign(0.0, $3);
         else if (($$ < 0.0) != ($3 < 0.0)) $$ += $3;
         if (!resultado_finito_p1($$, $1, $3)) {
@@ -259,7 +264,7 @@ comando_if:
           preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no if");
       } bloco { yyerrok; }
     /* Nao aceitar IF expr error: interceptava expressoes incompletas e
-     * confundia a abertura do bloco com a ausencia de bloco. */
+- confundia a abertura do bloco com a ausencia de bloco. */
     | IF error terminador {
           ERRO_SINTATICO(@1, "bloco ausente no if (esperado '{')"); yyerrok;
       }
@@ -283,13 +288,13 @@ lista_elif:
 /* ===== [P3] LAÇOS ===== */
 
 while_stmt:
-    WHILE expr block {
+    WHILE expr bloco {
         $$ = ast_criar(AST_WHILE, $2, $3, NULL, @1.first_line);
     }
 ;
 
 for_stmt:
-    FOR ID IN expr block {
+    FOR ID IN expr bloco {
         $$ = ast_criar_texto(AST_FOR, $2, @1.first_line);
         $$->a = $4; /* Iterável */
         $$->b = $5; /* Corpo */
