@@ -83,10 +83,10 @@ elemento:
     ;
 
 comando:
-      laco_while       /* P3 */
-    | laco_for         /* P3 */
-    | comando_break terminador    /* P3 */
-    | comando_continue terminador /* P3 */
+      while_stmt                   /* P3 */
+    | for_stmt                     /* P3 */
+    | break_stmt                   /* P3 */
+    | continue_stmt                /* P3 */
     | atribuicao terminador       /* P4 */
     | expr terminador  { emitir_pendente(); if (!isnan($1)) printf("Resultado: %.15g\n", $1); } /* P1 */
     ;
@@ -280,33 +280,34 @@ lista_elif:
 
 /* ===== FIM [P2] CONDICOES E LOGICA ===== */
 
-/* ===== [P3] LACOS ===== */
-laco_while:
-      WHILE expr bloco { RECONHECIDO("[OK] while reconhecido"); }
-    | WHILE { ERRO_SINTATICO(@1, "condicao vazia no while"); } bloco
-    | WHILE error {
-          preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no while");
-      } bloco { yyerrok; }
-    ;
+/* ===== [P3] LAÇOS ===== */
 
-laco_for:
-      FOR ID IN expr bloco { RECONHECIDO("[OK] for reconhecido"); }
-    | FOR ID error {
-          preparar_diagnostico(@1.first_line, @1.first_column, "for sem a palavra 'in' ou expressao iteravel invalida");
-      } bloco { yyerrok; }
-    | FOR error {
-          preparar_diagnostico(@1.first_line, @1.first_column, "for sem variavel de controle");
-      } bloco { yyerrok; }
-    ;
+while_stmt:
+    WHILE expr block {
+        $$ = ast_criar(AST_WHILE, $2, $3, NULL, @1.first_line);
+    }
+;
 
-comando_break:
-      BREAK { RECONHECIDO("[OK] break reconhecido"); }
-    ;
+for_stmt:
+    FOR ID IN expr block {
+        $$ = ast_criar_texto(AST_FOR, $2, @1.first_line);
+        $$->a = $4; /* Iterável */
+        $$->b = $5; /* Corpo */
+        free($2);
+    }
+;
 
-comando_continue:
-      CONTINUE { RECONHECIDO("[OK] continue reconhecido"); }
-    ;
+break_stmt:
+    BREAK terminador {
+        $$ = ast_criar(AST_BREAK, NULL, NULL, NULL, @1.first_line);
+    }
+;
 
+continue_stmt:
+    CONTINUE terminador {
+        $$ = ast_criar(AST_CONTINUE, NULL, NULL, NULL, @1.first_line);
+    }
+;
 /* ===== [P4] ATRIBUICAO, LISTAS E COMENTARIOS ===== */
 /* Atribuicoes, listas e indexacao. Comentarios sao ignorados no scanner. */
 
