@@ -23,8 +23,8 @@ lex.yy.c: $(SCANNER_SOURCE) parser.tab.h
 	$(FLEX) -o lex.yy.c $(SCANNER_SOURCE)
 
 # libm fornece floor e pow para os operadores da P1.
-parser: parser.tab.c parser.tab.h lex.yy.c Makefile
-	$(CC) $(CPPFLAGS) $(CFLAGS) $(LDFLAGS) -o $@ parser.tab.c lex.yy.c $(LDLIBS)
+parser: parser.tab.c parser.tab.h lex.yy.c Semantica/Ast/ast.c Semantica/Ast/ast.h Semantica/semantico.c Semantica/semantico.h Makefile
+	$(CC) $(CPPFLAGS) -I. $(CFLAGS) $(LDFLAGS) -o $@ parser.tab.c lex.yy.c Semantica/Ast/ast.c Semantica/semantico.c $(LDLIBS)
 
 tokens: parser.tab.h lex.yy.c Makefile
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DSO_TOKENS $(LDFLAGS) -o $@ lex.yy.c $(LDLIBS)
@@ -44,5 +44,26 @@ p4: parser.tab.c tokens
 	@test -n "$(ARQ)" || { echo 'Uso: make p4 ARQ=arquivo.py' >&2; exit 1; }
 	./tokens < "$(ARQ)"
 
+# ===== [P1] Verificacao de memoria dos casos validos de expressoes =====
+# Valgrind e preferido; usa AddressSanitizer com deteccao de leaks se ausente.
+VALIDOS_P1 = $(wildcard testes/validos/p1_*.txt)
+.PHONY: memcheck parser-memcheck
+memcheck: parser
+	@if command -v valgrind >/dev/null 2>&1; then \
+		for caso in $(VALIDOS_P1); do \
+			valgrind --quiet --leak-check=full --errors-for-leak-kinds=all --error-exitcode=1 ./parser < "$$caso" >/dev/null || exit $$?; \
+		done; \
+	else \
+		printf '%s\n' 'valgrind indisponivel; usando AddressSanitizer com deteccao de leaks.'; \
+		$(MAKE) --no-print-directory parser-memcheck || exit $$?; \
+		for caso in $(VALIDOS_P1); do \
+			ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 ./parser-memcheck < "$$caso" >/dev/null || exit $$?; \
+		done; \
+	fi
+
+parser-memcheck: parser.tab.c parser.tab.h lex.yy.c Semantica/Ast/ast.c Semantica/Ast/ast.h Semantica/semantico.c Semantica/semantico.h Makefile
+	$(CC) $(CPPFLAGS) -I. $(CFLAGS) -g -fsanitize=address -fno-omit-frame-pointer $(LDFLAGS) -o $@ parser.tab.c lex.yy.c Semantica/Ast/ast.c Semantica/semantico.c $(LDLIBS) -fsanitize=address
+# ===== FIM [P1] Verificacao de memoria dos casos validos de expressoes =====
+
 clean:
-	$(RM) parser.tab.c parser.tab.h lex.yy.c parser tokens parser.output
+	$(RM) parser.tab.c parser.tab.h lex.yy.c parser parser-memcheck tokens parser.output

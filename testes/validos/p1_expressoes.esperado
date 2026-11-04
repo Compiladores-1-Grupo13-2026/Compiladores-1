@@ -1,12 +1,50 @@
-Resultado: 11
-Resultado: 5
-Resultado: 7
-Resultado: 4
-Resultado: 5
-Resultado: -4
-Resultado: 512
-Resultado: -3
-Resultado: 2
-Resultado: -2
-Resultado: 1
-Resultado: 0
+PROGRAMA [linha 1]
+  SOMA [linha 1]
+    NUMERO 3 [linha 1]
+    MULTIPLICACAO [linha 1]
+      NUMERO 4 [linha 1]
+      NUMERO 2 [linha 1]
+  SOMA [linha 2]
+    NUMERO 3 [linha 2]
+    NUMERO 2 [linha 2]
+  SOMA [linha 3]
+    NUMERO 3 [linha 3]
+    NUMERO 4 [linha 3]
+  SOMA [linha 4]
+    NUMERO 3 [linha 4]
+    NUMERO 1 [linha 4]
+  DIVISAO [linha 5]
+    NUMERO 10 [linha 5]
+    NUMERO 2 [linha 5]
+  NEGATIVO [linha 6]
+    POTENCIA [linha 6]
+      NUMERO 2 [linha 6]
+      NUMERO 2 [linha 6]
+  POTENCIA [linha 7]
+    NUMERO 2 [linha 7]
+    POTENCIA [linha 7]
+      NUMERO 3 [linha 7]
+      NUMERO 2 [linha 7]
+  DIVINT [linha 8]
+    NEGATIVO [linha 8]
+      NUMERO 7 [linha 8]
+    NUMERO 3 [linha 8]
+  MODULO [linha 9]
+    NEGATIVO [linha 9]
+      NUMERO 7 [linha 9]
+    NUMERO 3 [linha 9]
+  MODULO [linha 10]
+    NUMERO 7 [linha 10]
+    NEGATIVO [linha 10]
+      NUMERO 3 [linha 10]
+  STRING 'texto' [linha 11]
+  NONE [linha 11]
+  BOOL True [linha 11]
+  BOOL False [linha 11]
+  SOMA [linha 12]
+    NUMERO 3 [linha 12]
+    MULTIPLICACAO [linha 12]
+      NUMERO 4 [linha 12]
+      POTENCIA [linha 12]
+        NUMERO 2 [linha 12]
+        NUMERO 2 [linha 12]

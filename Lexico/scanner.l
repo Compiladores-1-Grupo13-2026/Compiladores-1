@@ -9,6 +9,45 @@
 #include <string.h>
 #include "parser.tab.h"   /* nomes dos tokens, gerado pelo Bison */
 
+#ifndef SO_TOKENS
+typedef struct TextoScanner {
+    char *texto;
+    struct TextoScanner *prox;
+} TextoScanner;
+static TextoScanner *textos_scanner;
+
+static char *copiar_texto_scanner(const char *texto, size_t tamanho) {
+    char *copia = malloc(tamanho + 1);
+    TextoScanner *registro = malloc(sizeof *registro);
+    if (!copia || !registro) {
+        free(copia);
+        free(registro);
+        return NULL;
+    }
+    memcpy(copia, texto, tamanho);
+    copia[tamanho] = '\0';
+    registro->texto = copia;
+    registro->prox = textos_scanner;
+    textos_scanner = registro;
+    return copia;
+}
+
+void lexer_liberar_textos(void) {
+    TextoScanner *item = textos_scanner;
+    while (item) {
+        TextoScanner *proximo = item->prox;
+        free(item->texto);
+        free(item);
+        item = proximo;
+    }
+    textos_scanner = NULL;
+}
+#define GUARDA_TEXTO(fonte, comprimento) \
+    (yylval.texto = copiar_texto_scanner((fonte), (comprimento)))
+#else
+#define GUARDA_TEXTO(fonte, comprimento) ((void) 0)
+#endif
+
 /* P2: localizacao em bytes (tab ocupa uma coluna); Flex conta as linhas.
  * REJECT/yyless precisam desfazer o avanco da coluna antes da releitura. */
 static int coluna = 1;
@@ -73,8 +112,8 @@ static int termina_expressao(void) {
  /* =========== [P1] EXPRESSOES E LITERAIS =========== */
 
  /* Literais MiniPy: aspas simples ou duplas, com escapes e sem quebra de linha. */
-\"([^\"\\\n]|\\[^\n])*\"    { RETORNA(STRING); }
-\'([^\'\\\n]|\\[^\n])*\'    { RETORNA(STRING); }
+\"([^\"\\\n]|\\[^\n])*\"    { GUARDA_TEXTO(yytext + 1, (size_t) yyleng - 2); RETORNA(STRING); }
+\'([^\'\\\n]|\\[^\n])*\'    { GUARDA_TEXTO(yytext + 1, (size_t) yyleng - 2); RETORNA(STRING); }
 "True"      { RETORNA(TRUE); }
 "False"     { RETORNA(FALSE); }
 "None"      { RETORNA(NONE); }
@@ -84,6 +123,7 @@ static int termina_expressao(void) {
 "%"         { RETORNA(MOD); }
 "**"        { RETORNA(POWER); }
 
+ /* ===== FIM [P1] EXPRESSOES E LITERAIS ===== */
 
  /* ===== [P2] CONDIÇÕES E LÓGICA ===== */
 "=="        { RETORNA(EQ); }
@@ -176,7 +216,7 @@ static int termina_expressao(void) {
 "return"                { RETORNA(RETURN); }
 
  /* ======================== BASE ======================== */
- /* Operadores e delimitadores basicos */
+ /* Tokens aritmeticos basicos usados pelas expressoes da P1 e demais regras. */
 "+"                     { RETORNA(PLUS); }
 "-"                     { RETORNA(MINUS); }
 "*"                     { RETORNA(TIMES); }
@@ -185,13 +225,13 @@ static int termina_expressao(void) {
 ")"                     { RETORNA(RPAREN); }
 ","                     { RETORNA(COMMA); }
 
- /* Literais numericos: inteiros ou decimais */
+ /* [P1] Literais numericos inteiros ou decimais. */
 [0-9]+(\.[0-9]+)?       { yylval.numero = atof(yytext); RETORNA(NUM); }
 
- /* Identificador: letra ou "_" seguido de letras, digitos ou "_".
+ /* Identificador: P1 o usa como folha IDENTIFICADOR; outras regras tambem o usam.
   * Posicionado apos as palavras reservadas (P1 a P5) para evitar que
   * palavras-chave como def ou return sejam classificadas como ID. */
-[a-zA-Z_][a-zA-Z0-9_]*  { RETORNA(ID); }
+[a-zA-Z_][a-zA-Z0-9_]*  { GUARDA_TEXTO(yytext, (size_t) yyleng); RETORNA(ID); }
 
  /* ======================== ERRO ======================== */
  /* Caractere que nenhuma regra acima reconheceu. Deve ser o ultimo bloco. */

@@ -1,2 +1,9 @@
+PROGRAMA [linha 1]
+  POTENCIA [linha 1]
+    NEGATIVO [linha 1]
+      NUMERO 1 [linha 1]
+    NUMERO 0.5 [linha 1]
+  SOMA [linha 2]
+    NUMERO 2 [linha 2]
+    NUMERO 2 [linha 2]
 [ERRO SEMANTICO] Linha 1: potencia sem resultado real
-Resultado: 4
