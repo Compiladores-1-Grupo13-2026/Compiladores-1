@@ -1,0 +1,9 @@
+PROGRAMA [linha 1]
+  SUBTRACAO [linha 1]
+    STRING 'a' [linha 1]
+    NUMERO 1 [linha 1]
+  SOMA [linha 2]
+    NONE [linha 2]
+    NUMERO 2 [linha 2]
+[ERRO SEMANTICO] Linha 1: operacao entre tipos incompativeis ('str' e 'int')
+[ERRO SEMANTICO] Linha 2: operacao entre tipos incompativeis ('none' e 'int')
