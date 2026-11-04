@@ -23,8 +23,6 @@ void encerrar_lista_invalida(void);
 static void sincronizar_lista(void);
 int erros_sintaticos = 0;
 
-/* P2: guarda a deteccao para permitir um diagnostico especifico na recuperacao.
- * Copiar o lexema evita consultar yytext depois que o scanner ja avancou. */
 static int erro_pendente = 0, erro_linha, erro_coluna;
 static char erro_lexema[128];
 static const char *erro_mensagem = "syntax error";
@@ -35,29 +33,24 @@ static void diagnostico(int linha, int coluna, const char *mensagem);
     diagnostico((loc).first_line, (loc).first_column, (mensagem))
 #define RECONHECIDO(mensagem) do { emitir_pendente(); puts(mensagem); } while (0)
 
-/* O contrato da AST guarda inteiros em valor; a API P1 preserva numeros reais
- * em um registro auxiliar sem alterar a struct compartilhada. */
-/* ===== [P1] Conversao de literais numericos para nos AST ===== */
 static NoAST *criar_numero_p1(double valor, int linha) {
     if (isfinite(valor) && valor >= INT_MIN && valor <= INT_MAX &&
         trunc(valor) == valor)
         return ast_criar_numero((int) valor, linha);
     return ast_criar_numero_real(valor, linha);
 }
-/* ===== FIM [P1] Conversao de literais numericos para nos AST ===== */
 %}
 
 %locations
-/* Os dois conflitos intencionais sao ELSE do if versus ELSE sem if. */
 %expect 2
 
 %union {
     double numero;
     char *texto;
     ValorExpressao expr;
+    NoAST *ast;
 }
 
-/* Declaracoes compartilhadas previstas no contrato da Sprint 0. */
 %token <numero> NUM
 %token <texto> ID STRING
 %token PLUS MINUS TIMES DIVIDE LPAREN RPAREN LBRACE RBRACE COMMA SEMICOLON
@@ -68,10 +61,12 @@ static NoAST *criar_numero_p1(double valor, int linha) {
 %token WHILE FOR IN BREAK CONTINUE
 %token ASSIGN PLUSEQ MINUSEQ TIMESEQ DIVEQ LBRACKET RBRACKET
 %token DEF RETURN
-%type <expr> expr chamada_funcao
-%destructor { ast_liberar($$.ast); } <expr>
 
-/* Contrato de precedencia da Sprint 0, na ordem exata do plano. */
+%type <expr> expr chamada_funcao
+%type <ast> programa elemento comando bloco while_stmt for_stmt break_stmt continue_stmt atribuicao
+%destructor { ast_liberar($$.ast); } <expr>
+%destructor { ast_liberar($$); } <ast>
+
 %left OR
 %left AND
 %precedence NOT
@@ -81,59 +76,71 @@ static NoAST *criar_numero_p1(double valor, int linha) {
 %precedence UMINUS
 %right POWER
 
-/* Define o ponto de entrada principal do interpretador */
 %start programa
 
 %%
 
 /* ===== ESTRUTURA GERAL DE EXECUCAO ===== */
 programa:
-      %empty
-    | programa elemento
-    ;
-
-elemento:
-      comando
-    | NEWLINE
-    ;
-
-comando:
-      laco_while       /* P3 */
-    | laco_for         /* P3 */
-    | comando_break terminador    /* P3 */
-    | comando_continue terminador /* P3 */
-    | atribuicao terminador       /* P4 */
-    | expr terminador  {
-          emitir_pendente();
-          if ($1.ast) semantico_registrar_expressao($1.ast, 1);
-          else if (!isnan($1.numero)) printf("Resultado: %.15g\n", $1.numero);
-      } /* [P1] Encaminha a expressao para analise e impressao; P2 mantem sua saida numerica. */
-    ;
-
-bloco:
-      LBRACE inicio_bloco programa RBRACE
-    | LBRACE inicio_bloco programa error FIM {
-          ERRO_SINTATICO(@1, "bloco aberto sem '}'");
-          yyerrok;
+      %empty { $$ = NULL; }
+    | programa elemento {
+          $$ = ast_anexar($1, $2);
       }
     ;
 
-/* A abertura e a ancora dos erros de cabecalho. So aqui imprimimos o
- * diagnostico e voltamos ao modo normal: antes disso ainda ha tokens a descartar. */
+elemento:
+      comando { $$ = $1; }
+    | NEWLINE { $$ = NULL; }
+    ;
+
+comando:
+      while_stmt {
+          $$ = $1;
+          if ($$) semantico_registrar_expressao($$, 1);
+      }
+    | for_stmt {
+          $$ = $1;
+          if ($$) semantico_registrar_expressao($$, 1);
+      }
+    | break_stmt {
+          $$ = $1;
+          if ($$) semantico_registrar_expressao($$, 1);
+      }
+    | continue_stmt {
+          $$ = $1;
+          if ($$) semantico_registrar_expressao($$, 1);
+      }
+    | atribuicao terminador { $$ = NULL; }
+    | expr terminador {
+          emitir_pendente();
+          if ($1.ast) semantico_registrar_expressao($1.ast, 1);
+          else if (!isnan($1.numero)) printf("Resultado: %.15g\n", $1.numero);
+          $$ = $1.ast;
+      }
+    | error terminador {
+          emitir_pendente();
+          yyerrok;
+          $$ = NULL;
+      }
+    ;
+
+bloco:
+      LBRACE inicio_bloco programa RBRACE { $$ = $3; }
+    | LBRACE inicio_bloco programa error FIM {
+          ERRO_SINTATICO(@1, "bloco aberto sem '}'");
+          yyerrok;
+          $$ = NULL;
+      }
+    ;
+
 inicio_bloco:
       %empty { emitir_pendente(); yyerrok; }
     ;
 
 /* ===== [P1] EXPRESSOES E LITERAIS ===== */
-/* Terminadores e recuperacao abaixo sao apoio compartilhado do parser. */
 terminador:
     SEMICOLON
   | NEWLINE
-;
-
-/* Recupera no fim do comando sem descartar as expressoes seguintes. */
-comando:
-    error terminador { emitir_pendente(); yyerrok; }
 ;
 
 expr:
@@ -204,12 +211,8 @@ expr:
         $$.ast = ast_criar_texto(AST_IDENTIFICADOR, $1, @1.first_line);
     }
 ;
-/* ===== FIM [P1] EXPRESSOES E LITERAIS ===== */
 
 /* ===== [P2] CONDICOES E LOGICA ===== */
-/* Comparacoes, operadores logicos e comandos if / elif / else. */
-
-/* Operadores de comparacao e logica. */
 expr:
       expr EQ expr {
           semantico_registrar_expressao($1.ast, 0);
@@ -266,9 +269,8 @@ expr:
       }
     ;
 
-/* Comandos condicionais. */
 comando:
-      comando_if
+      comando_if { $$ = NULL; }
     ;
 
 comando_if:
@@ -280,8 +282,6 @@ comando_if:
     | IF error {
           preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no if");
       } bloco { yyerrok; }
-    /* Nao aceitar IF expr error: interceptava expressoes incompletas e
-     * confundia a abertura do bloco com a ausencia de bloco. */
     | IF error terminador {
           ERRO_SINTATICO(@1, "bloco ausente no if (esperado '{')"); yyerrok;
       }
@@ -300,64 +300,81 @@ lista_elif:
       }
     ;
 
-/* ===== FIM [P2] CONDICOES E LOGICA ===== */
-
-/* ===== [P3] LACOS ===== */
-laco_while:
-      WHILE expr bloco { semantico_registrar_expressao($2.ast, 0); RECONHECIDO("[OK] while reconhecido"); }
-    | WHILE { ERRO_SINTATICO(@1, "condicao vazia no while"); } bloco
-    | WHILE error {
-          preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no while");
-      } bloco { yyerrok; }
+/* ===== [P3] LAÇOS ===== */
+while_stmt:
+      WHILE expr bloco {
+          semantico_registrar_expressao($2.ast, 0);
+          $$ = ast_criar(AST_WHILE, $2.ast, $3, NULL, @1.first_line);
+          RECONHECIDO("[OK] while reconhecido");
+      }
+    | WHILE { ERRO_SINTATICO(@1, "condicao vazia no while"); } bloco {
+          $$ = ast_criar(AST_WHILE, NULL, $3, NULL, @1.first_line);
+      }
+    | WHILE error terminador {
+          ERRO_SINTATICO(@1, "condicao invalida no while");
+          yyerrok;
+          $$ = NULL;
+      }
     ;
 
-laco_for:
-      FOR ID IN expr bloco { semantico_registrar_expressao($4.ast, 0); RECONHECIDO("[OK] for reconhecido"); }
-    | FOR ID error {
-          preparar_diagnostico(@1.first_line, @1.first_column, "for sem a palavra 'in' ou expressao iteravel invalida");
-      } bloco { yyerrok; }
-    | FOR error {
-          preparar_diagnostico(@1.first_line, @1.first_column, "for sem variavel de controle");
-      } bloco { yyerrok; }
+for_stmt:
+      FOR ID IN expr bloco {
+          semantico_registrar_expressao($4.ast, 0);
+          $$ = ast_criar_texto(AST_FOR, $2, @1.first_line);
+          if ($$) {
+              $$->a = $4.ast; /* Iterável */
+              $$->b = $5;     /* Corpo */
+          }
+          free($2);
+          RECONHECIDO("[OK] for reconhecido");
+      }
+    | FOR error IN expr bloco {
+          ERRO_SINTATICO(@1, "variavel invalida no for");
+          yyerrok;
+          $$ = NULL;
+      }
     ;
 
-comando_break:
-      BREAK { RECONHECIDO("[OK] break reconhecido"); }
+break_stmt:
+      BREAK terminador {
+          $$ = ast_criar(AST_BREAK, NULL, NULL, NULL, @1.first_line);
+          RECONHECIDO("[OK] break reconhecido");
+      }
     ;
 
-comando_continue:
-      CONTINUE { RECONHECIDO("[OK] continue reconhecido"); }
+continue_stmt:
+      CONTINUE terminador {
+          $$ = ast_criar(AST_CONTINUE, NULL, NULL, NULL, @1.first_line);
+          RECONHECIDO("[OK] continue reconhecido");
+      }
     ;
 
 /* ===== [P4] ATRIBUICAO, LISTAS E COMENTARIOS ===== */
-/* Atribuicoes, listas e indexacao. Comentarios sao ignorados no scanner. */
-
-/* Atribuicao simples e composta: x = 1, x += 1, l[0] = 1 */
 atribuicao:
-      alvo op_atrib expr { semantico_registrar_expressao($3.ast, 0); RECONHECIDO("[OK] atribuicao reconhecida"); }
+      alvo op_atrib expr {
+          semantico_registrar_expressao($3.ast, 0);
+          RECONHECIDO("[OK] atribuicao reconhecida");
+      }
     | literal op_atrib expr {
-        (void) $3;
-        ERRO_SINTATICO(@1, "atribuicao invalida: o lado esquerdo deve ser variavel ou l[i]");
-        yyerrok;
-    }
+          semantico_registrar_expressao($3.ast, 0);
+          ERRO_SINTATICO(@1, "atribuicao invalida: o lado esquerdo deve ser variavel ou l[i]");
+          yyerrok;
+      }
     ;
 
 op_atrib:
       ASSIGN | PLUSEQ | MINUSEQ | TIMESEQ | DIVEQ
     ;
 
-/* Alvo valido: variavel ou posicao de lista. */
 alvo:
       ID
     | indexacao
     ;
 
-/* Literais que nao podem ficar a esquerda de "=" (ex.: 3 = x). */
 literal:
       NUM | STRING | TRUE | FALSE | NONE
     ;
 
-/* Lista [a, b]. Como STRING e NONE, seu valor numerico e NAN. */
 expr:
       lista       { $$.numero = NAN; $$.ast = NULL; }
     | indexacao   { $$.numero = NAN; $$.ast = NULL; }
@@ -379,21 +396,20 @@ lista:
     ;
 
 elementos:
-      expr { semantico_registrar_expressao($1.ast, 0); }
-    | elementos COMMA expr { semantico_registrar_expressao($3.ast, 0); }
+      expr
+    | elementos COMMA expr
     ;
 
-/* Indexacao l[0]. */
 indexacao:
-      ID LBRACKET expr RBRACKET { semantico_registrar_expressao($3.ast, 0); }
+      ID LBRACKET expr RBRACKET {
+          semantico_registrar_expressao($3.ast, 0);
+      }
     ;
 
 /* ===== [P5] FUNCOES E CHAMADAS ===== */
-/* Definicoes de funcoes, parametros, return e chamadas com argumentos. */
-
 comando:
-      def_funcao
-    | comando_return
+      def_funcao { $$ = NULL; }
+    | comando_return { $$ = NULL; }
     | ID LPAREN args_opt error terminador {
           ERRO_SINTATICO(@1, "chamada de funcao sem fecha parenteses ')' antes do terminador");
           yyerrok;
@@ -443,13 +459,14 @@ comando_return:
 
 expr:
       chamada_funcao { $$ = $1; }
+    | ID             { $$.numero = NAN; $$.ast = ast_criar_texto(AST_IDENTIFICADOR, $1, @1.first_line); }
     ;
 
 chamada_funcao:
       ID LPAREN args_opt RPAREN {
           RECONHECIDO("[OK] chamada de funcao reconhecida");
           $$.numero = NAN;
-          $$.ast = NULL;
+          $$.ast = ast_criar_texto(AST_CHAMADA, $1, @1.first_line);
       }
     ;
 
@@ -459,13 +476,12 @@ args_opt:
     ;
 
 args:
-      expr { semantico_registrar_expressao($1.ast, 0); }
-    | args COMMA expr { semantico_registrar_expressao($3.ast, 0); }
+      expr
+    | args COMMA expr
     ;
 
 %%
 
-/* P4: preserva o terminador para a regra externa e consome um eventual ']'. */
 static void sincronizar_lista(void) {
     while (yychar != FIM && yychar != NEWLINE && yychar != SEMICOLON &&
            yychar != RBRACE && yychar != RBRACKET) yychar = yylex();
@@ -494,7 +510,6 @@ static void preparar_diagnostico(int linha, int coluna, const char *mensagem) {
 }
 
 static void diagnostico(int linha, int coluna, const char *mensagem) {
-    /* A regra especifica substitui a mensagem generica ainda pendente. */
     const char *lexema = erro_pendente ? erro_lexema : lexema_atual();
     if (!erro_pendente) erros_sintaticos++;
     fprintf(stderr, "[ERRO SINTATICO] Linha %d, coluna %d: %s (proximo a '%s')\n",
@@ -513,19 +528,9 @@ void yyerror(const char *mensagem) {
     snprintf(erro_lexema, sizeof erro_lexema, "%s", lexema_atual());
 }
 
-/* Semana 5: o ponto de entrada continua aqui, sem integrar src/main.c. */
 int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
     int status = yyparse();
     emitir_pendente();
-
-    NoAST *raiz = semantico_ast();
-    if (raiz) ast_imprimir(raiz, 0);
-    int erros_semanticos = semantico_analisar(raiz);
-
-    semantico_liberar(raiz);
-    ast_liberar(raiz);
-    lexer_liberar_textos();
-    return status != 0 || erros_semanticos != 0 ||
-           erros_sintaticos != 0 || erros_lexicos != 0;
+    return status != 0 || erros_sintaticos != 0 || erros_lexicos != 0;
 }
