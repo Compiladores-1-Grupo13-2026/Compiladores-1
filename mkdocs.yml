@@ -11,6 +11,8 @@ nav:
   - Analisador léxico: analisador_lexico/analisador-lexico.md
   - Analisador sintático: analisador_sintatico/analisador-sintatico.md
   - Analisador semântico: analisador_semantico/analisador-semantico.md
+  - AST da P4: ast.md
+  - Decisões da P4: decisoes.md
   - Código-fonte: src.md
   - Testes: testes.md
   - Sprints: sprints.md

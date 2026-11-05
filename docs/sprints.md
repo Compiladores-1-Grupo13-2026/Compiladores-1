@@ -22,3 +22,29 @@ das Sprints 1 e 2.
 | P4 | Karoline | atribuição, listas, indexação e comentários | ✅ | documentação |
 | P5 | João Vitor | def, return, chamadas e recuperação | ✅ | integração, quadro e formulário |
 
+## Sprint 3 do professor: AST e semântica
+
+Divisão mantida por recurso da linguagem, conforme o
+[plano da equipe](https://docs.google.com/document/d/1oPxylxNLkBpUya7pTXNanqJy-Rh25Lyj43E3K4mtf30/edit).
+Esta atualização implementa exclusivamente a P4; as linhas dos demais
+integrantes registram as responsabilidades e dependências, sem declarar suas
+entregas concluídas.
+
+| Fatia | Base / responsabilidade transversal | Trabalho na fatia | Estado nesta branch |
+|---|---|---|---|
+| P1 — Ana | Núcleo comum da AST e build | Literais, identificadores e aritmética | Depende da entrega da responsável |
+| P2 — Leonardo | Visitante comum e diagnósticos | Comparações, lógica e condicionais | Depende da entrega do responsável |
+| P3 — Gabriel | Runner geral e Valgrind | Laços, contexto de break/continue | Depende da entrega do responsável |
+| P4 — Karoline | Tabela de símbolos e documentação | Atribuições, listas, indexação e leitura de nomes | Módulos e testes isolados implementados; integração depende da base |
+| P5 — João Vitor | Raiz/blocos do parser e fluxo do main | Funções, parâmetros, chamadas e return | Depende da entrega do responsável |
+
+A contribuição P4 está nas seções comentadas de `Semantica/Ast/ast.c` e `ast.h`,
+`Semantica/semantico.c` e `semantico.h`, além de `Semantica/Tabela/`.
+A preparação das ações AST fica comentada na seção P4 do próprio
+`Sintatica/parser.y`; os testes ficam em `testes/`, com casos nas pastas comuns
+`validos/` e `invalidos/`. Não há pastas nem módulos de produção separados por P.
+Os tipos e o núcleo da AST aguardam a P1. O contrato provisório dos testes está
+em `testes/contrato_ast_teste.h`.
+O parser principal continua na Semana 5. Não há tag de sprint concluída nem
+integração final anunciada.
+

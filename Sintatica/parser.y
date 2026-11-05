@@ -421,6 +421,80 @@ indexacao:
       ID LBRACKET expr RBRACKET { semantico_registrar_expressao($3.ast, 0); }
     ;
 
+/* ===== [P4] AST e recuperacao - preparacao para a base do grupo =====
+ * As regras ativas acima pertencem a entrega sintatica atual.
+ * As acoes abaixo ficam neste mesmo arquivo, junto da secao P4, aguardando
+ * a base comum, ID/STRING carregarem texto e a integracao da equipe.
+ * Nao constituem um segundo parser nem um modo AST ja disponivel.
+ * Substituir as producoes P4 correspondentes quando a base estiver pronta.
+ * Modelo alinhado com a P1: expr <expr> usa ValorExpressao.ast;
+ * atribuicao/lista/elementos/indexacao <no>; op_atrib <operador>.
+ * Os membros da union e a raiz/blocos dependem da integracao P1/P5.
+ * Precedencia de LBRACKET: apos POWER. Necessita <stdlib.h> e destruidores.
+ *
+ * atribuicao:
+ *       expr op_atrib expr {
+ *           $$ = ast_p4_atribuicao($2, $1.ast, $3.ast, @1.first_line);
+ *       }
+ *     ;
+ *
+ * op_atrib:
+ *       ASSIGN  { $$ = AST_ATRIBUICAO; }
+ *     | PLUSEQ  { $$ = AST_ATRIB_SOMA; }
+ *     | MINUSEQ { $$ = AST_ATRIB_SUB; }
+ *     | TIMESEQ { $$ = AST_ATRIB_MULT; }
+ *     | DIVEQ   { $$ = AST_ATRIB_DIV; }
+ *     ;
+ *
+ * expr:
+ *       lista     { $$ = (ValorExpressao){ .numero = NAN, .ast = $1 }; }
+ *     | indexacao { $$ = (ValorExpressao){ .numero = NAN, .ast = $1 }; }
+ *     ;
+ *
+ * lista:
+ *       LBRACKET RBRACKET { $$ = ast_p4_lista(NULL, @1.first_line); }
+ *     | LBRACKET elementos RBRACKET { $$ = ast_p4_lista($2, @1.first_line); }
+ *
+ *     | LBRACKET elementos error {
+ *           ast_liberar($2);
+ *           ERRO_SINTATICO(@1, "lista mal formada: faltou ']' (ou ',' entre elementos)");
+ *           sincronizar_lista();
+ *           $$ = ast_p4_lista(NULL, @1.first_line);
+ *           yyerrok;
+ *       }
+ *     | LBRACKET error {
+ *           ERRO_SINTATICO(@1, "lista mal formada: faltou ']'");
+ *           sincronizar_lista();
+ *           $$ = ast_p4_lista(NULL, @1.first_line);
+ *           yyerrok;
+ *       }
+ *     ;
+ *
+ * elementos:
+ *       expr { $$ = $1.ast; }
+ *     | elementos COMMA expr { $$ = ast_anexar($1, $3.ast); }
+ *     ;
+ *
+ *
+ * indexacao:
+ *       expr LBRACKET expr RBRACKET {
+ *           $$ = ast_p4_indexacao($1.ast, $3.ast, @1.first_line);
+ *       }
+ *     ;
+ *
+ * Helper correspondente para quando ID/STRING possuirem texto alocado:
+ *
+ * static void sincronizar_lista(void) {
+ *     while (yychar != FIM && yychar != NEWLINE && yychar != SEMICOLON &&
+ *            yychar != RBRACE && yychar != RBRACKET) {
+ *         if (yychar == ID || yychar == STRING) free(yylval.texto);
+ *         yychar = yylex();
+ *     }
+ *     if (yychar == RBRACKET) yychar = YYEMPTY;
+ *     encerrar_lista_invalida();
+ * }
+ * ===== FIM [P4] Preparacao da AST ===== */
+
 /* ===== [P5] FUNCOES E CHAMADAS ===== */
 /* Definicoes de funcoes, parametros, return e chamadas com argumentos. */
 
