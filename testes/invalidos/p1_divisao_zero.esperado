@@ -1,2 +1,8 @@
+PROGRAMA [linha 1]
+  DIVISAO [linha 1]
+    NUMERO 10 [linha 1]
+    NUMERO 0 [linha 1]
+  SOMA [linha 2]
+    NUMERO 2 [linha 2]
+    NUMERO 2 [linha 2]
 [ERRO SEMANTICO] Linha 1: divisao por zero
-Resultado: 4

@@ -1,2 +1,6 @@
+PROGRAMA [linha 1]
+  NUMERO inf [linha 1]
+  SOMA [linha 2]
+    NUMERO 2 [linha 2]
+    NUMERO 2 [linha 2]
 [ERRO SEMANTICO] Linha 1: literal numerico fora do intervalo suportado
-Resultado: 4
