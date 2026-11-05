@@ -12,8 +12,7 @@ construções e mostram `[OK]`.
 Esta branch acrescenta a **P4 da Sprint 3**: tabela de símbolos e seções de AST
 e semântica de atribuição/listas/indexação nos arquivos compartilhados, além de
 testes próprios. A base comum
-de AST e a integração do parser ainda serão entregues pelo grupo. O
-[guia da P4](docs/p4.md) explica os arquivos, os testes e os pontos de integração.
+de AST e a integração do parser ainda serão entregues pelo grupo.
 
 [Documentação no GitHub Pages](https://compiladores-1-grupo13-2026.github.io/Compiladores-1/)
 

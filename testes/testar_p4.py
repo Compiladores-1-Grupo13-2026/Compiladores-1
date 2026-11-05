@@ -54,7 +54,7 @@ def main():
         for name, sources in jobs:
             binary = Path(temporary) / (name + extension)
             contract = ["-include", HERE / "contrato_ast_teste.h"] if name == "semantico_test" else []
-            execute(flags + contract + sources + [HERE / (name + ".c"), "-o", binary])
+            execute(flags + contract + sources + [HERE / (name + ".c"), "-o", binary, "-lm"])
             result = execute(valgrind + [binary], timeout=10)
             print(text(result.stdout), end="")
     print("P4: 2 testes unitarios passaram. Casos .mpy aguardam a base do grupo.")

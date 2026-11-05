@@ -12,5 +12,5 @@ os callbacks correspondentes.
 
 O parser principal ainda aguarda a base que construirá a AST completa. Os
 testes unitários exercitam a contribuição P4 dos arquivos compartilhados com
-nós pré-montados e simulações das dependências. Consulte a [AST](../ast.md),
-as [decisões](../decisoes.md) e o [guia da P4](../p4.md).
+nós pré-montados e simulações das dependências. Consulte a [AST](../ast.md) e
+as [decisões](../decisoes.md).

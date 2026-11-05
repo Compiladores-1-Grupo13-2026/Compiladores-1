@@ -82,5 +82,4 @@ núcleo P1, comentários, recuperação sintática ou conflitos do parser. Os ca
 executados pelo runner unitário.
 
 O campo `int valor` do contrato ainda precisa ser conciliado pela P1 e pela
-equipe com os números decimais da linguagem. O [guia da P4](p4.md) reúne os
-arquivos compartilhados e os comandos de verificação.
+equipe com os números decimais da linguagem.

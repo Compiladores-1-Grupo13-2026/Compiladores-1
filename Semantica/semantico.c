@@ -1,3 +1,4 @@
+#include <math.h>
 #include <stdio.h>
 #include <string.h>
 #include "semantico.h"
@@ -35,6 +36,15 @@ static const char *p4_indexacao(NoAST *no, P4Visitar visitar, P4Erro erro) {
     if (!p4_mesmo_tipo(indice, P4_TIPO_ERRO) && !p4_mesmo_tipo(indice, "int") &&
         !p4_mesmo_tipo(indice, "?")) {
         erro(no->b->linha, "índice de lista deve ser int; recebido '%s'", indice);
+        invalido = 1;
+    }
+    /* A P1 preserva reais fora de NoAST.valor e ainda os classifica como int.
+     * Consultar a API numerica permite recusar indices literais fracionarios.
+     * Valores de expressoes e limites da lista ficam para a execucao. */
+    double valor_indice;
+    if (p4_mesmo_tipo(indice, "int") && ast_numero_valor(no->b, &valor_indice) &&
+        (!isfinite(valor_indice) || trunc(valor_indice) != valor_indice)) {
+        erro(no->b->linha, "índice de lista deve ser inteiro finito");
         invalido = 1;
     }
     /* O contrato nao guarda tipo por elemento: uma leitura l[i] tem tipo ?. */
@@ -89,7 +99,9 @@ static const char *p4_atribuicao(NoAST *no, P4Visitar visitar, P4Erro erro) {
      * Mesmo com alvo invalido, continua para relatar erros independentes. */
     const char *tipo_valor = p4_ler(no->b, visitar);
     if (p4_mesmo_tipo(tipo_valor, P4_TIPO_ERRO)) invalido = 1;
-    if (no->tipo == AST_ATRIB_DIV && no->b->tipo == AST_NUMERO && no->b->valor == 0) {
+    /* ast_criar_numero_real pode deixar valor zerado mesmo para 2 ou 0.5. */
+    double divisor;
+    if (no->tipo == AST_ATRIB_DIV && ast_numero_valor(no->b, &divisor) && divisor == 0.0) {
         erro(no->b->linha, "divisão por zero na atribuição composta '/='");
         invalido = 1;
     }

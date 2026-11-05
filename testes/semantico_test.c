@@ -246,12 +246,52 @@ static void testar_compostos(void) {
     tipo_simbolo("l", "lista", 12);
 }
 
+/* Cinco cenarios novos; os testes existentes ficam preservados. */
+static void testar_regressoes_p4(void) {
+    reiniciar();
+    verificar(atribuir(AST_ATRIBUICAO, "n", numero(8, 1), 1), "none", 0);
+
+    /* 1. Literal real nao nulo com valor == 0 nao e divisao por zero. */
+    NoAST *divisor = teste_numero_real(0.5, 2);
+    assert(divisor->valor == 0);
+    verificar(atribuir(AST_ATRIB_DIV, "n", divisor, 2), "none", 0);
+    tipo_simbolo("n", "?", 1);
+
+    /* 2. Zero real deve gerar erro e conservar o tipo anterior. */
+    verificar(atribuir(AST_ATRIBUICAO, "n", numero(8, 3), 3), "none", 0);
+    verificar(atribuir(AST_ATRIB_DIV, "n", teste_numero_real(0.0, 4), 4),
+              P4_TIPO_ERRO, 1);
+    tipo_simbolo("n", "int", 1);
+    assert(ultima_linha == 4 && strstr(mensagens, "zero"));
+
+    /* 3. Indice fracionario impede a insercao da variavel de destino. */
+    verificar(atribuir(AST_ATRIBUICAO, "l", ast_p4_lista(NULL, 5), 5), "none", 0);
+    verificar(atribuir(AST_ATRIBUICAO, "destino",
+                  ast_p4_indexacao(id("l", 6), teste_numero_real(1.5, 6), 6), 6),
+              P4_TIPO_ERRO, 1);
+    assert(!tabela_buscar("destino") && ultima_linha == 6);
+    tipo_simbolo("l", "lista", 5);
+
+    /* 4. Base e indice invalidos produzem os dois erros, sem atualizar n. */
+    verificar(atribuir(AST_ATRIBUICAO, "n",
+                  ast_p4_indexacao(numero(5, 7), texto("indice", 8), 7), 7),
+              P4_TIPO_ERRO, 2);
+    tipo_simbolo("n", "int", 1);
+    assert(ultima_linha == 8);
+
+    /* 5. Alvo invalido nao impede diagnosticar um nome ausente no RHS. */
+    verificar(ast_p4_atribuicao(AST_ATRIBUICAO, numero(3, 9),
+                  id("ausente_rhs", 10), 9), P4_TIPO_ERRO, 2);
+    assert(!tabela_buscar("ausente_rhs") && ultima_linha == 10);
+}
+
 int main(void) {
     testar_ast();
     testar_variaveis();
     testar_escopos();
     testar_listas_e_indices();
     testar_compostos();
+    testar_regressoes_p4();
     tabela_liberar();
     puts("[OK] semantica e AST P4: alvos, tipos, listas, indices e escopos");
     return 0;

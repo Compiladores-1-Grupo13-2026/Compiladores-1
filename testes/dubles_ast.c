@@ -8,6 +8,8 @@
 enum { CAPACIDADE_NOS = 1024, CAPACIDADE_TEXTO = 128, CAPACIDADE_CHAMADAS = 16 };
 static NoAST nos[CAPACIDADE_NOS];
 static char textos[CAPACIDADE_NOS][CAPACIDADE_TEXTO];
+static double valores_reais[CAPACIDADE_NOS];
+static int tem_real[CAPACIDADE_NOS];
 static size_t usados;
 static TesteImpressao chamadas[CAPACIDADE_CHAMADAS];
 static size_t total_chamadas;
@@ -20,6 +22,8 @@ void teste_impressao_reiniciar(void) {
 void teste_reiniciar(void) {
     memset(nos, 0, sizeof nos);
     memset(textos, 0, sizeof textos);
+    memset(valores_reais, 0, sizeof valores_reais);
+    memset(tem_real, 0, sizeof tem_real);
     usados = 0;
     teste_impressao_reiniciar();
 }
@@ -36,6 +40,22 @@ NoAST *teste_numero(int valor, int linha) {
     NoAST *no = teste_no(AST_NUMERO, linha);
     no->valor = valor;
     return no;
+}
+
+NoAST *teste_numero_real(double valor, int linha) {
+    NoAST *no = teste_no(AST_NUMERO, linha);
+    valores_reais[usados - 1] = valor;
+    tem_real[usados - 1] = 1;
+    return no;
+}
+
+/* Le dados preparados; nao avalia expressoes nem implementa o nucleo P1. */
+int ast_numero_valor(const NoAST *no, double *valor) {
+    if (!no || !valor || no->tipo != AST_NUMERO) return 0;
+    size_t indice = (size_t)(no - nos);
+    assert(indice < usados);
+    *valor = tem_real[indice] ? valores_reais[indice] : no->valor;
+    return 1;
 }
 
 NoAST *teste_texto(TipoNo tipo, const char *texto, int linha) {

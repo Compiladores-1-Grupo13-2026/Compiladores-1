@@ -368,15 +368,17 @@ indexacao:
 /* ===== [P4] AST e recuperacao - preparacao para a base do grupo =====
  * As regras ativas acima pertencem a entrega sintatica atual.
  * As acoes abaixo ficam neste mesmo arquivo, junto da secao P4, aguardando
- * expr carregar NoAST*, ID/STRING carregarem texto e a integracao da equipe.
+ * a base comum, ID/STRING carregarem texto e a integracao da equipe.
  * Nao constituem um segundo parser nem um modo AST ja disponivel.
  * Substituir as producoes P4 correspondentes quando a base estiver pronta.
- * Tipos: atribuicao/lista/elementos/indexacao <no>; op_atrib <operador>.
+ * Modelo alinhado com a P1: expr <expr> usa ValorExpressao.ast;
+ * atribuicao/lista/elementos/indexacao <no>; op_atrib <operador>.
+ * Os membros da union e a raiz/blocos dependem da integracao P1/P5.
  * Precedencia de LBRACKET: apos POWER. Necessita <stdlib.h> e destruidores.
  *
  * atribuicao:
  *       expr op_atrib expr {
- *           $$ = ast_p4_atribuicao($2, $1, $3, @1.first_line);
+ *           $$ = ast_p4_atribuicao($2, $1.ast, $3.ast, @1.first_line);
  *       }
  *     ;
  *
@@ -389,8 +391,8 @@ indexacao:
  *     ;
  *
  * expr:
- *       lista     { $$ = $1; }
- *     | indexacao { $$ = $1; }
+ *       lista     { $$ = (ValorExpressao){ .numero = NAN, .ast = $1 }; }
+ *     | indexacao { $$ = (ValorExpressao){ .numero = NAN, .ast = $1 }; }
  *     ;
  *
  * lista:
@@ -413,14 +415,14 @@ indexacao:
  *     ;
  *
  * elementos:
- *       expr { $$ = $1; }
- *     | elementos COMMA expr { $$ = ast_anexar($1, $3); }
+ *       expr { $$ = $1.ast; }
+ *     | elementos COMMA expr { $$ = ast_anexar($1, $3.ast); }
  *     ;
  *
  *
  * indexacao:
  *       expr LBRACKET expr RBRACKET {
- *           $$ = ast_p4_indexacao($1, $3, @1.first_line);
+ *           $$ = ast_p4_indexacao($1.ast, $3.ast, @1.first_line);
  *       }
  *     ;
  *

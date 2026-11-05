@@ -46,5 +46,5 @@ A preparação das ações AST fica comentada na seção P4 do próprio
 Os tipos e o núcleo da AST aguardam a P1. O contrato provisório dos testes está
 em `testes/contrato_ast_teste.h`.
 O parser principal continua na Semana 5. Não há tag de sprint concluída nem
-integração final anunciada. O [guia da P4](p4.md) registra os passos e limites.
+integração final anunciada.
 

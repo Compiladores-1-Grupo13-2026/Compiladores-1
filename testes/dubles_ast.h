@@ -9,6 +9,8 @@
 void teste_reiniciar(void);
 NoAST *teste_no(TipoNo tipo, int linha);
 NoAST *teste_numero(int valor, int linha);
+/* Fornece um literal real com NoAST.valor zerado, como na interface P1. */
+NoAST *teste_numero_real(double valor, int linha);
 NoAST *teste_texto(TipoNo tipo, const char *texto, int linha);
 
 typedef struct TesteImpressao {

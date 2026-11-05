@@ -35,5 +35,7 @@ typedef struct NoAST {
 
 NoAST *ast_criar(TipoNo tipo, NoAST *a, NoAST *b, NoAST *c, int linha);
 void ast_imprimir(NoAST *raiz, int nivel);
+/* Interface numerica ja entregue pela P1 em feature/expressoes-literais. */
+int ast_numero_valor(const NoAST *no, double *valor);
 
 #endif
