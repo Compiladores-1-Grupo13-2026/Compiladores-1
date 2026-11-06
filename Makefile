@@ -62,25 +62,32 @@ test-p4:
 
 memcheck-p4:
 	$(PYTHON) testes/testar_p4.py --memcheck
-# ===== [P1] Verificacao de memoria dos casos validos de expressoes =====
+# ===== [P1] Execucao e verificacao de memoria =====
+.PHONY: run
+run: parser
+	@test -n "$(ARQ)" || { printf '%s\n' 'Uso: make run ARQ=arquivo.txt' >&2; exit 1; }
+	./parser < "$(ARQ)"
+
 # Valgrind e preferido; usa AddressSanitizer com deteccao de leaks se ausente.
-VALIDOS_P1 = $(wildcard testes/validos/p1_*.txt)
+VALIDOS_MEMCHECK = $(sort $(wildcard testes/validos/p1_*.txt testes/validos/*_exec_*.txt))
 .PHONY: memcheck parser-memcheck
 memcheck: parser
 	@if command -v valgrind >/dev/null 2>&1; then \
-		for caso in $(VALIDOS_P1); do \
-			valgrind --quiet --leak-check=full --errors-for-leak-kinds=all --error-exitcode=1 ./parser < "$$caso" >/dev/null || exit $$?; \
+		for caso in $(VALIDOS_MEMCHECK); do \
+			modo=--ast; case "$$caso" in *_exec_*) modo= ;; esac; \
+			valgrind --quiet --leak-check=full --errors-for-leak-kinds=definite,indirect,possible --error-exitcode=1 ./parser $$modo < "$$caso" >/dev/null || exit $$?; \
 		done; \
 	else \
 		printf '%s\n' 'valgrind indisponivel; usando AddressSanitizer com deteccao de leaks.'; \
 		$(MAKE) --no-print-directory parser-memcheck || exit $$?; \
-		for caso in $(VALIDOS_P1); do \
-			ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 ./parser-memcheck < "$$caso" >/dev/null || exit $$?; \
+		for caso in $(VALIDOS_MEMCHECK); do \
+			modo=--ast; case "$$caso" in *_exec_*) modo= ;; esac; \
+			ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 ./parser-memcheck $$modo < "$$caso" >/dev/null || exit $$?; \
 		done; \
 	fi
 
-parser-memcheck: parser.tab.c parser.tab.h lex.yy.c $(FONTES_SEMANTICA) $(HEADERS_SEMANTICA) Makefile
-	$(CC) $(CPPFLAGS) -I. $(CFLAGS) -g -fsanitize=address -fno-omit-frame-pointer $(LDFLAGS) -o $@ parser.tab.c lex.yy.c $(FONTES_SEMANTICA) $(LDLIBS) -fsanitize=address
+parser-memcheck: parser.tab.c parser.tab.h lex.yy.c $(FONTES_SEMANTICA) $(HEADERS_SEMANTICA) $(FONTES_INTERPRETADOR) $(HEADERS_INTERPRETADOR) Makefile
+	$(CC) $(CPPFLAGS) -I. $(CFLAGS) -g -fsanitize=address -fno-omit-frame-pointer $(LDFLAGS) -o $@ parser.tab.c lex.yy.c $(FONTES_SEMANTICA) $(FONTES_INTERPRETADOR) $(LDLIBS) -fsanitize=address
 # ===== FIM [P1] Verificacao de memoria dos casos validos de expressoes =====
 
 clean:

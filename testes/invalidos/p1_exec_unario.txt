@@ -1,0 +1,4 @@
+def negar(x) { return -x; }
+print("antes")
+print(negar("texto"))
+print("depois")

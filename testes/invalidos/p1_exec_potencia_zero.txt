@@ -1,0 +1,5 @@
+print("antes")
+x = 0
+expoente = -1
+print(x ** expoente)
+print("depois")

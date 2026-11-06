@@ -1,116 +1,137 @@
-# Decisões técnicas — seção P4
+# Decisões técnicas
 
-A contribuição P4 fica em seções dos arquivos compartilhados `ast.c`, `ast.h`,
-`semantico.c` e `semantico.h`, identificadas por comentário com `P4` e título.
-A tabela comum fica em `Semantica/Tabela/tabela.c` e `tabela.h`.
+O MiniPy separa a leitura do código, a construção da árvore, a análise
+semântica e a execução. Essa organização permite inspecionar um programa com
+`--ast` e executar a mesma representação no modo padrão.
 
-O [plano da equipe](https://docs.google.com/document/d/1oPxylxNLkBpUya7pTXNanqJy-Rh25Lyj43E3K4mtf30/edit)
-define a responsabilidade de cada integrante e o contrato das estruturas.
-O [guia do professor](https://github.com/sergioaafreitas/COMP1/blob/main/semana%2001/docs/Guia%20-%20Projeto%20de%20um%20interpretador.md)
-situa AST e análise semântica inicial na Sprint 3. As escolhas específicas de
-MiniPy abaixo adaptam esses materiais à linguagem da equipe.
+## Uma árvore para analisar e executar
 
-## Semântica depois da construção da AST
+O Flex produz tokens; o Bison constrói a [AST](ast.md). A análise semântica
+consulta a tabela de símbolos sem substituir a árvore por resultados
+calculados. O interpretador percorre os nós para avaliar expressões, escolher
+ramos, repetir blocos e chamar funções.
 
-As ações do parser registram a estrutura. A seção semântica da P4 consulta a
-tabela e verifica somente seus nós. Expressões aritméticas, lógica, controle
-de fluxo e funções dependem dos responsáveis por essas fatias.
+A entrada passa pelas verificações léxicas, sintáticas e semânticas antes de
+ser executada. Mesmo um `print` escrito antes de um erro de análise não chega
+a ser executado. Durante a execução, a saída já produzida é preservada quando
+ocorre um erro.
 
-O visitante P4 recebe callbacks para visitar expressões e emitir diagnósticos.
-Os tipos são `int`, `str`, `bool`, `lista`, `none`, `funcao` e `?`. Este último
-indica tipo desconhecido e permite continuar a análise. O marcador interno
-`erro` (`P4_TIPO_ERRO`) indica um erro já diagnosticado e deve ser propagado
-pelas outras fatias para impedir atualizações inválidas na tabela.
+## Tipos estáticos e valores de execução
 
-## Atribuição e leitura de nomes
+A tabela semântica guarda nomes, categorias e tipos conhecidos. O ambiente de
+execução guarda valores concretos. São estruturas independentes: a tabela é
+liberada ao terminar a análise, e o ambiente é criado ao iniciar a execução.
 
-A primeira atribuição simples válida cria uma variável no escopo atual.
-A expressão à direita é visitada antes da inserção, para que `y = y + 1`
-acuse a leitura de `y` ainda inexistente. Um valor de tipo `?` permite a
-atribuição; `erro` impede a inserção e a atualização.
+`Valor` distingue `None`, inteiros, reais, booleanos, textos, listas e funções.
+A tag do valor determina qual campo da união pode ser lido. Parâmetros,
+retornos de chamadas e elementos de listas podem ter tipo estático desconhecido;
+nesses casos, o executor valida os valores recebidos.
 
-Reatribuição é permitida e atualiza o tipo da variável local, preservando a
-linha da primeira atribuição válida. Atribuições compostas leem o valor anterior:
-um identificador precisa existir no escopo atual. Uma variável apenas global
-não satisfaz essa exigência dentro de função sem uma construção `global`.
+| Operação | Comportamento |
+| --- | --- |
+| Aritmética com inteiros | Usa `long long`; verifica estouro nas operações inteiras |
+| Aritmética com um real | Produz `double` |
+| Booleanos em contas | `False` vale 0 e `True` vale 1 |
+| `/` | Sempre produz real, mesmo em `4 / 2` |
+| `//` | Arredonda para baixo: `-7 // 2` é `-4` |
+| `%` | O resto não nulo tem o sinal do divisor |
+| `**` com inteiros | Resultado inteiro para expoente não negativo; real para expoente negativo |
+| Textos | `+` concatena; multiplicação por inteiro ou booleano repete |
 
-| Operador | Tipos conhecidos aceitos | Resultado |
-|---|---|---|
-| `+=` | `int` com `int`; `str` com `str`; `lista` com `lista` | Tipo do alvo |
-| `-=` | `int` com `int` | `int` |
-| `*=` | `int` com `int`; alvo `str` ou `lista` com valor `int` | Tipo do alvo |
-| `/=` | `int` com `int` | `?`, até acordar a representação de decimais |
+O scanner lê literais numéricos como `double`. O executor converte um literal
+integral para `long long` quando ele cabe nesse tipo. Assim, a aritmética
+inteira pode preservar precisão que já não seria preservada ao escrever um
+literal decimal muito grande. Não há inteiros de precisão arbitrária.
 
-Se algum operando tem tipo desconhecido, o resultado também é `?`. Outros pares
-conhecidos geram erro. A P4 detecta divisor literal `0` em `/=`; divisores
-obtidos de valores em execução ficam para a etapa de interpretação.
+## Comparação e lógica
 
-Funções e builtins são categorias protegidas contra atribuição. `print` e
-`range` entram no escopo global como builtins de tipo `funcao`. A tabela não
-implementa chamadas; sua aridade começa desconhecida para a integração de funções.
+Igualdade e diferença aceitam tipos distintos. Números e booleanos são
+comparados pelo valor numérico; textos pelo conteúdo; listas recursivamente
+pelos elementos; funções pela identidade do nó de definição. Tipos distintos
+não numéricos são diferentes.
 
-## Tabela conforme o professor
+As comparações de ordem aceitam dois números ou dois textos. Textos são
+comparados com `strcmp`, pela ordem dos bytes. Listas não implementam ordenação.
 
-A [Semana 6](https://github.com/sergioaafreitas/COMP1/blob/main/semana%2006/src/tabela.c)
-apresenta lista encadeada. A [Semana 7](https://github.com/sergioaafreitas/COMP1/blob/main/semana%2007/src/tabela.c)
-evolui para hash com 211 posições e colisões por encadeamento. A tabela da
-equipe segue essa segunda estrutura e a função que acumula
-`h = (h << 4) + caractere` antes do módulo 211. O caractere é lido como
-`unsigned char` para evitar depender do sinal de `char`.
+`and` e `or` usam curto-circuito e devolvem um dos operandos. `not` devolve
+booleano. `None`, zero, `False`, texto vazio e lista vazia são falsos; os
+demais valores são verdadeiros.
 
-Cada escopo tem um índice privado. Entradas privadas ligam os símbolos às
-cadeias de colisão, preservando a estrutura pública `Simbolo` do contrato.
-Seu `prox` mantém a ordem de inserção para a impressão. Na saída de escopo,
-são liberados índice, símbolos e nomes.
+## Nomes, quadros e funções
 
-Os exemplos C do professor usam apenas o escopo global. Pilha de escopos,
-categorias, builtins, linha e liberação são adaptações previstas no plano MiniPy.
-A prática da Semana 7 usa outra linguagem; suas declarações `int nome;` e
-regras de redeclaração não são transplantadas para MiniPy.
+A tabela semântica usa um hash de 211 posições por escopo, com colisões por
+encadeamento. O encadeamento público dos símbolos conserva a ordem de inserção,
+separado das cadeias do hash. A busca semântica percorre os escopos ativos do
+mais interno até o global.
 
-## Escopos, listas e índices
+Na execução, somente chamadas de funções criam quadros. A busca do ambiente vê
+o quadro atual e depois o global; não procura os quadros de quem chamou.
+Atribuições escrevem no quadro atual. Blocos de `if`, `while` e `for` não
+criam outro quadro.
 
-Somente funções criam novos escopos. A busca local verifica o escopo atual;
-a busca geral percorre os ativos do mais interno até o global. Uma primeira
-atribuição simples em função cria uma variável local mesmo se houver global
-de mesmo nome. Ao sair, os locais são liberados. A tabela imprime os escopos
-ativos, sem guardar histórico dos encerrados.
+Uma função conserva seu nó da AST, sem capturar o ambiente onde foi definida.
+Definições aninhadas, portanto, não oferecem fechamentos léxicos. Os argumentos
+são avaliados no quadro do chamador antes de criar o quadro da chamada; os
+valores são então associados aos parâmetros. O quadro é liberado ao terminar,
+e uma função sem retorno explícito de valor produz `None`.
 
-Listas vazias, aninhadas e heterogêneas são permitidas. O tipo externo é `lista`;
-os elementos são visitados individualmente para verificar nomes. Quando os
-tipos são conhecidos, a base de indexação deve ser lista e o índice, inteiro.
-O resultado tem tipo `?`, pois o contrato não descreve o tipo de cada elemento.
-Atribuir a uma posição conserva o tipo externo `lista`.
+`print` e `range` são nomes de funções embutidas, não palavras reservadas do
+scanner. O executor reconhece essas chamadas pelo nome. A análise semântica
+protege nomes de funções e embutidas contra atribuição e redefinição inválidas.
 
-Limites, tamanhos e índices negativos dependem dos valores da execução. A P4
-não acrescenta indexação de strings. Comentários continuam descartados pelo
-scanner existente e não geram símbolos nem nós.
+## Atribuição, listas e propriedade
 
-## Organização e pendências
+Na atribuição simples, o valor à direita é avaliado antes do alvo. Na composta,
+o alvo e seu valor anterior são fixados antes da avaliação da expressão à
+direita. Isso preserva o destino quando chamadas envolvidas alteram listas.
 
-Os construtores e o impressor P4 ocupam sua seção de `Semantica/Ast/ast.c`;
-os protótipos ficam em `ast.h`. Os tipos e a API do núcleo comum aguardam a P1.
-O visitante ocupa a seção P4 de `Semantica/semantico.c`. As ações futuras de
-AST ficam comentadas na seção P4 de `Sintatica/parser.y`, aguardando a mudança
-de `expr` para nós pelo grupo. O parser ativo mantém a entrega da Semana 5.
+Textos têm cópias próprias. Listas são vetores dinâmicos com contagem de
+referências: `b = a` compartilha a mesma lista, e uma alteração por `b` é
+visível por `a`. A cópia de uma lista não duplica seus elementos.
 
-| Responsável | Integração que permanece com ele |
-|---|---|
-| P1 | Tipos, alocação, impressão e liberação gerais da AST; domínio numérico |
-| P2 | Despacho semântico e diagnósticos gerais |
-| P3 | Suíte geral e verificação global de memória |
-| P4 | Seções de atribuições/listas/indexação/leitura, tabela, testes próprios e documentação |
-| P5 | Parser, raiz, blocos, main, funções e chamadas |
+~~~text
+a = [1, 2];
+b = a;
+b[0] += 5;
+print(a);
+~~~
 
-O runner `testes/testar_p4.py` executa somente dois testes unitários, com o
-contrato declarativo `testes/contrato_ast_teste.h` e os dublês `dubles_ast.c/h`.
-O alvo geral `make test` e a suíte da P3 permanecem com seu responsável.
+A saída é `[6, 2]`. Índices precisam ser inteiros e podem ser negativos.
+A gramática aceita a forma `nome[indice]`; sublistas podem ser acessadas
+atribuindo uma delas a outro identificador. Textos não são indexáveis.
 
-Os casos `.mpy` e `.esperado` em `testes/validos/` e `testes/invalidos/` estão
-preparados para a integração e não são executados pelo runner atual. Os unitários
-não certificam parser, comentários, recuperação, conflitos Bison ou memória do
-núcleo da P1. Valgrind para os unitários permanece pendente neste Windows.
+Cada valor devolvido pela avaliação pertence a quem o recebeu.
+`ambiente_definir` e `lista_adicionar` assumem o valor recebido; buscas no
+ambiente emprestam um ponteiro, e uma leitura que será guardada ou devolvida
+precisa fazer uma cópia. Funções emprestam o nó da AST, que permanece vivo
+durante toda a execução.
 
-O contrato `int valor` ainda precisa ser conciliado pela P1 e pela equipe com
-os decimais da entrega anterior. A seção P4 do header declara suas funções e
-preserva essa decisão para os responsáveis pela base.
+## Interrupção de blocos e erros
+
+Um sinal compartilhado distingue execução normal, `break`, `continue` e
+`return`. Blocos param ao encontrar um sinal. Laços consomem `break` e
+`continue`, preservando `return` para a chamada da função.
+
+Cada laço aceita até 1.000.000 de iterações; a profundidade de chamadas é
+limitada a 1000. Esses limites interrompem programas que não terminariam ou
+que consumiriam a pilha indefinidamente.
+
+Erros de execução usam `[ERRO EXECUCAO] Linha N: mensagem` no stderr.
+`erro_execucao` descarrega stdout e interrompe o programa com `longjmp`; o
+ambiente é liberado e o código de saída é 1. Sucesso retorna 0.
+
+## Limites da implementação
+
+- A inferência semântica não determina todos os tipos e não acompanha todos
+  os caminhos de execução. Verificações de valores continuam necessárias.
+- A análise aceita algumas combinações de listas em `+=` e `*=`, mas o
+  executor não implementa concatenação ou repetição de listas e rejeita
+  essas operações.
+- A contagem de referências não coleta ciclos entre listas. A impressão
+  reconhece ciclos; a igualdade entre ciclos distintos pode continuar
+  recursivamente.
+- Em erros de execução, valores temporários abandonados pelo `longjmp` podem
+  permanecer alocados até o encerramento do processo.
+
+O [interpretador](interpretador.md) detalha a execução e os formatos de
+saída. A página de [testes](testes.md) registra a validação e a cobertura.

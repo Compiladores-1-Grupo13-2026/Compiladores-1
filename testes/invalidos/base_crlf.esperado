@@ -1,3 +1,9 @@
 [OK] atribuicao reconhecida
 [ERRO SINTATICO] Linha 2, coluna 5: syntax error (proximo a '\n')
-Resultado: 4
+PROGRAMA [linha 1]
+  ATRIBUICAO [linha 1]
+    IDENTIFICADOR 'x' [linha 1]
+    NUMERO 1 [linha 1]
+  SOMA [linha 3]
+    NUMERO 2 [linha 3]
+    NUMERO 2 [linha 3]

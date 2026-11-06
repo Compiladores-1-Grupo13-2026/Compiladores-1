@@ -1,6 +1,16 @@
-Resultado: 7
 [ERRO SINTATICO] Linha 2, coluna 5: syntax error (proximo a ';')
-Resultado: 42
 [ERRO SINTATICO] Linha 4, coluna 7: syntax error (proximo a ';')
-Resultado: 8
+PROGRAMA [linha 1]
+  SOMA [linha 1]
+    NUMERO 3 [linha 1]
+    NUMERO 4 [linha 1]
+  MULTIPLICACAO [linha 3]
+    NUMERO 6 [linha 3]
+    NUMERO 7 [linha 3]
+  SUBTRACAO [linha 5]
+    NUMERO 9 [linha 5]
+    NUMERO 1 [linha 5]
+  DIVISAO [linha 6]
+    NUMERO 10 [linha 6]
+    NUMERO 0 [linha 6]
 [ERRO SEMANTICO] Linha 6: divisao por zero

@@ -1,0 +1,2 @@
+antes
+[ERRO EXECUCAO] Linha 1: operacao '-' entre tipos incompativeis ('str' e 'int')

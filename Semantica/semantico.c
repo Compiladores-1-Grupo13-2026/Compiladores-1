@@ -182,34 +182,15 @@ static int eh_operador_p1(TipoNo tipo) {
            tipo == AST_POTENCIA || tipo == AST_NEGATIVO;
 }
 
-/* Verifica se o tipo informado e int. */
+/* bool participa das contas como int; float preserva a parte fracionaria. */
 static int tipos_numericos(const char *tipo) {
-    return tipo && tipo[0] == 'i' && tipo[1] == 'n' &&
-           tipo[2] == 't' && !tipo[3];
+    return tipo && (strcmp(tipo, "int") == 0 || strcmp(tipo, "float") == 0 ||
+                    strcmp(tipo, "bool") == 0);
 }
 
 /* Verifica se dois tipos sao iguais. */
 static int tipos_iguais(const char *a, const char *b) {
-    if (!a || !b) return 0;
-
-    if (a[0] != b[0]) return 0;
-
-    if (a[0] == 'i')
-        return tipos_numericos(a) && tipos_numericos(b);
-
-    if (a[0] == 's')
-        return a[1] == 't' && a[2] == 'r' && !a[3] &&
-               b[1] == 't' && b[2] == 'r' && !b[3];
-
-    if (a[0] == 'b')
-        return a[1] == 'o' && a[2] == 'o' && a[3] == 'l' && !a[4] &&
-               b[1] == 'o' && b[2] == 'o' && b[3] == 'l' && !b[4];
-
-    if (a[0] == 'n')
-        return a[1] == 'o' && a[2] == 'n' && a[3] == 'e' && !a[4] &&
-               b[1] == 'o' && b[2] == 'n' && b[3] == 'e' && !b[4];
-
-    return 0;
+    return a && b && strcmp(a, b) == 0;
 }
 
 /* ===== [P2] Identificacao de operadores de comparacao e logica ===== */
@@ -232,6 +213,8 @@ static int eh_comparacao_ordem(TipoNo tipo) {
 
 /* ===== FIM [P2] Identificacao de operadores de comparacao e logica ===== */
 
+static int valor_numerico(const NoAST *no, double *valor);
+
 /*
  * Retorna o tipo resultante de uma expressao.
  *
@@ -245,8 +228,11 @@ const char *semantico_tipo_expr(const NoAST *no) {
     if (!no) return "?";
 
     switch (no->tipo) {
-        case AST_NUMERO:
-            return "int";
+        case AST_NUMERO: {
+            double numero;
+            return ast_numero_valor(no, &numero) && trunc(numero) != numero ?
+                   "float" : "int";
+        }
 
         case AST_STRING:
             return "str";
@@ -257,18 +243,22 @@ const char *semantico_tipo_expr(const NoAST *no) {
         case AST_NONE:
             return "none";
 
-        case AST_IDENTIFICADOR:
-            return "?";
+        case AST_IDENTIFICADOR: {
+            Simbolo *simbolo = tabela_buscar(no->texto);
+            return simbolo ? simbolo->tipo : "?";
+        }
 
-        case AST_NEGATIVO:
-            return tipos_numericos(semantico_tipo_expr(no->a)) ? "int" : "?";
+        case AST_NEGATIVO: {
+            const char *a = semantico_tipo_expr(no->a);
+            return tipos_numericos(a) ? (tipos_iguais(a, "float") ? "float" : "int") : "?";
+        }
 
         case AST_SOMA: {
             const char *a = semantico_tipo_expr(no->a);
             const char *b = semantico_tipo_expr(no->b);
 
             if (tipos_numericos(a) && tipos_numericos(b))
-                return "int";
+                return tipos_iguais(a, "float") || tipos_iguais(b, "float") ? "float" : "int";
 
             if (tipos_iguais(a, "str") && tipos_iguais(b, "str"))
                 return "str";
@@ -281,9 +271,23 @@ const char *semantico_tipo_expr(const NoAST *no) {
         case AST_DIVISAO:
         case AST_DIVINT:
         case AST_MODULO:
-        case AST_POTENCIA:
-            return tipos_numericos(semantico_tipo_expr(no->a)) &&
-                   tipos_numericos(semantico_tipo_expr(no->b)) ? "int" : "?";
+        case AST_POTENCIA: {
+            const char *a = semantico_tipo_expr(no->a);
+            const char *b = semantico_tipo_expr(no->b);
+            if (no->tipo == AST_MULTIPLICACAO &&
+                ((tipos_iguais(a, "str") && (tipos_iguais(b, "int") || tipos_iguais(b, "bool"))) ||
+                 ((tipos_iguais(a, "int") || tipos_iguais(a, "bool")) && tipos_iguais(b, "str")))) return "str";
+            if (!tipos_numericos(a) || !tipos_numericos(b)) return "?";
+            if (no->tipo == AST_POTENCIA) {
+                double expoente;
+                if (tipos_iguais(a, "float") || tipos_iguais(b, "float")) return "float";
+                /* Uma potencia inteira pode virar real com expoente negativo. */
+                if (!valor_numerico(no->b, &expoente)) return "?";
+                return expoente < 0 ? "float" : "int";
+            }
+            return no->tipo == AST_DIVISAO || tipos_iguais(a, "float") ||
+                   tipos_iguais(b, "float") ? "float" : "int";
+        }
 
         /* ===== [P2] Tipo resultante de comparacoes e logica ===== */
 
@@ -325,6 +329,11 @@ static int valor_numerico(const NoAST *no, double *valor) {
     double a, b;
 
     if (!no) return 0;
+
+    if (no->tipo == AST_BOOL) {
+        *valor = no->valor != 0;
+        return 1;
+    }
 
     if (no->tipo == AST_NUMERO) {
         if (!numero_literal(no, valor) || !isfinite(*valor))
@@ -415,7 +424,7 @@ static int tipos_incompativeis(const NoAST *no) {
     a = semantico_tipo_expr(no->a);
     b = semantico_tipo_expr(no->b);
 
-    /* Identificadores ainda nao possuem verificacao de tipo. */
+    /* Tipos de identificadores conhecidos foram consultados na tabela. */
     if (a[0] == '?' || b[0] == '?')
         return 0;
 
@@ -423,6 +432,10 @@ static int tipos_incompativeis(const NoAST *no) {
     if (no->tipo == AST_SOMA &&
         tipos_iguais(a, "str") && tipos_iguais(b, "str"))
         return 0;
+
+    if (no->tipo == AST_MULTIPLICACAO &&
+        ((tipos_iguais(a, "str") && (tipos_iguais(b, "int") || tipos_iguais(b, "bool"))) ||
+         ((tipos_iguais(a, "int") || tipos_iguais(a, "bool")) && tipos_iguais(b, "str")))) return 0;
 
     return !tipos_numericos(a) || !tipos_numericos(b);
 }
@@ -705,7 +718,7 @@ static const char *tipo_variavel_for(const NoAST *iteravel) {
     if (!iteravel) return "?";
     if (iteravel->tipo == AST_CHAMADA && iteravel->texto &&
         strcmp(iteravel->texto, "range") == 0) return "int";
-    if (iteravel->tipo == AST_STRING) return "str";
+    if (tipos_iguais(semantico_tipo_expr(iteravel), "str")) return "str";
     return "?";                         /* lista, identificador, expressao... */
 }
 /* ===== FIM [P3] LACOS: estado e auxiliares ===== */
@@ -822,7 +835,7 @@ static const char *visitar_chamada(NoAST *chamada) {
             erro_formatado(chamada->linha,
                            "funcao '%s' espera %d argumento(s), recebeu %d",
                            chamada->texto, simbolo->num_params, recebidos);
-    } else if (strcmp(simbolo->tipo, "?") != 0) {
+    } else if (strcmp(simbolo->tipo, "?") != 0 && strcmp(simbolo->tipo, "funcao") != 0) {
         /* Parametros e valores de tipo desconhecido podem guardar uma funcao;
          * um int, str, bool ou lista conhecido nao pode ser chamado. */
         erro_formatado(chamada->linha, "'%s' nao e uma funcao (tipo '%s')",
@@ -848,14 +861,28 @@ static void visitar_laco(NoAST *no) {
             profundidade_laco--;
             break;
         case AST_FOR:
+            /* O iteravel e lido antes de criar/atualizar a variavel de controle. */
+            visitar(no->a);
+            if (no->a && no->a->tipo == AST_IDENTIFICADOR) {
+                const char *tipo = semantico_tipo_expr(no->a);
+                if (tipos_numericos(tipo))
+                    erro_formatado(no->linha, "iteravel do 'for' nao pode ser do tipo '%s'", tipo);
+            }
             /* Registra a variavel do 'for' na tabela como CAT_VARIAVEL. */
-            if (no->texto)
-                tabela_inserir(no->texto, CAT_VARIAVEL, tipo_variavel_for(no->a), no->linha);
+            if (no->texto) {
+                const char *tipo = tipo_variavel_for(no->a);
+                Simbolo *local = tabela_buscar_local(no->texto);
+                if (!local) tabela_inserir(no->texto, CAT_VARIAVEL, tipo, no->linha);
+                else {
+                    char copia[sizeof local->tipo] = {0};
+                    snprintf(copia, sizeof copia, "%s", tipo);
+                    memcpy(local->tipo, copia, sizeof copia);
+                }
+            }
             /* O iteravel nao pode ser um literal numerico isolado. */
             if (no->a && no->a->tipo == AST_NUMERO)
                 erro_semantico(no->linha, "iteravel do 'for' nao pode ser um numero literal");
             profundidade_laco++;
-            visitar(no->a); /* Iteravel */
             visitar(no->b); /* Corpo */
             profundidade_laco--;
             break;

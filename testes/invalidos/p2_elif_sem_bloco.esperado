@@ -1,3 +1,9 @@
 [ERRO SINTATICO] Linha 1, coluna 10: bloco ausente no elif (esperado '{') (proximo a '\n')
 [OK] if reconhecido
-Resultado: 4
+PROGRAMA [linha 1]
+  IF [linha 1]
+    NUMERO 1 [linha 1]
+    BLOCO [linha 1]
+  SOMA [linha 2]
+    NUMERO 2 [linha 2]
+    NUMERO 2 [linha 2]

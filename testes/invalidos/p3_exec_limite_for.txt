@@ -1,0 +1,3 @@
+print("antes")
+for i in range(1000001) { }
+print("nao deve aparecer")

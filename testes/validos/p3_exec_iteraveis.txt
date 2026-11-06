@@ -1,0 +1,6 @@
+for i in range(1, 10, 3) { print(i) }
+for i in range(3, -2, -2) { print(i) }
+for item in [1, "texto", [2]] { print(item) }
+for letra in "abc" { if letra == "b" { continue; } print(letra) }
+for item in [] { print("nao deve aparecer") }
+for letra in "" { print("nao deve aparecer") }

@@ -1,0 +1,8 @@
+x = 100
+contador = [0]
+def ler_global() { return x; }
+def local(x) { return ler_global(); }
+def marcar(valor) { contador[0] += 1; return valor; }
+def juntar(x, y) { return [x, y]; }
+def chamar() { x = 7; return juntar(x, x + 1); }
+print(local(9), x, chamar(), juntar(marcar(1), marcar(2)), contador)
