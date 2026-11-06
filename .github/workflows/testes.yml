@@ -1,0 +1,25 @@
+name: Testes MiniPy
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  compilacao-e-testes:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Instalar dependencias
+        run: sudo apt-get update && sudo apt-get install -y build-essential flex bison libfl-dev valgrind
+      - name: Compilar e testar
+        run: make clean && make && make tokens && make test
+      - name: Testes unitarios com os modulos reais
+        if: ${{ !cancelled() }}
+        run: |
+          python3 testes/verificar_b.py
+          python3 testes/testar_p4.py --runtime --memcheck
+          python3 testes/testar_valores.py --memcheck
+      - name: Memoria dos programas validos
+        if: ${{ !cancelled() }}
+        run: make memcheck

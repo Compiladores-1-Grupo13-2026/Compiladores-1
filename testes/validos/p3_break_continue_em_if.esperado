@@ -1,0 +1,19 @@
+[OK] atribuicao reconhecida
+[OK] continue reconhecido
+[OK] if reconhecido
+[OK] break reconhecido
+[OK] while reconhecido
+PROGRAMA [linha 1]
+  ATRIBUICAO [linha 1]
+    IDENTIFICADOR 'x' [linha 1]
+    NUMERO 0 [linha 1]
+  WHILE [linha 2]
+    NUMERO 1 [linha 2]
+    BLOCO [linha 2]
+      IF [linha 3]
+        IGUAL [linha 3]
+          IDENTIFICADOR 'x' [linha 3]
+          NUMERO 2 [linha 3]
+        BLOCO [linha 3]
+          CONTINUE [linha 4]
+      BREAK [linha 6]

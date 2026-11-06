@@ -1,0 +1,4 @@
+def chamar(f) { return f(); }
+print("antes")
+chamar(3)
+print("nao deve aparecer")

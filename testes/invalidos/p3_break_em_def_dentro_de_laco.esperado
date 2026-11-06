@@ -1,1 +1,11 @@
+[OK] break reconhecido
+[OK] def reconhecido
+[OK] while reconhecido
+PROGRAMA [linha 1]
+  WHILE [linha 1]
+    NUMERO 1 [linha 1]
+    BLOCO [linha 1]
+      FUNCAO 'func' [linha 2]
+        BLOCO [linha 2]
+          BREAK [linha 3]
 [ERRO SEMANTICO] Linha 3: 'break' fora de um laco

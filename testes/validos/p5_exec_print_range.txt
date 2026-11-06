@@ -1,0 +1,11 @@
+print()
+print(7, 4 / 2, 3.5, True, False, None, "fim", [1, "a", [False]])
+print(range(3), range(2, 5), range(5, 0, -2))
+print(range(3, 0), range(0, 3, -1), range(0))
+l = [0]
+def mudar(l) { l[0] = 1; return "alterou"; }
+print(l, mudar(l))
+maximo = (2 ** 62 - 1) * 2 + 1
+minimo = -maximo - 1
+print(range(maximo - 1, maximo, 2), range(minimo + 1, minimo, -2))
+print(range(1, minimo, minimo))

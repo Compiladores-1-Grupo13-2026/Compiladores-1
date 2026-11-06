@@ -1,0 +1,9 @@
+def identidade(v) { return v; }
+t = "abc"
+u = t
+t = "outro"
+print(u, t, identidade("retorno"))
+l = ["a", 2.5, [True, None]]
+b = l
+b[0] = "b"
+print(l, b, identidade)

@@ -1,1 +1,9 @@
 [OK] atribuicao reconhecida
+PROGRAMA [linha 1]
+  ATRIBUICAO [linha 1]
+    IDENTIFICADOR 'resultado' [linha 1]
+    MULTIPLICACAO [linha 1]
+      SOMA [linha 1]
+        NUMERO 10 [linha 1]
+        NUMERO 5 [linha 1]
+      NUMERO 2 [linha 1]

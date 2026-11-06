@@ -1,0 +1,4 @@
+def gerar(valor) { return range(valor); }
+print("antes")
+print(gerar("a"))
+print("nao deve aparecer")

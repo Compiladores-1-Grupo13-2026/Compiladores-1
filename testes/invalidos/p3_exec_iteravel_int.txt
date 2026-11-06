@@ -1,0 +1,4 @@
+def iterar(valor) { for item in valor { print(item) } }
+print("antes")
+iterar(3)
+print("nao deve aparecer")

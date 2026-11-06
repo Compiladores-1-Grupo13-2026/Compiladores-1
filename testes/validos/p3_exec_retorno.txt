@@ -1,0 +1,11 @@
+def procurar() {
+    while True {
+        for i in range(5) {
+            if i == 2 { return [i, "fim"]; }
+        }
+        print("nao deve aparecer")
+    }
+    print("nao deve aparecer")
+}
+print(procurar())
+print("depois")

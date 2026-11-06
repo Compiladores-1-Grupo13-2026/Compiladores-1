@@ -1,0 +1,4 @@
+def dividir(a, b) { return a / b; }
+print("antes")
+print(dividir(10, 0))
+print("nao deve aparecer")

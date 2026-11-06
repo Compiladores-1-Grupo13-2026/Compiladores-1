@@ -1,3 +1,5 @@
-Resultado: 4
 [ERRO SINTATICO] Linha 1, coluna 9: bloco aberto sem '}' (proximo a 'EOF')
 [OK] while reconhecido
+PROGRAMA [linha 1]
+  WHILE [linha 1]
+    NUMERO 1 [linha 1]
