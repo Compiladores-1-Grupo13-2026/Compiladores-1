@@ -1,27 +1,28 @@
 # Analisador léxico
 
-Fonte: [Lexico/scanner.l](https://github.com/Compiladores-1-Grupo13-2026/Compiladores-1/blob/main/Lexico/scanner.l).
+O scanner em `Lexico/scanner.l` transforma o código de entrada em tokens para o parser.
+A [organização dos fontes](../src.md) descreve como ele participa do build.
 
-| Token | Lexema / expressão regular | Fatia |
-|---|---|---|
-| NUM | `[0-9]+(\.[0-9]+)?` | base / P1 |
-| ID | `[a-zA-Z_][a-zA-Z0-9_]*` | base / todas |
-| STRING | aspas simples ou duplas, escapes com `\`, sem quebra de linha | P1 |
-| TRUE, FALSE, NONE | `True`, `False`, `None` | P1 |
-| PLUS, MINUS, TIMES, DIVIDE | `+`, `-`, `*`, `/` | base / P1 |
-| FLOORDIV, MOD, POWER | `//`, `%`, `**` | P1 |
-| LPAREN, RPAREN, COMMA | `(`, `)`, `,` | base / P1 e P5 |
-| EQ, NE, LT, GT, LE, GE | `==`, `!=`, `<`, `>`, `<=`, `>=` | P2 |
-| AND, OR, NOT | `and`, `or`, `not` | P2 |
-| IF, ELIF, ELSE | `if`, `elif`, `else` | P2 |
-| WHILE, FOR, IN, BREAK, CONTINUE | `while`, `for`, `in`, `break`, `continue` | P3 |
-| LBRACE, RBRACE, SEMICOLON | `{`, `}`, `;` | base / P3 |
-| NEWLINE | `\n` significativo ou terminador sintetizado antes de `}` / EOF | base / P2 e P3 |
-| ASSIGN, PLUSEQ, MINUSEQ, TIMESEQ, DIVEQ | `=`, `+=`, `-=`, `*=`, `/=` | P4 |
-| LBRACKET, RBRACKET | `[`, `]` | P4 |
-| DEF, RETURN | `def`, `return` | P5 |
-| ignorado | `#.*` (comentário); `[ \t\r]+` (espaços) | P4 / base |
-| YYUNDEF | `.` (caractere não reconhecido) | erro léxico global |
+| Token | Lexema / expressão regular |
+|---|---|
+| NUM | `[0-9]+(\.[0-9]+)?` |
+| ID | `[a-zA-Z_][a-zA-Z0-9_]*` |
+| STRING | aspas simples ou duplas, escapes com `\`, sem quebra de linha |
+| TRUE, FALSE, NONE | `True`, `False`, `None` |
+| PLUS, MINUS, TIMES, DIVIDE | `+`, `-`, `*`, `/` |
+| FLOORDIV, MOD, POWER | `//`, `%`, `**` |
+| LPAREN, RPAREN, COMMA | `(`, `)`, `,` |
+| EQ, NE, LT, GT, LE, GE | `==`, `!=`, `<`, `>`, `<=`, `>=` |
+| AND, OR, NOT | `and`, `or`, `not` |
+| IF, ELIF, ELSE | `if`, `elif`, `else` |
+| WHILE, FOR, IN, BREAK, CONTINUE | `while`, `for`, `in`, `break`, `continue` |
+| LBRACE, RBRACE, SEMICOLON | `{`, `}`, `;` |
+| NEWLINE | `\n` significativo ou terminador sintetizado antes de `}` / EOF |
+| ASSIGN, PLUSEQ, MINUSEQ, TIMESEQ, DIVEQ | `=`, `+=`, `-=`, `*=`, `/=` |
+| LBRACKET, RBRACKET | `[`, `]` |
+| DEF, RETURN | `def`, `return` |
+| ignorado | `#.*` (comentário); `[ \t\r]+` (espaços) |
+| YYUNDEF | `.` (caractere não reconhecido) |
 
 Catálogo extraído de `Lexico/scanner.l`. A regra de STRING é
 `\"([^\"\\\n]|\\[^\n])*\"` para aspas duplas; a versão com aspas simples é análoga.
@@ -58,7 +59,7 @@ A regra coringa `.` é a última: imprime `[ERRO LEXICO] Linha N`, incrementa
 `erros_lexicos` e retorna `YYUNDEF`. O modo tokens também retorna 1 se houve
 caractere inválido; não o ignora silenciosamente.
 
-## Evidência da Semana 3
+## Inspecionar os tokens
 
 ```sh
 make tokens
@@ -69,3 +70,19 @@ make tokens
 `SO_TOKENS` compila o mesmo scanner com um `main` que imprime `TOKEN(lexema)`;
 não precisa vincular o parser. `make test` compara essas saídas com
 `*.tokens.esperado` e também valida o caractere inválido `@`.
+
+## Textos, números e execução
+
+O scanner reconhece números inteiros ou decimais e os entrega como `double`.
+O parser preserva o literal na AST; o interpretador decide sua representação em
+tempo de execução. O sinal de um número é o operador unário `MINUS`.
+
+Os textos de identificadores e strings são copiados pelo scanner. A AST guarda
+suas próprias cópias; as funções de limpeza liberam cada estrutura separadamente.
+Os escapes de strings chegam à AST como barra e caractere e são tratados pelo
+interpretador, incluindo `\n`, `\t`, `\\`, `\"` e `\'`.
+
+Esta etapa não executa comandos nem escolhe ramos de condições. Um erro léxico
+impede a execução do programa, mesmo se o parser conseguir recuperar o restante
+da entrada. Veja também [análise sintática](../analisador_sintatico/analisador-sintatico.md)
+e [interpretador](../interpretador.md).
