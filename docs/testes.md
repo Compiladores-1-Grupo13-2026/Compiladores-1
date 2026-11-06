@@ -1,7 +1,7 @@
 # Testes
 
 `make test` compila parser/tokens e chama `sh testes/run_tests.sh`.
-São 18 entradas válidas, 38 inválidas e 3 verificações de tokens. Os cinco
+São 25 entradas válidas, 41 inválidas e 3 verificações de tokens. Os cinco
 testes antigos foram preservados em `validos/`, com prefixos de fatia;
 `p1_original.txt` conserva o antigo teste de expressão atribuída a uma variável.
 
@@ -28,8 +28,9 @@ pasta vazia também falha. Não são exigidas ferramentas Python para os testes.
   `in`, e bloco aberto no EOF.
 - P4: atribuições simples/compostas, indexação, listas em várias linhas, alvo literal,
   falta de `]`/vírgula e continuação com expressão ou atribuição válida.
-- P5: def, parâmetros, chamadas, return vazio/com expressão, cabeçalhos malformados,
-  falta de `)` com `;` e NEWLINE, múltiplos erros no mesmo arquivo.
+- P5: def, parâmetros, recursão (simples e mútua), builtins, escopos, cabeçalhos
+  malformados, função não definida/antes do def, aridade, redeclaração e return fora
+  de função (5 válidos e 5 inválidos; detalhes em [P5](p5.md)).
 - Base: programa oficial, exemplo exato do §9.3, erro léxico, linha/coluna com
   espaços/tabs, comentários, CRLF e ausência de resultados falsos para IDs/chamadas.
 

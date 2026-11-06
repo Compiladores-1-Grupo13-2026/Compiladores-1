@@ -46,6 +46,13 @@ static NoAST *criar_numero_p1(double valor, int linha) {
 
 }
 /* ===== FIM [P1] Conversao de literais numericos para nos AST ===== */
+
+/* ===== [P5] Raiz da AST e encadeamento de elif/else ===== */
+/* Raiz AST_PROGRAMA montada ao fim da analise; o main imprime e analisa. */
+static NoAST *raiz_programa = NULL;
+/* Liga um elif (outro IF) ou um else (BLOCO) ao fim de uma cadeia de IFs. */
+static NoAST *anexar_senao(NoAST *se, NoAST *senao);
+/* ===== FIM [P5] Raiz da AST e encadeamento de elif/else ===== */
 %}
 
 %locations
@@ -57,7 +64,8 @@ static NoAST *criar_numero_p1(double valor, int linha) {
     char *texto;
 
     ValorExpressao expr;
-
+    NoAST *no;            /* [P5] comandos, blocos e listas de nos */
+    TipoNo operador;      /* [P4] operador de atribuicao (=, +=, ...) */
 }
 
 /* Declaracoes compartilhadas */
@@ -75,11 +83,18 @@ static NoAST *criar_numero_p1(double valor, int linha) {
 %token DEF RETURN
 
 /* Tipos retornados pelas regras */
-%type <numero> expr chamada_funcao
-%type <no> programa elemento bloco while_stmt for_stmt break_stmt continue_stmt comando def_funcao comando_return atribuicao
-
 %type <expr> expr chamada_funcao
 %destructor { ast_liberar($$.ast); } <expr>
+
+/* [P5] Todo comando devolve um no da AST; listas usam o campo prox. */
+%type <no> programa elemento bloco comando
+%type <no> comando_if lista_elif                               /* P2 */
+%type <no> laco_while laco_for break_stmt continue_stmt        /* P3 */
+%type <no> atribuicao alvo lista elementos indexacao           /* P4 */
+%type <no> def_funcao params_opt params comando_return args_opt args /* P5 */
+%type <operador> op_atrib
+/* Nos descartados pela recuperacao de erros sao liberados aqui. */
+%destructor { ast_liberar($$); } <no>
 
 /* Contrato de precedencia da Sprint 0, na ordem exata do plano. */
 %left OR
@@ -92,14 +107,22 @@ static NoAST *criar_numero_p1(double valor, int linha) {
 %right POWER
 
 /* Define o ponto de entrada principal do interpretador */
-%start programa
+%start entrada
 
 %%
 
 /* ===== ESTRUTURA GERAL DE EXECUCAO ===== */
+/* [P5] A raiz: todos os comandos do arquivo viram filhos de um AST_PROGRAMA. */
+entrada:
+      programa {
+          if ($1) raiz_programa = ast_criar(AST_PROGRAMA, $1, NULL, NULL, $1->linha);
+      }
+    ;
+
+/* [P5] Sequencia de comandos encadeada pelo prox (linhas vazias viram NULL). */
 programa:
       %empty { $$ = NULL; }
-    | programa elemento { $$ = $1; }
+    | programa elemento { $$ = ast_anexar($1, $2); }
     ;
 
 elemento:
@@ -108,23 +131,26 @@ elemento:
     ;
 
 comando:
-      while_stmt                   /* P3 */
-    | for_stmt                     /* P3 */
+      laco_while                   /* P3 */
+    | laco_for                     /* P3 */
     | break_stmt                   /* P3 */
     | continue_stmt                /* P3 */
-    | atribuicao terminador       /* P4 */
+    | atribuicao terminador { $$ = $1; }  /* P4 */
     | expr terminador  {
           emitir_pendente();
-          if ($1.ast) semantico_registrar_expressao($1.ast, 1);
-          else if (!isnan($1.numero)) printf("Resultado: %.15g\n", $1.numero);
-      } /* [P1] Encaminha a expressao para analise e impressao; P2 mantem sua saida numerica. */
+          $$ = $1.ast;
+      } /* [P1] A expressao vira um comando da AST; a analise ocorre no fim. */
     ;
 
+/* [P5] Um bloco { ... } vira um AST_BLOCO com os comandos internos. */
 bloco:
-      LBRACE inicio_bloco programa RBRACE { $$ = $3; }
+      LBRACE inicio_bloco programa RBRACE {
+          $$ = ast_criar(AST_BLOCO, $3, NULL, NULL, @1.first_line);
+      }
     | LBRACE inicio_bloco programa error FIM {
           ERRO_SINTATICO(@1, "bloco aberto sem '}'");
           yyerrok;
+          ast_liberar($3);
           $$ = NULL;
       }
     ;
@@ -144,7 +170,7 @@ terminador:
 
 /* Recupera no fim do comando sem descartar as expressoes seguintes. */
 comando:
-    error terminador { emitir_pendente(); yyerrok; }
+    error terminador { emitir_pendente(); yyerrok; $$ = NULL; }
 ;
 
 expr:
@@ -224,57 +250,40 @@ expr:
 /* Operadores de comparacao e logica. */
 expr:
       expr EQ expr {
-          semantico_registrar_expressao($1.ast, 0);
-          semantico_registrar_expressao($3.ast, 0);
           $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero == $3.numero);
-          $$.ast = NULL;
+          $$.ast = ast_criar(AST_IGUAL, $1.ast, $3.ast, NULL, @2.first_line);
       }
     | expr NE expr {
-          semantico_registrar_expressao($1.ast, 0);
-          semantico_registrar_expressao($3.ast, 0);
           $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero != $3.numero);
-          $$.ast = NULL;
+          $$.ast = ast_criar(AST_DIFERENTE, $1.ast, $3.ast, NULL, @2.first_line);
       }
     | expr LT expr {
-          semantico_registrar_expressao($1.ast, 0);
-          semantico_registrar_expressao($3.ast, 0);
           $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero < $3.numero);
-          $$.ast = NULL;
+          $$.ast = ast_criar(AST_MENOR, $1.ast, $3.ast, NULL, @2.first_line);
       }
     | expr GT expr {
-          semantico_registrar_expressao($1.ast, 0);
-          semantico_registrar_expressao($3.ast, 0);
           $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero > $3.numero);
-          $$.ast = NULL;
+          $$.ast = ast_criar(AST_MAIOR, $1.ast, $3.ast, NULL, @2.first_line);
       }
     | expr LE expr {
-          semantico_registrar_expressao($1.ast, 0);
-          semantico_registrar_expressao($3.ast, 0);
           $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero <= $3.numero);
-          $$.ast = NULL;
+          $$.ast = ast_criar(AST_MENOR_IGUAL, $1.ast, $3.ast, NULL, @2.first_line);
       }
     | expr GE expr {
-          semantico_registrar_expressao($1.ast, 0);
-          semantico_registrar_expressao($3.ast, 0);
           $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero >= $3.numero);
-          $$.ast = NULL;
+          $$.ast = ast_criar(AST_MAIOR_IGUAL, $1.ast, $3.ast, NULL, @2.first_line);
       }
     | expr AND expr {
-          semantico_registrar_expressao($1.ast, 0);
-          semantico_registrar_expressao($3.ast, 0);
           $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero != 0 && $3.numero != 0);
-          $$.ast = NULL;
+          $$.ast = ast_criar(AST_E, $1.ast, $3.ast, NULL, @2.first_line);
       }
     | expr OR expr {
-          semantico_registrar_expressao($1.ast, 0);
-          semantico_registrar_expressao($3.ast, 0);
           $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero != 0 || $3.numero != 0);
-          $$.ast = NULL;
+          $$.ast = ast_criar(AST_OU, $1.ast, $3.ast, NULL, @2.first_line);
       }
     | NOT expr {
-          semantico_registrar_expressao($2.ast, 0);
           $$.numero = isnan($2.numero) ? NAN : ($2.numero == 0);
-          $$.ast = NULL;
+          $$.ast = ast_criar(AST_NAO, $2.ast, NULL, NULL, @1.first_line);
       }
     ;
 
@@ -283,106 +292,131 @@ comando:
       comando_if
     ;
 
+/* [P5/integracao] AST_IF: a = condicao, b = bloco, c = elif (outro IF) ou else (BLOCO). */
 comando_if:
-      IF expr bloco { semantico_registrar_expressao($2.ast, 0); RECONHECIDO("[OK] if reconhecido"); }
-    | IF expr bloco ELSE bloco { semantico_registrar_expressao($2.ast, 0); RECONHECIDO("[OK] if reconhecido"); }
-    | IF expr bloco lista_elif { semantico_registrar_expressao($2.ast, 0); RECONHECIDO("[OK] if reconhecido"); }
-    | IF expr bloco lista_elif ELSE bloco { semantico_registrar_expressao($2.ast, 0); RECONHECIDO("[OK] if reconhecido"); }
-    | IF { ERRO_SINTATICO(@1, "condicao vazia no if"); } bloco
+      IF expr bloco {
+          $$ = ast_criar(AST_IF, $2.ast, $3, NULL, @1.first_line);
+          RECONHECIDO("[OK] if reconhecido");
+      }
+    | IF expr bloco ELSE bloco {
+          $$ = ast_criar(AST_IF, $2.ast, $3, $5, @1.first_line);
+          RECONHECIDO("[OK] if reconhecido");
+      }
+    | IF expr bloco lista_elif {
+          $$ = ast_criar(AST_IF, $2.ast, $3, $4, @1.first_line);
+          RECONHECIDO("[OK] if reconhecido");
+      }
+    | IF expr bloco lista_elif ELSE bloco {
+          $$ = ast_criar(AST_IF, $2.ast, $3, anexar_senao($4, $6), @1.first_line);
+          RECONHECIDO("[OK] if reconhecido");
+      }
+    | IF { ERRO_SINTATICO(@1, "condicao vazia no if"); } bloco { ast_liberar($3); $$ = NULL; }
     | IF error {
           preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no if");
-      } bloco { yyerrok; }
+      } bloco { yyerrok; ast_liberar($4); $$ = NULL; }
     /* Nao aceitar IF expr error: interceptava expressoes incompletas e
 - confundia a abertura do bloco com a ausencia de bloco. */
     | IF error terminador {
           ERRO_SINTATICO(@1, "bloco ausente no if (esperado '{')"); yyerrok;
+          $$ = NULL;
       }
-    | ELSE bloco { ERRO_SINTATICO(@1, "else sem if correspondente"); }
+    | ELSE bloco { ERRO_SINTATICO(@1, "else sem if correspondente"); ast_liberar($2); $$ = NULL; }
     ;
 
+/* Cada elif vira um AST_IF pendurado no filho c do anterior. */
 lista_elif:
-      ELIF expr bloco { semantico_registrar_expressao($2.ast, 0); }
-    | lista_elif ELIF expr bloco { semantico_registrar_expressao($3.ast, 0); }
-    | ELIF { ERRO_SINTATICO(@1, "condicao vazia no elif"); } bloco
+      ELIF expr bloco { $$ = ast_criar(AST_IF, $2.ast, $3, NULL, @1.first_line); }
+    | lista_elif ELIF expr bloco {
+          $$ = anexar_senao($1, ast_criar(AST_IF, $3.ast, $4, NULL, @2.first_line));
+      }
+    | ELIF { ERRO_SINTATICO(@1, "condicao vazia no elif"); } bloco { ast_liberar($3); $$ = NULL; }
     | ELIF error {
           preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no elif");
-      } bloco { yyerrok; }
+      } bloco { yyerrok; ast_liberar($4); $$ = NULL; }
     | ELIF error terminador {
           ERRO_SINTATICO(@1, "bloco ausente no elif (esperado '{')"); yyerrok;
+          $$ = NULL;
       }
     ;
 
 /* ===== FIM [P2] CONDICOES E LOGICA ===== */
 
 
-/* ===== [P3] LAÇOS ===== */
-
-while_stmt:
-    WHILE expr bloco {
-        $$ = ast_criar(AST_WHILE, $2, $3, NULL, @1.first_line);
-    }
-;
-
 /* ===== [P3] LACOS ===== */
+/* [P5/integracao] As regras com recuperacao de erro passaram a gerar os nos
+ * AST_WHILE (a = condicao, b = corpo) e AST_FOR (texto = variavel,
+ * a = iteravel, b = corpo). As copias sem recuperacao foram unificadas aqui. */
 laco_while:
-      WHILE expr bloco { semantico_registrar_expressao($2.ast, 0); RECONHECIDO("[OK] while reconhecido"); }
-    | WHILE { ERRO_SINTATICO(@1, "condicao vazia no while"); } bloco
+      WHILE expr bloco {
+          $$ = ast_criar(AST_WHILE, $2.ast, $3, NULL, @1.first_line);
+          RECONHECIDO("[OK] while reconhecido");
+      }
+    | WHILE { ERRO_SINTATICO(@1, "condicao vazia no while"); } bloco { ast_liberar($3); $$ = NULL; }
     | WHILE error {
           preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no while");
-      } bloco { yyerrok; }
+      } bloco { yyerrok; ast_liberar($4); $$ = NULL; }
     ;
 
 laco_for:
-      FOR ID IN expr bloco { semantico_registrar_expressao($4.ast, 0); RECONHECIDO("[OK] for reconhecido"); }
+      FOR ID IN expr bloco {
+          /* O texto de ID pertence ao scanner; ast_criar_texto guarda uma copia. */
+          $$ = ast_criar_texto(AST_FOR, $2, @1.first_line);
+          if ($$) { $$->a = $4.ast; $$->b = $5; }
+          else { ast_liberar($4.ast); ast_liberar($5); }
+          RECONHECIDO("[OK] for reconhecido");
+      }
     | FOR ID error {
           preparar_diagnostico(@1.first_line, @1.first_column, "for sem a palavra 'in' ou expressao iteravel invalida");
-      } bloco { yyerrok; }
+      } bloco { yyerrok; ast_liberar($5); $$ = NULL; }
     | FOR error {
           preparar_diagnostico(@1.first_line, @1.first_column, "for sem variavel de controle");
-      } bloco { yyerrok; }
+      } bloco { yyerrok; ast_liberar($4); $$ = NULL; }
     ;
-
-for_stmt:
-    FOR ID IN expr bloco {
-        $$ = ast_criar_texto(AST_FOR, $2, @1.first_line);
-        $$->a = $4; /* Iterável */
-        $$->b = $5; /* Corpo */
-        free($2);
-    }
-;
 
 break_stmt:
     BREAK terminador {
         $$ = ast_criar(AST_BREAK, NULL, NULL, NULL, @1.first_line);
+        RECONHECIDO("[OK] break reconhecido");
     }
 ;
 
 continue_stmt:
     CONTINUE terminador {
         $$ = ast_criar(AST_CONTINUE, NULL, NULL, NULL, @1.first_line);
+        RECONHECIDO("[OK] continue reconhecido");
     }
 ;
 /* ===== [P4] ATRIBUICAO, LISTAS E COMENTARIOS ===== */
 /* Atribuicoes, listas e indexacao. Comentarios sao ignorados no scanner. */
+/* [P5/integracao] As acoes AST que a P4 deixou preparadas (comentadas) foram
+ * ativadas: as regras agora devolvem nos via ast_p4_atribuicao/lista/indexacao. */
 
 /* Atribuicao simples e composta: x = 1, x += 1, l[0] = 1 */
 atribuicao:
-      alvo op_atrib expr { semantico_registrar_expressao($3.ast, 0); RECONHECIDO("[OK] atribuicao reconhecida"); }
+      alvo op_atrib expr {
+          $$ = ast_p4_atribuicao($2, $1, $3.ast, @1.first_line);
+          RECONHECIDO("[OK] atribuicao reconhecida");
+      }
     | literal op_atrib expr {
-        (void) $3;
+        ast_liberar($3.ast);
         ERRO_SINTATICO(@1, "atribuicao invalida: o lado esquerdo deve ser variavel ou l[i]");
         yyerrok;
+        $$ = NULL;
     }
     ;
 
 op_atrib:
-      ASSIGN | PLUSEQ | MINUSEQ | TIMESEQ | DIVEQ
+      ASSIGN  { $$ = AST_ATRIBUICAO; }
+    | PLUSEQ  { $$ = AST_ATRIB_SOMA; }
+    | MINUSEQ { $$ = AST_ATRIB_SUB; }
+    | TIMESEQ { $$ = AST_ATRIB_MULT; }
+    | DIVEQ   { $$ = AST_ATRIB_DIV; }
     ;
 
 /* Alvo valido: variavel ou posicao de lista. */
 alvo:
-      ID
-    | indexacao
+      ID        { $$ = ast_criar_texto(AST_IDENTIFICADOR, $1, @1.first_line); }
+    | indexacao { $$ = $1; }
     ;
 
 /* Literais que nao podem ficar a esquerda de "=" (ex.: 3 = x). */
@@ -392,111 +426,45 @@ literal:
 
 /* Lista [a, b]. Como STRING e NONE, seu valor numerico e NAN. */
 expr:
-      lista       { $$.numero = NAN; $$.ast = NULL; }
-    | indexacao   { $$.numero = NAN; $$.ast = NULL; }
+      lista       { $$.numero = NAN; $$.ast = $1; }
+    | indexacao   { $$.numero = NAN; $$.ast = $1; }
     ;
 
 lista:
-      LBRACKET RBRACKET
-    | LBRACKET elementos RBRACKET
+      LBRACKET RBRACKET { $$ = ast_p4_lista(NULL, @1.first_line); }
+    | LBRACKET elementos RBRACKET { $$ = ast_p4_lista($2, @1.first_line); }
     | LBRACKET elementos error {
+        ast_liberar($2);
         ERRO_SINTATICO(@1, "lista mal formada: faltou ']' (ou ',' entre elementos)");
         sincronizar_lista();
         yyerrok;
+        $$ = ast_p4_lista(NULL, @1.first_line);
     }
     | LBRACKET error {
         ERRO_SINTATICO(@1, "lista mal formada: faltou ']'");
         sincronizar_lista();
         yyerrok;
+        $$ = ast_p4_lista(NULL, @1.first_line);
     }
     ;
 
 elementos:
-      expr { semantico_registrar_expressao($1.ast, 0); }
-    | elementos COMMA expr { semantico_registrar_expressao($3.ast, 0); }
+      expr { $$ = $1.ast; }
+    | elementos COMMA expr { $$ = ast_anexar($1, $3.ast); }
     ;
 
 /* Indexacao l[0]. */
 indexacao:
-      ID LBRACKET expr RBRACKET { semantico_registrar_expressao($3.ast, 0); }
+      ID LBRACKET expr RBRACKET {
+          $$ = ast_p4_indexacao(ast_criar_texto(AST_IDENTIFICADOR, $1, @1.first_line),
+                                $3.ast, @1.first_line);
+      }
     ;
 
-/* ===== [P4] AST e recuperacao - preparacao para a base do grupo =====
- * As regras ativas acima pertencem a entrega sintatica atual.
- * As acoes abaixo ficam neste mesmo arquivo, junto da secao P4, aguardando
- * a base comum, ID/STRING carregarem texto e a integracao da equipe.
- * Nao constituem um segundo parser nem um modo AST ja disponivel.
- * Substituir as producoes P4 correspondentes quando a base estiver pronta.
- * Modelo alinhado com a P1: expr <expr> usa ValorExpressao.ast;
- * atribuicao/lista/elementos/indexacao <no>; op_atrib <operador>.
- * Os membros da union e a raiz/blocos dependem da integracao P1/P5.
- * Precedencia de LBRACKET: apos POWER. Necessita <stdlib.h> e destruidores.
- *
- * atribuicao:
- *       expr op_atrib expr {
- *           $$ = ast_p4_atribuicao($2, $1.ast, $3.ast, @1.first_line);
- *       }
- *     ;
- *
- * op_atrib:
- *       ASSIGN  { $$ = AST_ATRIBUICAO; }
- *     | PLUSEQ  { $$ = AST_ATRIB_SOMA; }
- *     | MINUSEQ { $$ = AST_ATRIB_SUB; }
- *     | TIMESEQ { $$ = AST_ATRIB_MULT; }
- *     | DIVEQ   { $$ = AST_ATRIB_DIV; }
- *     ;
- *
- * expr:
- *       lista     { $$ = (ValorExpressao){ .numero = NAN, .ast = $1 }; }
- *     | indexacao { $$ = (ValorExpressao){ .numero = NAN, .ast = $1 }; }
- *     ;
- *
- * lista:
- *       LBRACKET RBRACKET { $$ = ast_p4_lista(NULL, @1.first_line); }
- *     | LBRACKET elementos RBRACKET { $$ = ast_p4_lista($2, @1.first_line); }
- *
- *     | LBRACKET elementos error {
- *           ast_liberar($2);
- *           ERRO_SINTATICO(@1, "lista mal formada: faltou ']' (ou ',' entre elementos)");
- *           sincronizar_lista();
- *           $$ = ast_p4_lista(NULL, @1.first_line);
- *           yyerrok;
- *       }
- *     | LBRACKET error {
- *           ERRO_SINTATICO(@1, "lista mal formada: faltou ']'");
- *           sincronizar_lista();
- *           $$ = ast_p4_lista(NULL, @1.first_line);
- *           yyerrok;
- *       }
- *     ;
- *
- * elementos:
- *       expr { $$ = $1.ast; }
- *     | elementos COMMA expr { $$ = ast_anexar($1, $3.ast); }
- *     ;
- *
- *
- * indexacao:
- *       expr LBRACKET expr RBRACKET {
- *           $$ = ast_p4_indexacao($1.ast, $3.ast, @1.first_line);
- *       }
- *     ;
- *
- * Helper correspondente para quando ID/STRING possuirem texto alocado:
- *
- * static void sincronizar_lista(void) {
- *     while (yychar != FIM && yychar != NEWLINE && yychar != SEMICOLON &&
- *            yychar != RBRACE && yychar != RBRACKET) {
- *         if (yychar == ID || yychar == STRING) free(yylval.texto);
- *         yychar = yylex();
- *     }
- *     if (yychar == RBRACKET) yychar = YYEMPTY;
- *     encerrar_lista_invalida();
- * }
- * ===== FIM [P4] Preparacao da AST ===== */
-
 /* ===== [P5] FUNCOES E CHAMADAS ===== */
-/* Definicoes de funcoes, parametros, return e chamadas com argumentos. */
+/* Definicoes de funcoes, parametros, return e chamadas com argumentos.
+ * Cada regra devolve um no da AST; a verificacao (nome existe? quantos
+ * argumentos? return dentro de funcao?) fica para a analise semantica. */
 
 comando:
       def_funcao
@@ -504,47 +472,58 @@ comando:
     | ID LPAREN args_opt error terminador {
           ERRO_SINTATICO(@1, "chamada de funcao sem fecha parenteses ')' antes do terminador");
           yyerrok;
+          ast_liberar($3);
+          $$ = NULL;
       }
     ;
 
+/* def nome(p1, p2) { corpo }  ->  FUNCAO 'nome' (a = parametros, b = BLOCO) */
 def_funcao:
       DEF ID LPAREN params_opt RPAREN bloco {
+          $$ = ast_p5_funcao($2, $4, $6, @1.first_line);
           RECONHECIDO("[OK] def reconhecido");
       }
     | DEF error LPAREN params_opt RPAREN {
           ERRO_SINTATICO(@1, "definicao de funcao sem identificador (esperado nome antes de '(')");
           yyerrok;
-      } bloco
+      } bloco { ast_liberar($4); ast_liberar($7); $$ = NULL; }
     | DEF error {
           preparar_diagnostico(@1.first_line, @1.first_column, "definicao de funcao malformada (esperado nome e parametros antes do bloco)");
-      } bloco { yyerrok; }
+      } bloco { yyerrok; ast_liberar($4); $$ = NULL; }
     | DEF ID LPAREN error RPAREN {
           ERRO_SINTATICO(@1, "parametros mal formados na definicao de funcao. Recuperado apos ')'.");
           yyerrok;
-      } bloco
+      } bloco { ast_liberar($7); $$ = NULL; }
     ;
 
 params_opt:
-      %empty
-    | params
+      %empty { $$ = NULL; }
+    | params { $$ = $1; }
     ;
 
+/* Parametros viram nos PARAMETRO encadeados pelo prox, na ordem do codigo. */
 params:
-      ID
-    | params COMMA ID
+      ID { $$ = ast_criar_texto(AST_PARAMETRO, $1, @1.first_line); }
+    | params COMMA ID {
+          $$ = ast_anexar($1, ast_criar_texto(AST_PARAMETRO, $3, @3.first_line));
+      }
     ;
 
+/* return expr;  ->  RETURN (a = expr);   return;  ->  RETURN sem filho */
 comando_return:
       RETURN expr terminador {
-          semantico_registrar_expressao($2.ast, 0);
+          $$ = ast_criar(AST_RETURN, $2.ast, NULL, NULL, @1.first_line);
           RECONHECIDO("[OK] return reconhecido");
       }
     | RETURN terminador {
+          $$ = ast_criar(AST_RETURN, NULL, NULL, NULL, @1.first_line);
           RECONHECIDO("[OK] return reconhecido");
       }
     | RETURN ID LPAREN args_opt error terminador {
           ERRO_SINTATICO(@1, "chamada de funcao sem fecha parenteses ')' no return antes do terminador");
           yyerrok;
+          ast_liberar($4);
+          $$ = NULL;
       }
     ;
 
@@ -552,23 +531,27 @@ expr:
       chamada_funcao { $$ = $1; }
     ;
 
+/* nome(a1, a2)  ->  CHAMADA 'nome' (a = argumentos). print e range sao ID. */
 chamada_funcao:
       ID LPAREN args_opt RPAREN {
           RECONHECIDO("[OK] chamada de funcao reconhecida");
           $$.numero = NAN;
-          $$.ast = NULL;
+          $$.ast = ast_p5_chamada($1, $3, @1.first_line);
       }
     ;
 
 args_opt:
-      %empty
-    | args
+      %empty { $$ = NULL; }
+    | args { $$ = $1; }
     ;
 
+/* Argumentos sao expressoes quaisquer, encadeadas pelo prox. */
 args:
-      expr { semantico_registrar_expressao($1.ast, 0); }
-    | args COMMA expr { semantico_registrar_expressao($3.ast, 0); }
+      expr { $$ = $1.ast; }
+    | args COMMA expr { $$ = ast_anexar($1, $3.ast); }
     ;
+
+/* ===== FIM [P5] FUNCOES E CHAMADAS ===== */
 
 %%
 
@@ -620,19 +603,39 @@ void yyerror(const char *mensagem) {
     snprintf(erro_lexema, sizeof erro_lexema, "%s", lexema_atual());
 }
 
-/* Semana 5: o ponto de entrada continua aqui, sem integrar src/main.c. */
+/* ===== [P5] Encadeamento de elif/else e fluxo principal ===== */
+/* Desce pelos filhos c da cadeia de IFs e pendura "senao" no ultimo. */
+static NoAST *anexar_senao(NoAST *se, NoAST *senao) {
+    if (!se) return senao;
+    NoAST *ultimo = se;
+    while (ultimo->c && ultimo->c->tipo == AST_IF) ultimo = ultimo->c;
+    if (ultimo->c) ast_liberar(senao);   /* nao deve ocorrer: ja ha um else */
+    else ultimo->c = senao;
+    return se;
+}
+
+/* Fluxo do interpretador (Semana 6):
+ * 1. yyparse() le stdin e monta a AST (com recuperacao de erros sintaticos);
+ * 2. a AST do programa e impressa;
+ * 3. a analise semantica percorre a AST e usa a tabela de simbolos;
+ * 4. AST, tabela e textos do scanner sao liberados.
+ * O codigo de saida e 1 se houve qualquer erro. */
 int main(void) {
     setvbuf(stdout, NULL, _IONBF, 0);
     int status = yyparse();
     emitir_pendente();
 
-    NoAST *raiz = semantico_ast();
-    if (raiz) ast_imprimir(raiz, 0);
-    int erros_semanticos = semantico_analisar(raiz);
+    if (raiz_programa) ast_imprimir(raiz_programa, 0);
 
-    semantico_liberar(raiz);
-    ast_liberar(raiz);
+    /* Roda mesmo apos erros sintaticos (como ja fazia a P1), analisando os
+     * comandos que a recuperacao preservou. Limitacao: um def descartado
+     * pela recuperacao nao entra na AST, entao suas chamadas sao relatadas
+     * como "funcao nao definida". */
+    int erros_semanticos = semantico_analisar(raiz_programa);
+
+    ast_liberar(raiz_programa);
     lexer_liberar_textos();
     return status != 0 || erros_semanticos != 0 ||
            erros_sintaticos != 0 || erros_lexicos != 0;
 }
+/* ===== FIM [P5] Encadeamento de elif/else e fluxo principal ===== */

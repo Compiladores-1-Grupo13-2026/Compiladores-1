@@ -1,2 +1,4 @@
+def (a) { return a; }
 def soma(a,, b) { return a; }
+print(5;
 2 + 2;

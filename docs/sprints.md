@@ -36,7 +36,7 @@ entregas concluídas.
 | P2 — Leonardo | Visitante comum e diagnósticos | Comparações, lógica e condicionais | Depende da entrega do responsável |
 | P3 — Gabriel | Runner geral e Valgrind | Laços, contexto de break/continue | Depende da entrega do responsável |
 | P4 — Karoline | Tabela de símbolos e documentação | Atribuições, listas, indexação e leitura de nomes | Módulos e testes isolados implementados; integração depende da base |
-| P5 — João Vitor | Raiz/blocos do parser e fluxo do main | Funções, parâmetros, chamadas e return | Depende da entrega do responsável |
+| P5 — João Vitor | Raiz/blocos do parser e fluxo do main | Funções, parâmetros, chamadas e return | AST completa do programa, escopos de função e 10 testes |
 
 A contribuição P4 está nas seções comentadas de `Semantica/Ast/ast.c` e `ast.h`,
 `Semantica/semantico.c` e `semantico.h`, além de `Semantica/Tabela/`.

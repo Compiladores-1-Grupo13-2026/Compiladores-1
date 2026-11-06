@@ -1,10 +1,13 @@
 #ifndef MINIPY_SEMANTICO_H
 #define MINIPY_SEMANTICO_H
 
+#include "Ast/ast.h"
+
+/* ===== [P1] API de analise de expressoes ===== */
+const char *semantico_tipo_expr(const NoAST *no);
+/* ===== FIM [P1] API de analise de expressoes ===== */
 
 /* ===== [P4] Atribuição, listas e indexação ===== */
-
-#include "Ast/ast.h"
 
 /* Adaptadores para o visitante e erro_semantico da base P2. As strings de tipo
  * retornadas pelo visitante precisam continuar validas ate o fim da visita.
@@ -20,16 +23,12 @@ typedef void (*P4Erro)(int linha, const char *formato, ...);
 const char *semantico_p4_visitar(NoAST *no, P4Visitar visitar, P4Erro erro);
 
 /* ===== FIM [P4] Atribuição, listas e indexação ===== */
-=======
-#include "Ast/ast.h"
 
-/* ===== [P1] API de registro e analise de expressoes ===== */
-/* O parser tambem encaminha expressoes de outras regras para esta analise. */
-void semantico_registrar_expressao(NoAST *raiz, int imprimir);
-NoAST *semantico_ast(void);
+/* ===== [P5] Ponto de entrada da analise semantica ===== */
+/* Percorre a AST inteira do programa (raiz AST_PROGRAMA), criando e
+ * consultando a tabela de simbolos. Imprime cada erro em stderr e devolve
+ * a quantidade de erros semanticos encontrados. Libera a tabela ao final. */
 int semantico_analisar(NoAST *raiz);
-const char *semantico_tipo_expr(const NoAST *no);
-void semantico_liberar(NoAST *raiz_impressa);
-/* ===== FIM [P1] API de registro e analise de expressoes ===== */
+/* ===== FIM [P5] Ponto de entrada da analise semantica ===== */
 
 #endif

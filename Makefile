@@ -23,8 +23,12 @@ lex.yy.c: $(SCANNER_SOURCE) parser.tab.h
 	$(FLEX) -o lex.yy.c $(SCANNER_SOURCE)
 
 # libm fornece floor e pow para os operadores da P1.
-parser: parser.tab.c parser.tab.h lex.yy.c Semantica/Ast/ast.c Semantica/Ast/ast.h Semantica/semantico.c Semantica/semantico.h Makefile
-	$(CC) $(CPPFLAGS) -I. $(CFLAGS) $(LDFLAGS) -o $@ parser.tab.c lex.yy.c Semantica/Ast/ast.c Semantica/semantico.c $(LDLIBS)
+# [P5] Fontes do interpretador integrado: AST, tabela de simbolos e semantica.
+FONTES_SEMANTICA = Semantica/Ast/ast.c Semantica/Tabela/tabela.c Semantica/semantico.c
+HEADERS_SEMANTICA = Semantica/Ast/ast.h Semantica/Tabela/tabela.h Semantica/semantico.h
+
+parser: parser.tab.c parser.tab.h lex.yy.c $(FONTES_SEMANTICA) $(HEADERS_SEMANTICA) Makefile
+	$(CC) $(CPPFLAGS) -I. $(CFLAGS) $(LDFLAGS) -o $@ parser.tab.c lex.yy.c $(FONTES_SEMANTICA) $(LDLIBS)
 
 tokens: parser.tab.h lex.yy.c Makefile
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DSO_TOKENS $(LDFLAGS) -o $@ lex.yy.c $(LDLIBS)
@@ -53,7 +57,6 @@ test-p4:
 
 memcheck-p4:
 	$(PYTHON) testes/testar_p4.py --memcheck
-=======
 # ===== [P1] Verificacao de memoria dos casos validos de expressoes =====
 # Valgrind e preferido; usa AddressSanitizer com deteccao de leaks se ausente.
 VALIDOS_P1 = $(wildcard testes/validos/p1_*.txt)
@@ -71,8 +74,8 @@ memcheck: parser
 		done; \
 	fi
 
-parser-memcheck: parser.tab.c parser.tab.h lex.yy.c Semantica/Ast/ast.c Semantica/Ast/ast.h Semantica/semantico.c Semantica/semantico.h Makefile
-	$(CC) $(CPPFLAGS) -I. $(CFLAGS) -g -fsanitize=address -fno-omit-frame-pointer $(LDFLAGS) -o $@ parser.tab.c lex.yy.c Semantica/Ast/ast.c Semantica/semantico.c $(LDLIBS) -fsanitize=address
+parser-memcheck: parser.tab.c parser.tab.h lex.yy.c $(FONTES_SEMANTICA) $(HEADERS_SEMANTICA) Makefile
+	$(CC) $(CPPFLAGS) -I. $(CFLAGS) -g -fsanitize=address -fno-omit-frame-pointer $(LDFLAGS) -o $@ parser.tab.c lex.yy.c $(FONTES_SEMANTICA) $(LDLIBS) -fsanitize=address
 # ===== FIM [P1] Verificacao de memoria dos casos validos de expressoes =====
 
 clean:

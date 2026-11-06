@@ -1,24 +1,3 @@
-
-#include <stdio.h>
-#include "ast.h"
-
-/* ===== [P4] Atribuição, listas e indexação ===== */
-
-NoAST *ast_p4_atribuicao(TipoNo operador, NoAST *alvo, NoAST *valor, int linha) {
-    return ast_criar(operador, alvo, valor, NULL, linha);
-}
-
-NoAST *ast_p4_lista(NoAST *elementos, int linha) {
-    return ast_criar(AST_LISTA, elementos, NULL, NULL, linha);
-}
-
-NoAST *ast_p4_indexacao(NoAST *base, NoAST *indice, int linha) {
-    return ast_criar(AST_INDEXACAO, base, indice, NULL, linha);
-}
-
-const char *ast_p4_nome_tipo(TipoNo tipo) {
-    switch (tipo) {
-=======
 #include "ast.h"
 
 #include <stdio.h>
@@ -151,6 +130,40 @@ const char *ast_nome_tipo(TipoNo tipo) {
         case AST_LISTA: return "LISTA";
         case AST_INDEXACAO: return "INDEXACAO";
 
+
+        /* ===== [P5] Nomes dos nos de funcoes ===== */
+        case AST_FUNCAO: return "FUNCAO";
+        case AST_PARAMETRO: return "PARAMETRO";
+        case AST_RETURN: return "RETURN";
+        case AST_CHAMADA: return "CHAMADA";
+        /* ===== FIM [P5] Nomes dos nos de funcoes ===== */
+    }
+    return "DESCONHECIDO";
+}
+
+/* ===== [P4] Atribuição, listas e indexação ===== */
+
+NoAST *ast_p4_atribuicao(TipoNo operador, NoAST *alvo, NoAST *valor, int linha) {
+    return ast_criar(operador, alvo, valor, NULL, linha);
+}
+
+NoAST *ast_p4_lista(NoAST *elementos, int linha) {
+    return ast_criar(AST_LISTA, elementos, NULL, NULL, linha);
+}
+
+NoAST *ast_p4_indexacao(NoAST *base, NoAST *indice, int linha) {
+    return ast_criar(AST_INDEXACAO, base, indice, NULL, linha);
+}
+
+const char *ast_p4_nome_tipo(TipoNo tipo) {
+    switch (tipo) {
+        case AST_ATRIBUICAO: return "ATRIBUICAO";
+        case AST_ATRIB_SOMA: return "ATRIB_SOMA";
+        case AST_ATRIB_SUB: return "ATRIB_SUB";
+        case AST_ATRIB_MULT: return "ATRIB_MULT";
+        case AST_ATRIB_DIV: return "ATRIB_DIV";
+        case AST_LISTA: return "LISTA";
+        case AST_INDEXACAO: return "INDEXACAO";
         default: return NULL;
     }
 }
@@ -166,14 +179,41 @@ int ast_p4_imprimir(NoAST *no, int nivel) {
 }
 
 /* ===== FIM [P4] Atribuição, listas e indexação ===== */
-=======
-        case AST_FUNCAO: return "FUNCAO";
-        case AST_PARAMETRO: return "PARAMETRO";
-        case AST_RETURN: return "RETURN";
-        case AST_CHAMADA: return "CHAMADA";
+
+/* ===== [P5] Construtores de funcoes e chamadas ===== */
+
+/* def nome(parametros) { corpo }: o nome fica em texto, os parametros
+ * (ja encadeados por prox) no filho a e o BLOCO do corpo no filho b. */
+NoAST *ast_p5_funcao(const char *nome, NoAST *parametros, NoAST *corpo, int linha) {
+    NoAST *no = ast_criar_texto(AST_FUNCAO, nome, linha);
+    if (!no) {
+        ast_liberar(parametros);
+        ast_liberar(corpo);
+        return NULL;
     }
-    return "DESCONHECIDO";
+    no->a = parametros;
+    no->b = corpo;
+    return no;
 }
+
+/* nome(argumentos): os argumentos sao expressoes encadeadas por prox. */
+NoAST *ast_p5_chamada(const char *nome, NoAST *argumentos, int linha) {
+    NoAST *no = ast_criar_texto(AST_CHAMADA, nome, linha);
+    if (!no) {
+        ast_liberar(argumentos);
+        return NULL;
+    }
+    no->a = argumentos;
+    return no;
+}
+
+int ast_p5_contar(const NoAST *lista) {
+    int total = 0;
+    for (; lista; lista = lista->prox) total++;
+    return total;
+}
+
+/* ===== FIM [P5] Construtores de funcoes e chamadas ===== */
 
 static void imprimir_texto(const char *texto) {
     putchar('\'');
@@ -250,39 +290,3 @@ void ast_liberar(NoAST *raiz) {
     free(raiz->texto);
     free(raiz);
 }
-
-/* ============================================================================
- * P3 (Gabriel) - LACOS - trecho de Semantica/Ast/ast.c
- * ========================================================================== */
-
-
-/* ---------- PEDACO 1: dentro do switch de ast_nome_tipo() ------------------ */
-    /* ===== [P3] LACOS ===== */
-    case AST_WHILE:    return "WHILE";
-    case AST_FOR:      return "FOR";
-    case AST_BREAK:    return "BREAK";
-    case AST_CONTINUE: return "CONTINUE";
-    /* (se P1 usou um vetor de nomes em vez de switch, acrescente "WHILE",
-     *  "FOR", "BREAK", "CONTINUE" na posicao da secao [P3] do enum) */
-
-
-/* ===== [P3] LAÇOS ===== */
-case AST_WHILE:
-    printf("%*sWHILE [linha %d]\n", nivel * 2, "", raiz->linha);
-    if (raiz->a) ast_imprimir(raiz->a, nivel + 1);
-    if (raiz->b) ast_imprimir(raiz->b, nivel + 1);
-    break;
-
-case AST_FOR:
-    printf("%*sFOR '%s' [linha %d]\n", nivel * 2, "", raiz->texto ? raiz->texto : "", raiz->linha);
-    if (raiz->a) ast_imprimir(raiz->a, nivel + 1);
-    if (raiz->b) ast_imprimir(raiz->b, nivel + 1);
-    break;
-
-case AST_BREAK:
-    printf("%*sBREAK [linha %d]\n", nivel * 2, "", raiz->linha);
-    break;
-
-case AST_CONTINUE:
-    printf("%*sCONTINUE [linha %d]\n", nivel * 2, "", raiz->linha);
-    break;

@@ -9,10 +9,9 @@ O parser principal fecha o escopo técnico da **Semana 5: parser e recuperação
 Expressões numéricas são calculadas; as cinco fatias reconhecem as demais
 construções e mostram `[OK]`.
 
-Esta branch acrescenta a **P4 da Sprint 3**: tabela de símbolos e seções de AST
-e semântica de atribuição/listas/indexação nos arquivos compartilhados, além de
-testes próprios. A base comum
-de AST e a integração do parser ainda serão entregues pelo grupo.
+Na **Sprint 3 (AST e semântica)**, o parser monta uma AST única do programa,
+imprime essa árvore e a análise semântica a percorre usando a tabela de símbolos
+com escopos por função (P4 e P5). Veja [Funções e integração (P5)](docs/p5.md).
 
 [Documentação no GitHub Pages](https://compiladores-1-grupo13-2026.github.io/Compiladores-1/)
 
@@ -93,9 +92,9 @@ Abra <http://127.0.0.1:8000/Compiladores-1/>. Use `Ctrl+C` para encerrar.
 
 ## Escopo e limitações
 
-A entrega cobre léxico, parser e recuperação de erros da Semana 5. AST, tabela
-de símbolos e semântica da P4 estão implementadas em seções dos arquivos comuns, com
-validação pelo contrato da Sprint 3. O parser principal ainda não as aciona.
+A entrega cobre léxico, parser e recuperação de erros da Semana 5 e, na Sprint 3,
+a construção da AST completa, a tabela de símbolos e a análise semântica integradas
+ao parser principal. O programa ainda não é executado (funções não rodam).
 A execução e as fatias dos demais integrantes permanecem fora desta contribuição.
 O parser lê stdin; arquivos de teste da entrega anterior usam `.txt`.
 

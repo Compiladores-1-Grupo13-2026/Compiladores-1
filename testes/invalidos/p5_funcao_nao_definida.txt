@@ -1,0 +1,4 @@
+print(dobro(2))
+def dobro(x) { return x * 2 }
+print(dobra(3))
+y = triplo(1)

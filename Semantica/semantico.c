@@ -1,9 +1,14 @@
-
-#include <math.h>
-#include <stdio.h>
-#include <string.h>
 #include "semantico.h"
 #include "Tabela/tabela.h"
+
+#include <math.h>
+#include <stdarg.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+/* Contador comum de erros semanticos (P1, P2, P3, P4 e P5). */
+static int erros;
 
 /* ===== [P4] Atribuição, listas e indexação ===== */
 
@@ -155,65 +160,8 @@ const char *semantico_p4_visitar(NoAST *no, P4Visitar visitar, P4Erro erro) {
 }
 
 /* ===== FIM [P4] Atribuição, listas e indexação ===== */
-=======
-#include "semantico.h"
-
-#include <math.h>
-#include <stdio.h>
-#include <stdlib.h>
 
 /* ===== [P1] Analise semantica de expressoes e literais ===== */
-
-struct ExpressaoRegistrada {
-    NoAST *raiz;
-    int imprimir;
-    struct ExpressaoRegistrada *prox;
-};
-
-static struct ExpressaoRegistrada *expressoes;
-static struct ExpressaoRegistrada **fim_expressoes = &expressoes;
-static NoAST *raiz_ast;
-static int erros;
-
-/* [P1] Ponte de registro usada pelo parser nas regras de expressao. */
-static struct ExpressaoRegistrada *buscar_registro(NoAST *raiz) {
-    for (struct ExpressaoRegistrada *item = expressoes; item; item = item->prox)
-        if (item->raiz == raiz) return item;
-
-    return NULL;
-}
-
-void semantico_registrar_expressao(NoAST *raiz, int imprimir) {
-    if (!raiz) return;
-
-    struct ExpressaoRegistrada *item = buscar_registro(raiz);
-
-    if (!item) {
-        item = malloc(sizeof *item);
-        if (!item) return;
-
-        item->raiz = raiz;
-        item->imprimir = 0;
-        item->prox = NULL;
-
-        *fim_expressoes = item;
-        fim_expressoes = &item->prox;
-    }
-
-    if (imprimir && !item->imprimir) {
-        if (!raiz_ast)
-            raiz_ast = ast_criar(AST_PROGRAMA, NULL, NULL, NULL, raiz->linha);
-
-        if (raiz_ast) {
-            raiz_ast->a = ast_anexar(raiz_ast->a, raiz);
-            item->imprimir = 1;
-        }
-    }
-}
-
-NoAST *semantico_ast(void) {
-    return raiz_ast;
-}
 
 /* Verifica se o no representa um operador aritmetico da P1. */
 static int eh_operador_p1(TipoNo tipo) {
@@ -633,15 +581,12 @@ static void analisar_operador_p2(NoAST *no) {
 /* ===== FIM [P2] Analise semantica de comparacoes e logica ===== */
 
 /*
- * Percorre a AST e realiza as verificacoes semanticas.
- * A analise dos filhos ocorre antes da analise do proprio no.
+ * Verifica UM no de expressao (literais, aritmetica e comparacoes).
+ * [P5] Antes este trecho tambem descia nos filhos; agora o visitante geral
+ * (secao P5) percorre a arvore e chama esta funcao em pos-ordem.
  */
-static void analisar_no(NoAST *no) {
+static void verificar_no(NoAST *no) {
     if (!no) return;
-
-    analisar_no(no->a);
-    analisar_no(no->b);
-    analisar_no(no->c);
 
     /* Verifica literais numericos fora do intervalo suportado. */
     if (no->tipo == AST_NUMERO) {
@@ -726,83 +671,7 @@ static void analisar_no(NoAST *no) {
     }
 }
 
-/* Executa a analise semantica de todas as expressoes registradas. */
-int semantico_analisar(NoAST *raiz) {
-    erros = 0;
-
-    for (struct ExpressaoRegistrada *item = expressoes;
-         item;
-         item = item->prox) {
-
-        analisar_no(item->raiz);
-    }
-
-    if (!expressoes && raiz)
-        analisar_no(raiz);
-
-    return erros;
-}
-
-/* Verifica se uma raiz ja esta anexada a AST utilizada para impressao. */
-static int raiz_esta_impressa(NoAST *raiz_impressa, NoAST *raiz) {
-    if (!raiz_impressa)
-        return 0;
-
-    for (NoAST *item = raiz_impressa->a; item; item = item->prox) {
-        if (item == raiz)
-            return 1;
-    }
-
-    return 0;
-}
-
-/* Libera as expressoes registradas e reinicia o estado do analisador. */
-void semantico_liberar(NoAST *raiz_impressa) {
-    struct ExpressaoRegistrada *item = expressoes;
-
-    while (item) {
-        struct ExpressaoRegistrada *proximo = item->prox;
-
-        if (!raiz_esta_impressa(raiz_impressa, item->raiz))
-            ast_liberar(item->raiz);
-
-        free(item);
-        item = proximo;
-    }
-
-    expressoes = NULL;
-    fim_expressoes = &expressoes;
-    raiz_ast = NULL;
-    erros = 0;
-}
-
 /* ===== FIM [P1] Analise semantica de expressoes e literais ===== */
-
-/* ============================================================================
- * P3 (Gabriel) - LACOS - trecho de Semantica/semantico.c
- *
- * Sao 2 pedacos para colar no semantico.c (esqueleto do P2).
- *
- * Suposicoes (contrato do plano, secoes 3.4 a 3.6):
- *   - visitar(NoAST *no) visita UM no e aceita NULL; o case de BLOCO/PROGRAMA e
- *     quem percorre a lista pelo prox;
- *   - erro_semantico(int linha, const char *formato, ...) conta o erro e segue;
- *   - tabela.h (tabela_buscar, tabela_buscar_local, tabela_inserir, Categoria)
- *     e ast.h ja estao incluidos.
- *
- * COMBINADO COM O P5 (case AST_FUNCAO): o corpo de um def NAO herda o laco que
- * o envolve (break dentro de def dentro de while e erro). O P5 precisa de 3
- * linhas em volta da visita do corpo da funcao:
- *     int laco_salvo = profundidade_laco;
- *     profundidade_laco = 0;
- *     ... visita parametros e corpo ...
- *     profundidade_laco = laco_salvo;
- * O teste invalidos/p3_break_em_def_dentro_de_laco cobra isso.
- * ========================================================================== */
-
-
-/* ---------- PEDACO 1: topo do semantico.c, antes de visitar() -------------- */
-#include <string.h>
 
 /* ===== [P3] LACOS: estado e auxiliares ===== */
 /* Quantos while/for envolvem o no visitado, dentro da funcao atual.
@@ -817,71 +686,223 @@ static const char *tipo_variavel_for(const NoAST *iteravel) {
     if (iteravel->tipo == AST_STRING) return "str";
     return "?";                         /* lista, identificador, expressao... */
 }
+/* ===== FIM [P3] LACOS: estado e auxiliares ===== */
 
-/* Literais que nunca sao iteraveis (for i in 5). NULL = nao sabemos / pode ser. */
-static const char *literal_nao_iteravel(const NoAST *no) {
-    if (!no) return NULL;
-    switch (no->tipo) {
-    case AST_NUMERO: return "um numero";
-    case AST_BOOL:   return "um booleano";
-    case AST_NONE:   return "None";
-    default:         return NULL;
-    }
+/* ===== [P5] Funcoes, chamadas, return e percurso da AST ===== */
+
+/* Quantas definicoes de funcao envolvem o no visitado (0 = nivel global).
+ * return so e valido quando for maior que zero. */
+static int profundidade_funcao = 0;
+
+/* Diagnostico no formato comum, aceitando argumentos como o printf.
+ * Tem a mesma assinatura do callback P4Erro usado pela secao P4. */
+static void erro_formatado(int linha, const char *formato, ...) {
+    va_list argumentos;
+    fprintf(stderr, "[ERRO SEMANTICO] Linha %d: ", linha);
+    va_start(argumentos, formato);
+    vfprintf(stderr, formato, argumentos);
+    va_end(argumentos);
+    fputc('\n', stderr);
+    erros++;
 }
 
+static const char *visitar(NoAST *no);
 
-/* ---------- PEDACO 2: dentro do switch (no->tipo) de visitar() ------------- */
-    /* ===== [P3] LAÇOS ===== */
-
-case AST_WHILE: {
-    profundidade_laco++;
-    semantico_visitar(no->a); /* Condição */
-    semantico_visitar(no->b); /* Corpo */
-    profundidade_laco--;
-    break;
-}
-
-case AST_FOR: {
-    /* 1. Registra a variável do 'for' na Tabela de Símbolos como CAT_VARIAVEL */
-    if (no->texto) {
-        tabela_inserir(no->texto, CAT_VARIAVEL, "int", no->linha);
+/* Coloca o nome da funcao no escopo atual, com a quantidade de parametros.
+ * Um nome repetido no MESMO escopo e erro (redeclaracao). */
+static void registrar_funcao(NoAST *funcao) {
+    /* Parametro repetido: compara cada parametro com os anteriores. */
+    for (NoAST *parametro = funcao->a; parametro; parametro = parametro->prox) {
+        for (NoAST *anterior = funcao->a; anterior != parametro; anterior = anterior->prox) {
+            if (strcmp(anterior->texto, parametro->texto) == 0) {
+                erro_formatado(parametro->linha, "parametro '%s' repetido na funcao '%s'",
+                               parametro->texto, funcao->texto);
+                break;
+            }
+        }
     }
 
-    /* 2. Verifica se o iterável não é um literal numérico isolado */
-    if (no->a && no->a->tipo == AST_NUMERO) {
-        erro_semantico(no->linha, "iteravel do 'for' nao pode ser um numero literal");
+    Simbolo *existente = tabela_buscar_local(funcao->texto);
+    if (existente) {
+        if (existente->categoria == CAT_BUILTIN)
+            erro_formatado(funcao->linha,
+                           "nao e permitido redefinir a funcao embutida '%s'",
+                           funcao->texto);
+        else if (existente->categoria == CAT_FUNCAO)
+            erro_formatado(funcao->linha, "funcao '%s' ja definida na linha %d",
+                           funcao->texto, existente->linha);
+        else
+            erro_formatado(funcao->linha, "nome '%s' ja usado na linha %d",
+                           funcao->texto, existente->linha);
+        return;
     }
-
-    profundidade_laco++;
-    semantico_visitar(no->a); /* Iterável */
-    semantico_visitar(no->b); /* Corpo */
-    profundidade_laco--;
-    break;
+    tabela_inserir(funcao->texto, CAT_FUNCAO, "funcao", funcao->linha);
+    Simbolo *simbolo = tabela_buscar_local(funcao->texto);
+    if (simbolo) simbolo->num_params = ast_p5_contar(funcao->a);
 }
 
-case AST_BREAK: {
-    if (profundidade_laco <= 0) {
-        erro_semantico(no->linha, "'break' fora de um laco");
-    }
-    break;
+/* Visita uma sequencia de comandos (corpo do PROGRAMA ou de um BLOCO).
+ * 1a passada: registra as funcoes definidas na sequencia, para permitir
+ * a recursao e que um corpo chame uma funcao definida mais abaixo.
+ * 2a passada: visita cada comando na ordem do codigo-fonte. */
+static void visitar_lista(NoAST *primeiro) {
+    for (NoAST *comando = primeiro; comando; comando = comando->prox)
+        if (comando->tipo == AST_FUNCAO) registrar_funcao(comando);
+    for (NoAST *comando = primeiro; comando; comando = comando->prox)
+        visitar(comando);
 }
 
-case AST_CONTINUE: {
-    if (profundidade_laco <= 0) {
-        erro_semantico(no->linha, "'continue' fora de um laco");
-    }
-    break;
-}
-
-case AST_FUNCAO: {
-    /* ATENÇÃO: Definição de função zera a profundidade de laço interna */
-    int profundidade_anterior = profundidade_laco;
+/* def nome(p1, p2) { corpo }: cada funcao ganha o seu proprio escopo.
+ * Parametros e variaveis atribuidas no corpo morrem ao sair dele. */
+static void visitar_funcao(NoAST *funcao) {
+    /* Combinado com a P3: o corpo do def nao herda o laco que o envolve. */
+    int laco_salvo = profundidade_laco;
     profundidade_laco = 0;
-    
-    /* Visita parâmetros e corpo da função */
-    semantico_visitar(no->a);
-    semantico_visitar(no->b);
-    
-    profundidade_laco = profundidade_anterior;
-    break;
+    profundidade_funcao++;
+
+    tabela_entrar_escopo(funcao->texto);
+    /* Um repetido ja foi relatado em registrar_funcao; aqui so falha a insercao. */
+    for (NoAST *parametro = funcao->a; parametro; parametro = parametro->prox)
+        tabela_inserir(parametro->texto, CAT_PARAMETRO, "?", parametro->linha);
+    visitar(funcao->b);
+    tabela_sair_escopo();
+
+    profundidade_funcao--;
+    profundidade_laco = laco_salvo;
 }
+
+/* nome(a1, a2): confere se o nome existe, se e chamavel e a aridade. */
+static const char *visitar_chamada(NoAST *chamada) {
+    int recebidos = 0;
+    for (NoAST *argumento = chamada->a; argumento; argumento = argumento->prox) {
+        visitar(argumento);
+        recebidos++;
+    }
+
+    Simbolo *simbolo = tabela_buscar(chamada->texto);
+    if (!simbolo) {
+        erro_formatado(chamada->linha, "funcao '%s' nao definida", chamada->texto);
+    } else if (simbolo->categoria == CAT_BUILTIN) {
+        /* print aceita qualquer quantidade; range aceita de 1 a 3. */
+        if (strcmp(chamada->texto, "range") == 0 && (recebidos < 1 || recebidos > 3))
+            erro_formatado(chamada->linha,
+                           "funcao 'range' espera de 1 a 3 argumentos, recebeu %d",
+                           recebidos);
+    } else if (simbolo->categoria == CAT_FUNCAO) {
+        /* Fora de funcoes o codigo roda de cima para baixo: o def precisa
+         * vir antes. Dentro de um corpo, a chamada so acontece quando a
+         * funcao for executada, entao um def mais abaixo e aceito. */
+        if (profundidade_funcao == 0 && simbolo->linha > chamada->linha)
+            erro_formatado(chamada->linha,
+                           "funcao '%s' chamada antes de ser definida (def na linha %d)",
+                           chamada->texto, simbolo->linha);
+        else if (simbolo->num_params != recebidos)
+            erro_formatado(chamada->linha,
+                           "funcao '%s' espera %d argumento(s), recebeu %d",
+                           chamada->texto, simbolo->num_params, recebidos);
+    } else if (strcmp(simbolo->tipo, "?") != 0) {
+        /* Parametros e valores de tipo desconhecido podem guardar uma funcao;
+         * um int, str, bool ou lista conhecido nao pode ser chamado. */
+        erro_formatado(chamada->linha, "'%s' nao e uma funcao (tipo '%s')",
+                       chamada->texto, simbolo->tipo);
+    }
+    return "?";   /* O tipo de retorno so sera conhecido na execucao. */
+}
+
+/* return [expr]: so pode aparecer dentro do corpo de uma funcao. */
+static void visitar_return(NoAST *retorno) {
+    if (profundidade_funcao == 0)
+        erro_formatado(retorno->linha, "'return' fora de uma funcao");
+    visitar(retorno->a);
+}
+
+/* [P3] Lacos: regras de Gabriel, ligadas ao percurso comum. */
+static void visitar_laco(NoAST *no) {
+    switch (no->tipo) {
+        case AST_WHILE:
+            profundidade_laco++;
+            visitar(no->a); /* Condicao */
+            visitar(no->b); /* Corpo */
+            profundidade_laco--;
+            break;
+        case AST_FOR:
+            /* Registra a variavel do 'for' na tabela como CAT_VARIAVEL. */
+            if (no->texto)
+                tabela_inserir(no->texto, CAT_VARIAVEL, tipo_variavel_for(no->a), no->linha);
+            /* O iteravel nao pode ser um literal numerico isolado. */
+            if (no->a && no->a->tipo == AST_NUMERO)
+                erro_semantico(no->linha, "iteravel do 'for' nao pode ser um numero literal");
+            profundidade_laco++;
+            visitar(no->a); /* Iteravel */
+            visitar(no->b); /* Corpo */
+            profundidade_laco--;
+            break;
+        case AST_BREAK:
+            if (profundidade_laco <= 0) erro_semantico(no->linha, "'break' fora de um laco");
+            break;
+        case AST_CONTINUE:
+            if (profundidade_laco <= 0) erro_semantico(no->linha, "'continue' fora de um laco");
+            break;
+        default:
+            break;
+    }
+}
+
+/* Visitante geral: visita UM no e devolve o tipo da expressao ("none" para
+ * comandos). Cada fatia trata os seus tipos; quem e dono de uma lista
+ * (PROGRAMA, BLOCO, chamada, LISTA) e quem percorre o prox. */
+static const char *visitar(NoAST *no) {
+    if (!no) return "none";
+
+    switch (no->tipo) {
+        case AST_PROGRAMA:
+        case AST_BLOCO:
+            visitar_lista(no->a);
+            return "none";
+        case AST_FUNCAO:
+            visitar_funcao(no);
+            return "none";
+        case AST_PARAMETRO:
+            return "none";
+        case AST_RETURN:
+            visitar_return(no);
+            return "none";
+        case AST_CHAMADA:
+            return visitar_chamada(no);
+        case AST_IF:            /* [P2] a = condicao, b = bloco, c = elif/else */
+            visitar(no->a);
+            visitar(no->b);
+            visitar(no->c);
+            return "none";
+        case AST_WHILE:
+        case AST_FOR:
+        case AST_BREAK:
+        case AST_CONTINUE:
+            visitar_laco(no);
+            return "none";
+        default:
+            break;
+    }
+
+    /* [P4] Atribuicoes, listas, indexacao e leitura de identificadores. */
+    const char *tipo_p4 = semantico_p4_visitar(no, visitar, erro_formatado);
+    if (tipo_p4) return tipo_p4;
+
+    /* [P1]/[P2] Expressoes: filhos primeiro (pos-ordem), depois o operador. */
+    visitar(no->a);
+    visitar(no->b);
+    visitar(no->c);
+    verificar_no(no);
+    return semantico_tipo_expr(no);
+}
+
+int semantico_analisar(NoAST *raiz) {
+    erros = 0;
+    profundidade_laco = 0;
+    profundidade_funcao = 0;
+    visitar(raiz);
+    tabela_liberar();
+    return erros;
+}
+
+/* ===== FIM [P5] Funcoes, chamadas, return e percurso da AST ===== */

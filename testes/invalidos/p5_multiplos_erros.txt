@@ -1,4 +1,0 @@
-def (a) { return a; }
-def f(a,, b) { return; }
-print(5;
-2 + 2;

@@ -13,6 +13,7 @@ nav:
   - Analisador semântico: analisador_semantico/analisador-semantico.md
   - AST da P4: ast.md
   - Decisões da P4: decisoes.md
+  - Funções e integração (P5): p5.md
   - Código-fonte: src.md
   - Testes: testes.md
   - Sprints: sprints.md
