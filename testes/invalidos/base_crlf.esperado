@@ -1,5 +1,5 @@
 [OK] atribuicao reconhecida
-[ERRO SINTATICO] Linha 2, coluna 4: syntax error (proximo a '\n')
+[ERRO SINTATICO] Linha 2, coluna 5: syntax error (proximo a '\n')
 PROGRAMA [linha 1]
   ATRIBUICAO [linha 1]
     IDENTIFICADOR 'x' [linha 1]
