@@ -1,135 +1,124 @@
 # MiniPy — Equipe 13
 
-MiniPy é um interpretador didático de um subconjunto de Python, com blocos
-delimitados por `{ }`, implementado em **C + Flex + Bison** pela Equipe 13.
-O objetivo é estudar a construção incremental do léxico e da gramática antes
-de implementar AST, tabela de símbolos e execução.
+Interpretador didático de um subconjunto de Python, implementado em **C + Flex +
+Bison**. O MiniPy executa expressões, condicionais, laços, listas e funções com
+recursão. Blocos usam `{ }`; comandos terminam com `;` ou quebra de linha.
 
-Na **Sprint 4**, a Pessoa A acrescenta infraestrutura, condições (P2), ambiente,
-listas e atribuições (P4) à AST e à semântica da Sprint 3. Os quatro módulos de
-execução da Pessoa B ainda precisam ser integrados. Consulte o
-[interpretador](docs/interpretador.md) e [funções da Sprint 3](docs/p5.md).
+[Documentação do projeto](https://compiladores-1-grupo13-2026.github.io/Compiladores-1/)
 
-[Documentação no GitHub Pages](https://compiladores-1-grupo13-2026.github.io/Compiladores-1/)
+## Compilar e executar
 
-## Tecnologias
+São necessários GCC, GNU Make, Flex, Bison e as bibliotecas de desenvolvimento
+libfl e libm. Os testes também usam `sh`, `timeout`, `diff` e `grep`; os testes
+unitários usam Python 3. Valgrind é usado na verificação de memória em Linux.
 
-C implementa o projeto; Flex gera o scanner e Bison gera o parser. Make automatiza o build. MkDocs com Material publica esta documentação no GitHub Pages.
-
-## Regras da linguagem
-
-- MiniPy é sensível a maiúsculas e minúsculas. Identificadores usam letras ASCII, dígitos e `_`, sem dígito inicial.
-- Blocos de `if`, `elif`, `else`, `while`, `for` e `def` usam sempre `{ }`.
-- Comandos simples terminam com `;` ou quebra de linha. Antes de `}` e no EOF,
-  o scanner fornece um terminador quando necessário, inclusive em `if x { y = 1 }`.
-  Comandos de bloco não precisam de terminador; um `;` isolado não é comando vazio.
-- `else` e `elif` devem estar na mesma linha do `}` anterior. A quebra de linha
-  encerra o condicional; `else` na linha seguinte é diagnosticado como `else sem if`.
-- Listas podem ocupar várias linhas dentro de `[ ]`; seus elementos precisam de vírgulas.
-- `print` e `range` são identificadores comuns. A execução das chamadas depende do módulo da Pessoa B.
-- Comentários começam com `#` e vão até o fim da linha.
-- Números são inteiros ou decimais, sem notação exponencial; o sinal é operador unário.
-  Strings aceitam escapes e uma única linha. Não há indentação significativa.
-
-## Como rodar o projeto
-
-Ambiente validado: GCC 13.3.0, Flex 2.6.4, Bison 3.8.2, GNU Make e GNU coreutils
-(`timeout`, usado para detectar travamentos nos testes). É necessário o pacote de
-desenvolvimento de libfl e libm. Em Debian/Ubuntu, instale as dependências e execute os comandos na raiz do repositório:
+Em Debian/Ubuntu:
 
 ```sh
-sudo apt install build-essential flex bison libfl-dev python3-venv
-```
-
-Se ainda não tiver o projeto na máquina:
-
-```sh
-git clone https://github.com/Compiladores-1-Grupo13-2026/Compiladores-1.git
-cd Compiladores-1
-```
-
-Depois de integrar os módulos da Pessoa B, compile e execute:
-
-```sh
+sudo apt install build-essential flex bison libfl-dev python3 python3-venv valgrind
 make clean
 make
 make tokens
-./tokens < testes/validos/base_programa_referencia.txt
-./parser --ast < testes/validos/base_programa_referencia.txt
-./parser < programa.txt
-make test
 ```
 
-`make` gera `parser.tab.c/.h`, `parser.output`, `lex.yy.c` e `parser`.
-`make tokens` compila o mesmo scanner com `SO_TOKENS`; `make clean` remove os
-artefatos. Eles são ignorados pelo Git. Para ver a recuperação e o código de saída:
+O executável recebe o programa pelo stdin:
 
 ```sh
-./parser < testes/invalidos/base_multiplos_erros.txt 2>&1
-echo "$?"  # 1
+./parser < programa.txt
+./parser --ast < programa.txt
+./tokens < programa.txt
+make run ARQ=programa.txt
 ```
 
-O modo padrão executa somente após as análises passarem e mostra os `print` e
-os erros. `--ast` mostra reconhecimentos e a AST, sem executar. No Windows/MSYS2,
-compile com `make parser tokens LDLIBS=-lm`. Erros vão para stderr; sucesso
-retorna 0 e qualquer erro retorna 1. Erros de execução preservam a saída anterior.
+O modo padrão executa depois das análises. `--ast` mostra reconhecimentos e a
+árvore sintática, sem executar. O modo tokens mostra o resultado do scanner.
+Expressões soltas são descartadas; use `print` para mostrar valores.
 
-| Tipo | Exemplo de diagnóstico | Código |
-| --- | --- | --- |
-| Léxico | `[ERRO LEXICO] Linha 1: caractere invalido '@'` | 1 |
-| Sintático | `[ERRO SINTATICO] Linha 1, coluna 1: syntax error (proximo a 'EOF')` | 1 |
-| Semântico | `[ERRO SEMANTICO] Linha 1: variável 'x' usada antes de ser atribuída` | 1 |
-| Execução | `[ERRO EXECUCAO] Linha 3: indice 5 fora do intervalo (lista de tamanho 2)` | 1 |
+```text
+def fatorial(n) {
+    if n <= 1 { return 1; }
+    return n * fatorial(n - 1);
+}
+lista = [1, 2, 3]
+lista[0] += 5
+print(fatorial(5), lista)
+```
 
-Para construir a documentação:
+Saída: `120 [6, 2, 3]`.
+
+## Linguagem e diagnósticos
+
+| Recurso | Suporte |
+| --- | --- |
+| Valores e contas | Inteiros, reais, booleanos, textos, `None`; aritmética, potência, concatenação e repetição de textos |
+| Condições | Comparações, lógica com curto-circuito, `if`, `elif` e `else` |
+| Laços | `while`, `for`, `break`, `continue`; iteração em listas, textos e `range` |
+| Listas | Literais, compartilhamento por referência, índices positivos e negativos, alteração de elementos |
+| Funções | `def`, parâmetros, `return`, recursão, chamadas por alias, `print` e `range` |
+
+Identificadores usam letras ASCII, dígitos e `_`, sem dígito inicial; são sensíveis
+a maiúsculas e minúsculas. Comentários usam `#`. `elif` e `else` devem ficar na
+mesma linha do `}` anterior. Listas podem ocupar várias linhas.
+
+Sucesso retorna 0; qualquer erro retorna 1. Erros de análise impedem a execução
+inteira; erros de execução interrompem o programa e preservam a saída anterior.
+
+| Etapa | Formato |
+| --- | --- |
+| Léxico | `[ERRO LEXICO] Linha N: mensagem` |
+| Sintático | `[ERRO SINTATICO] Linha N, coluna C: mensagem (proximo a 'lexema')` |
+| Semântico | `[ERRO SEMANTICO] Linha N: mensagem` |
+| Execução | `[ERRO EXECUCAO] Linha N: mensagem` |
+
+## Testes
+
+```sh
+make test
+python3 testes/testar_p4.py --runtime
+python3 testes/testar_valores.py
+python3 testes/verificar_b.py
+make memcheck
+```
+
+Na validação local de **6 de novembro de 2026**, passaram os **108 casos**
+(46 válidos e 62 inválidos) e as três verificações de tokens, tanto em Windows
+quanto em Linux. Os quatro executáveis unitários passaram. Valgrind verificou
+os 46 casos válidos e os quatro unitários; `make memcheck` terminou com sucesso.
+Veja [critérios e limites da validação](docs/testes.md).
+
+No Windows/MSYS2, o build pode usar `LDLIBS=-lm`; o teste CRLF precisa preservar
+os bytes de entrada. As expectativas canônicas seguem a leitura do Linux.
+Os detalhes de ambiente estão no [guia de compilação](docs/src.md).
+
+## Documentação
+
+O site MkDocs apresenta a [linguagem](docs/index.md), a [AST](docs/ast.md), as
+[decisões técnicas](docs/decisoes.md), o [interpretador](docs/interpretador.md)
+e as [funções](docs/p5.md). A organização dos fontes está em
+[Código-fonte](docs/src.md); recursos e limites estão em
+[Estado do projeto](docs/sprints.md).
+
+Para gerar e visualizar a documentação em um ambiente Python isolado:
 
 ```sh
 python3 -m venv .venv-docs
-.venv-docs/bin/pip install -r requirements-docs.txt
-.venv-docs/bin/mkdocs build --strict
+. .venv-docs/bin/activate
+python -m pip install -r requirements-docs.txt
+python -m mkdocs build --strict
+python -m mkdocs serve
 ```
 
-O workflow `.github/workflows/gh-pages.yml` constrói e publica `site/` quando
-as mudanças chegam a `main`. O build local não confirma a publicação remota.
+No Windows, ative o ambiente com `.\.venv-docs\Scripts\Activate.ps1`.
+O servidor local mostra a documentação em
+<http://127.0.0.1:8000/Compiladores-1/>.
 
-Para visualizar a documentação localmente:
+## Limites do subconjunto
 
-```sh
-.venv-docs/bin/mkdocs serve
-```
-
-Abra <http://127.0.0.1:8000/Compiladores-1/>. Use `Ctrl+C` para encerrar.
-
-## Escopo e limitações
-
-A implementação A preserva os headers e o despachante do contrato. P2 implementa
-comparações, curto-circuito e condicionais; P4 implementa quadros atual/global,
-listas compartilhadas, índices negativos e atribuições simples/compostas.
-
-```sh
-python3 testes/testar_p4.py
-python3 testes/testar_p4.py --runtime
-python3 testes/testar_p4.py --runtime --memcheck
-python3 testes/atualizar_esperados_a.py
-```
-
-O primeiro comando testa tabela/P2/P4 com a AST real. `--runtime` inclui os
-contratos de execução e exige os módulos B; `--memcheck` exige Valgrind.
-O último comando regenera somente os 21 históricos A, após compilar e revisar.
-O runner geral usa `--ast` nos históricos e execução em `_exec_`.
-Os casos `.mpy` antigos permanecem fora da suíte geral `.txt`.
-
-A validação C continua pendente: Make/GCC/Flex/Bison estão ausentes neste
-ambiente e faltam os módulos B. Foram preparados 13 casos de execução A,
-com os mesmos cenários dos 17 casos iniciais agrupados; as expectativas
-seguem o contrato e ainda precisam de confirmação com o parser real.
-Veja [arquitetura, mensagens e pendências](docs/interpretador.md).
-
-A [página Início](docs/index.md) apresenta a linguagem e a equipe. O
-[léxico](docs/analisador_lexico/analisador-lexico.md) documenta o catálogo de tokens,
-e o [sintático](docs/analisador_sintatico/analisador-sintatico.md) detalha a
-gramática EBNF, a precedência, o tratamento de erros e as limitações. O [registro das sprints](docs/sprints.md) detalha o planejamento,
-as entregas e as pendências da equipe.
+MiniPy não executa Python padrão. Não há fatiamento, indexação de textos,
+indexação encadeada ou coleta de ciclos entre listas. Operações aritméticas
+entre listas não são implementadas. Funções veem o quadro atual e o global,
+sem closures. Há limites de 1.000.000 de iterações por laço e 1000 chamadas
+aninhadas. Consulte os detalhes no [interpretador](docs/interpretador.md).
 
 ## Membros
 
@@ -161,8 +150,8 @@ as entregas e as pendências da equipe.
     </td>
     <td align="center">
       <a href="https://github.com/Antedeguemon21">
-        <img src="https://github.com/Antedeguemon21.png" width="100" alt="Antedeguemon21"/><br />
-        <sub><b>Antedeguemon21</b></sub>
+        <img src="https://github.com/Antedeguemon21.png" width="100" alt="Leonardo"/><br />
+        <sub><b>Leonardo</b></sub>
       </a>
     </td>
   </tr>

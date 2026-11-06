@@ -1,85 +1,124 @@
-# AST — seção P4
+# Árvore sintática abstrata
 
-A AST representa a estrutura do programa para análise posterior. A contribuição
-P4 ocupa uma seção de `Semantica/Ast/ast.c`, identificada com o comentário:
+A AST registra a estrutura do programa que será analisado e executado. O parser
+constrói a árvore em `Semantica/Ast/ast.c`; a análise semântica a percorre antes
+de o interpretador avaliar os nós. Parênteses e terminadores organizam a
+gramática, mas não precisam de nós próprios.
 
-```c
-/* ===== [P4] Atribuição, listas e indexação ===== */
-```
+~~~sh
+./parser --ast < programa.txt
+~~~
 
-Os protótipos ficam na seção P4 de `ast.h`. Os tipos `NoAST` e `TipoNo`, a API
-de alocação, a impressão geral e a liberação comuns aguardam a P1, conforme o
-[plano da equipe](https://docs.google.com/document/d/1oPxylxNLkBpUya7pTXNanqJy-Rh25Lyj43E3K4mtf30/edit).
-O [exemplo da Semana 6](https://github.com/sergioaafreitas/COMP1/blob/main/semana%2006/src/README.md)
-é a referência didática para AST e tabela de símbolos.
+O modo `--ast` mostra reconhecimentos e a árvore, realiza a análise semântica e
+encerra sem executar o programa. O modo padrão executa a mesma árvore somente
+quando não há erros léxicos, sintáticos ou semânticos.
 
-## Filhos dos nós P4
+## Estrutura comum
 
-O contrato define `NoAST` com tipo, linha, `int valor`, `char *texto`, filhos
-`a`, `b`, `c` e encadeamento `prox`. A seção P4 utiliza os filhos assim:
+`Semantica/Ast/ast.h` define todos os tipos de nó e a estrutura compartilhada:
 
-| Tipo | Filho `a` | Filho `b` | Filho `c` |
-|---|---|---|---|
-| `AST_ATRIBUICAO` | Alvo de `=` | Valor | `NULL` |
-| `AST_ATRIB_SOMA` | Alvo de `+=` | Valor | `NULL` |
-| `AST_ATRIB_SUB` | Alvo de `-=` | Valor | `NULL` |
-| `AST_ATRIB_MULT` | Alvo de `*=` | Valor | `NULL` |
-| `AST_ATRIB_DIV` | Alvo de `/=` | Valor | `NULL` |
-| `AST_LISTA` | Primeiro elemento; demais por `prox` | `NULL` | `NULL` |
-| `AST_INDEXACAO` | Expressão base | Índice | `NULL` |
+~~~c
+typedef struct NoAST {
+    TipoNo tipo;
+    int linha;
+    int valor;
+    char *texto;
+    struct NoAST *a, *b, *c;
+    struct NoAST *prox;
+} NoAST;
+~~~
 
-Uma lista vazia tem `a == NULL`. Em `itens = [1, 2]`, a atribuição aponta para
-o identificador em `a` e para a lista em `b`. A lista aponta para o literal `1`,
-cujo `prox` aponta para `2`. Em `itens[0] += 3`, o alvo é uma indexação. Os
-identificadores e literais são nós fornecidos pela base da P1.
+`tipo` determina o significado dos filhos `a`, `b` e `c`. `linha` preserva a
+localização usada nos diagnósticos. `texto` guarda uma cópia de identificadores,
+strings e nomes de funções ou variáveis de controle.
 
-`ast_p4_atribuicao`, `ast_p4_lista` e `ast_p4_indexacao` usam `ast_criar` para
-preencher esses filhos. As funções pertencem à seção P4 do arquivo comum;
-não existe um módulo de produção separado por integrante.
+`prox` encadeia comandos, elementos de lista, parâmetros e argumentos. O primeiro
+item representa a sequência inteira; uma sequência vazia é `NULL`. A travessia
+dos filhos tem significado diferente da travessia dos próximos itens.
 
-## Linhas, impressão e memória
+## Formato dos nós
 
-A atribuição recebe a linha do alvo; a lista, a linha do `[`; a indexação,
-a linha inicial da expressão base. Cada elemento preserva sua localização.
+Os nomes abaixo omitem o prefixo `AST_` do enum `TipoNo`.
 
-Os filhos passam a pertencer à árvore. Um nó deve ter um único dono e `prox`
-deve formar uma sequência sem ciclos. A liberação comum da P1 deverá visitar
-`a`, `b`, `c`, `prox` e os textos. As ações de recuperação da P4 precisam liberar
-subárvores abandonadas durante a integração do parser.
+| Nó | Dados e filhos |
+| --- | --- |
+| `PROGRAMA`, `BLOCO` | `a`: primeiro comando; os demais seguem por `prox` |
+| `NUMERO` | Valor obtido com `ast_numero_valor` |
+| `STRING` | `texto`: conteúdo sem as aspas delimitadoras |
+| `BOOL` | `valor`: 0 ou 1 |
+| `NONE` | Sem filhos |
+| `IDENTIFICADOR` | `texto`: nome da variável ou função |
+| `SOMA`, `SUBTRACAO`, `MULTIPLICACAO`, `DIVISAO`, `DIVINT`, `MODULO`, `POTENCIA` | `a`: operando esquerdo; `b`: operando direito |
+| `NEGATIVO` | `a`: operando |
+| `IGUAL`, `DIFERENTE`, `MENOR`, `MAIOR`, `MENOR_IGUAL`, `MAIOR_IGUAL`, `E`, `OU` | `a`: operando esquerdo; `b`: operando direito |
+| `NAO` | `a`: operando |
+| `IF` | `a`: condição; `b`: bloco quando verdadeira; `c`: bloco `else`, outro `IF` para `elif`, ou `NULL` |
+| `WHILE` | `a`: condição; `b`: corpo |
+| `FOR` | `texto`: variável de controle; `a`: iterável; `b`: corpo |
+| `BREAK`, `CONTINUE` | Sem filhos |
+| `ATRIBUICAO`, `ATRIB_SOMA`, `ATRIB_SUB`, `ATRIB_MULT`, `ATRIB_DIV` | `a`: alvo; `b`: expressão do valor |
+| `LISTA` | `a`: primeiro elemento; os demais seguem por `prox` |
+| `INDEXACAO` | `a`: identificador da lista; `b`: índice |
+| `FUNCAO` | `texto`: nome; `a`: primeiro parâmetro; `b`: bloco do corpo |
+| `PARAMETRO` | `texto`: nome do parâmetro; os demais seguem por `prox` |
+| `RETURN` | `a`: expressão devolvida, ou `NULL` para `return;` |
+| `CHAMADA` | `texto`: nome chamado; `a`: primeiro argumento; os demais seguem por `prox` |
 
-`ast_p4_nome_tipo` retorna o nome dos sete tipos P4 e `NULL` para os demais.
-`ast_p4_imprimir` imprime o nó P4 com dois espaços por nível e delega os filhos
-`a`, `b`, `c` ao impressor comum. O responsável pela sequência percorre `prox`
-uma única vez. O retorno é `1` quando o nó foi impresso e `0` nos demais casos.
+Uma expressão usada como comando, como `3 + 4;`, aparece diretamente na
+sequência de comandos. Na execução, seu valor é calculado e descartado.
 
-A tabela copia os nomes recebidos; seu ciclo de vida é independente dos textos
-armazenados na AST.
+## Exemplo de construção
 
-## Semântica e parser
+~~~text
+x = 3 + 4 * 2;
+~~~
 
-O visitante da seção P4 de `Semantica/semantico.c` trata atribuições, listas,
-indexações e leitura de identificadores. Ele recebe callbacks para as expressões
-das outras fatias e para os diagnósticos gerais. `NULL` indica tipo de nó de
-outra fatia; `?` indica tipo desconhecido; `P4_TIPO_ERRO` indica erro já relatado
-no filho. As políticas estão em [Decisões](decisoes.md).
+A precedência está representada pela posição dos nós:
 
-As ações futuras de AST estão comentadas na própria seção P4 de
-`Sintatica/parser.y`. Elas aguardam a base que fará `expr` carregar nós AST.
-A forma preparada aceita `expr op_atrib expr` e `expr [ expr ]`, permitindo
-que alvos como `3 = 1` e bases como `5[0]` cheguem à verificação semântica.
-O parser ativo mantém o comportamento da Semana 5.
+~~~text
+PROGRAMA [linha 1]
+  ATRIBUICAO [linha 1]
+    IDENTIFICADOR 'x' [linha 1]
+    SOMA [linha 1]
+      NUMERO 3 [linha 1]
+      MULTIPLICACAO [linha 1]
+        NUMERO 4 [linha 1]
+        NUMERO 2 [linha 1]
+~~~
 
-## Alcance da validação
+Em `itens = [1, 2]`, o filho `b` da atribuição é uma `LISTA`. Seu filho `a`
+aponta para o número `1`, cujo `prox` aponta para `2`. Em `itens[0] += 3`, o
+alvo da atribuição composta é uma `INDEXACAO`.
 
-Os testes unitários verificam filhos, tipos, linhas e encaminhamento de chamadas
-da seção P4. `testes/contrato_ast_teste.h` é uma interface declarativa de teste;
-`testes/dubles_ast.c` fornece nós pré-montados e registra chamadas às dependências.
-Esses arquivos ficam fora do build de produção.
+A gramática aceita indexação diretamente por nome, como `itens[i]`. Para
+trabalhar com uma sublista, atribua-a a outro nome antes de indexá-la:
 
-A validação atual não comprova a impressão completa da árvore, liberação do
-núcleo P1, comentários, recuperação sintática ou conflitos do parser. Os casos
-`.mpy` em `testes/validos/` e `testes/invalidos/` aguardam integração e não são
-executados pelo runner unitário.
+~~~text
+matriz = [[1, 2], [3, 4]];
+linha = matriz[0];
+linha[1] = 9;
+~~~
 
-O campo `int valor` do contrato ainda precisa ser conciliado pela P1 e pela
-equipe com os números decimais da linguagem.
+## Números, strings e memória
+
+O campo `valor` permanece inteiro no contrato de `NoAST`. Literais reais usam
+um registro auxiliar associado ao endereço do nó. A função
+`ast_numero_valor(no, &numero)` recupera o `double` correto; ler `no->valor`
+diretamente não recupera necessariamente o valor de um literal numérico.
+
+As strings guardam os escapes ainda escritos como barra e letra. A execução
+converte os escapes de quebra de linha, tabulação, barra e aspas ao construir
+o valor de texto.
+
+Cada nó é dono de seus filhos e da cópia de `texto`. `ast_liberar` percorre
+`a`, `b`, `c` e `prox`, remove o registro numérico auxiliar e libera o nó. A
+árvore não deve compartilhar um mesmo nó entre pais nem conter ciclos.
+As ações de recuperação sintática liberam subárvores que foram descartadas.
+
+As listas da AST representam a estrutura do código; as listas de valores do
+interpretador são objetos separados, compartilhados por referência. Uma função
+em execução conserva um ponteiro para seu nó `FUNCAO`, que continua pertencendo
+à AST até o encerramento do programa.
+
+Veja também a [análise semântica](analisador_semantico/analisador-semantico.md),
+as [decisões técnicas](decisoes.md) e o [interpretador](interpretador.md).

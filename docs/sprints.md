@@ -1,50 +1,74 @@
-# Sprints e quadro de acompanhamento
+# Estado do projeto
 
-O plano interno usa Sprint 0 (base), 1 (léxico), 2 (parser) e 3 (erros da
-Semana 5). Essa **Sprint 3 interna não é a Sprint 3 do guia do professor**,
-que trata de AST/semântica a partir da Semana 6. O guia está no fechamento
-das Sprints 1 e 2.
+O MiniPy constrói a AST, realiza análise semântica e executa o programa.
+Scanner, parser e módulos do interpretador participam do mesmo pipeline.
 
-| Sprint interna | Planejado por fatia | Realizado / evidência local |
-|---|---|---|
-| 0 | Todas: base, tokens e precedência; P1: build | build sem warnings, terminadores e contrato registrados |
-| 1 | P1 literais; P2 lógica; P3 laços; P4 listas/atribuição; P5 funções | scanner completo e `make tokens`, catálogo por fatia |
-| 2 | Cada fatia acrescenta suas produções; P4 documenta gramática | cinco fatias reconhecidas; referência oficial aceita |
-| 3 | Cada fatia recupera seus erros; P2 integra diagnósticos; P3 testes; P4 docs; P5 coordena PC1 | suíte verde, saídas esperadas, documentação e roteiro preparados; revisão humana e evidências externas pendentes |
+## Recursos disponíveis
 
-## Responsáveis por fatia
+| Área | Comportamento implementado |
+| --- | --- |
+| Léxico | Identificadores, inteiros/decimais, strings, palavras reservadas, operadores, comentários e localização |
+| Sintaxe | Precedência, listas, atribuições, condicionais, laços, funções, chamadas e recuperação |
+| AST | Nós de todos os recursos, linhas, sequências, impressão e liberação |
+| Semântica | Símbolos, tipos conhecidos, escopos, nomes, aridade e contexto de `return`, `break` e `continue` |
+| Valores e expressões | Inteiros, reais, booleanos, strings, listas, `None`, funções, coerção, aritmética e impressão |
+| Condições | Comparações, verdadeiro/falso, curto-circuito e seleção de ramos |
+| Laços | `while`, `for` em listas/textos/`range`, aninhamento e sinais de controle |
+| Ambiente e listas | Quadros de chamada, busca atual/global, referências compartilhadas, atribuição e índices negativos |
+| Funções e builtins | Definição, argumentos, retorno, recursão, aliases, `print` e `range` |
+| Erros dinâmicos | Linha e encerramento controlado para tipos inválidos, divisor zero, índices, limites e chamadas |
 
-| Fatia | Responsável | Escopo reconhecido | Estado na Semana 5 | Responsabilidade transversal |
-|---|---|---|---|---|
-| P1 | Ana | expressões, literais, aritmética e erros numéricos | ✅ | build e flags |
-| P2 | Leonardo | comparações, lógica, if/elif/else e recuperação | ✅ | diagnóstico global, linha/coluna e status |
-| P3 | Gabriel | while, for, break, continue e recuperação | ✅ | testes automatizados |
-| P4 | Karoline | atribuição, listas, indexação e comentários | ✅ | documentação |
-| P5 | João Vitor | def, return, chamadas e recuperação | ✅ | integração, quadro e formulário |
+```text
+entrada → scanner → parser → AST → análise semântica → interpretador
+```
 
-## Sprint 3 do professor: AST e semântica
+O modo padrão executa somente após as análises passarem. `--ast` mostra
+reconhecimentos e árvore sem executar. O executável `tokens` inspeciona o
+scanner isoladamente. Expressões soltas são avaliadas e descartadas; chamadas
+como `print` produzem a saída do programa.
 
-Divisão mantida por recurso da linguagem, conforme o
-[plano da equipe](https://docs.google.com/document/d/1oPxylxNLkBpUya7pTXNanqJy-Rh25Lyj43E3K4mtf30/edit).
-Esta atualização implementa exclusivamente a P4; as linhas dos demais
-integrantes registram as responsabilidades e dependências, sem declarar suas
-entregas concluídas.
+## Validação registrada
 
-| Fatia | Base / responsabilidade transversal | Trabalho na fatia | Estado nesta branch |
-|---|---|---|---|
-| P1 — Ana | Núcleo comum da AST e build | Literais, identificadores e aritmética | Depende da entrega da responsável |
-| P2 — Leonardo | Visitante comum e diagnósticos | Comparações, lógica e condicionais | Depende da entrega do responsável |
-| P3 — Gabriel | Runner geral e Valgrind | Laços, contexto de break/continue | Depende da entrega do responsável |
-| P4 — Karoline | Tabela de símbolos e documentação | Atribuições, listas, indexação e leitura de nomes | Módulos e testes isolados implementados; integração depende da base |
-| P5 — João Vitor | Raiz/blocos do parser e fluxo do main | Funções, parâmetros, chamadas e return | AST completa do programa, escopos de função e 10 testes |
+Em **6 de novembro de 2026**, a compilação passou sem avisos e a suíte
+terminou com **108/108 programas aprovados**, mais três verificações de
+tokens, no Windows e no Linux. Os quatro executáveis unitários passaram.
 
-A contribuição P4 está nas seções comentadas de `Semantica/Ast/ast.c` e `ast.h`,
-`Semantica/semantico.c` e `semantico.h`, além de `Semantica/Tabela/`.
-A preparação das ações AST fica comentada na seção P4 do próprio
-`Sintatica/parser.y`; os testes ficam em `testes/`, com casos nas pastas comuns
-`validos/` e `invalidos/`. Não há pastas nem módulos de produção separados por P.
-Os tipos e o núcleo da AST aguardam a P1. O contrato provisório dos testes está
-em `testes/contrato_ast_teste.h`.
-O parser principal continua na Semana 5. Não há tag de sprint concluída nem
-integração final anunciada.
+O Valgrind verificou os 46 válidos e os quatro unitários; `make memcheck`
+retornou 0. O AddressSanitizer verificou 108 programas e quatro unitários
+sem diagnóstico de acesso inválido. Os critérios e limites dessas ferramentas
+estão em [Testes e validação](testes.md).
+
+As referências históricas já refletem o modo AST. O teste CRLF foi alinhado
+à entrada preservada no Linux; esses ajustes fazem parte da suíte atual.
+
+## Limites do produto
+
+- A linguagem é um subconjunto didático de Python, com blocos `{ }` e sem
+  indentação significativa.
+- Inteiros de execução usam `long long`; estouros suportados são interrompidos
+  com erro controlado. Reais usam `double`.
+- Cada laço permite até 1.000.000 de iterações; chamadas aninhadas são limitadas
+  a 1000 níveis.
+- `range` produz uma lista, exige argumentos de tipo inteiro e recusa passo zero.
+- A indexação é de listas e exige `int`. Não há indexação de strings, fatiamento,
+  atributos ou métodos como `append`.
+- O ambiente procura no quadro atual e no global. Não implementa closures que
+  conservem locais de uma chamada encerrada.
+- Listas compartilham referências, mas não há coleta de ciclos. A comparação
+  de estruturas cíclicas também tem limitações.
+- Concatenação e repetição de listas não fazem parte da aritmética implementada.
+  A aceitação de alguns tipos na análise estática não garante suporte à
+  operação durante a execução.
+
+Os valores e sinais são detalhados no [Interpretador](interpretador.md).
+As escolhas entre análise e execução estão em [Decisões técnicas](decisoes.md).
+
+## Documentação e automação
+
+As fontes do site ficam em `docs/`, com navegação em `mkdocs.yml`. A geração
+local usa `mkdocs build --strict`. O workflow de testes define compilação,
+execução e memória; o de documentação define a geração e publicação do site.
+
+Esta página descreve os arquivos e as validações locais. Gerar o site
+localmente não altera o conteúdo publicado nem comprova uma execução remota.
 
