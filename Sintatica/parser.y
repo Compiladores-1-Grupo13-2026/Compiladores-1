@@ -12,8 +12,12 @@ typedef struct {
 
 #include <stdio.h>
 #include <stdlib.h>
+#include <string.h>
 
 #include "Semantica/semantico.h"
+#include "Interpretador/interpretador.h"
+
+static int modo_ast = 0;
 
 int yylex(void);
 void yyerror(const char *mensagem);
@@ -33,7 +37,7 @@ static void emitir_pendente(void);
 static void diagnostico(int linha, int coluna, const char *mensagem);
 #define ERRO_SINTATICO(loc, mensagem) \
     diagnostico((loc).first_line, (loc).first_column, (mensagem))
-#define RECONHECIDO(mensagem) do { emitir_pendente(); puts(mensagem); } while (0)
+#define RECONHECIDO(mensagem) do { emitir_pendente(); if (modo_ast) puts(mensagem); } while (0)
 
 /* O contrato da AST guarda inteiros em valor; a API P1 preserva numeros reais
  * em um registro auxiliar sem alterar a struct compartilhada. */
@@ -620,22 +624,27 @@ static NoAST *anexar_senao(NoAST *se, NoAST *senao) {
  * 3. a analise semantica percorre a AST e usa a tabela de simbolos;
  * 4. AST, tabela e textos do scanner sao liberados.
  * O codigo de saida e 1 se houve qualquer erro. */
-int main(void) {
+int main(int argc, char **argv) {
+    modo_ast = argc > 1 && strcmp(argv[1], "--ast") == 0;
     setvbuf(stdout, NULL, _IONBF, 0);
     int status = yyparse();
     emitir_pendente();
 
-    if (raiz_programa) ast_imprimir(raiz_programa, 0);
+    if (modo_ast && raiz_programa) ast_imprimir(raiz_programa, 0);
 
     /* Roda mesmo apos erros sintaticos (como ja fazia a P1), analisando os
      * comandos que a recuperacao preservou. Limitacao: um def descartado
      * pela recuperacao nao entra na AST, entao suas chamadas sao relatadas
      * como "funcao nao definida". */
     int erros_semanticos = semantico_analisar(raiz_programa);
+    int erro_exec = 0;
+    if (!modo_ast && status == 0 && erros_lexicos == 0 &&
+        erros_sintaticos == 0 && erros_semanticos == 0)
+        erro_exec = interpretar_programa(raiz_programa);
 
     ast_liberar(raiz_programa);
     lexer_liberar_textos();
-    return status != 0 || erros_semanticos != 0 ||
+    return status != 0 || erros_semanticos != 0 || erro_exec != 0 ||
            erros_sintaticos != 0 || erros_lexicos != 0;
 }
 /* ===== FIM [P5] Encadeamento de elif/else e fluxo principal ===== */

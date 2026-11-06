@@ -26,9 +26,14 @@ lex.yy.c: $(SCANNER_SOURCE) parser.tab.h
 # [P5] Fontes do interpretador integrado: AST, tabela de simbolos e semantica.
 FONTES_SEMANTICA = Semantica/Ast/ast.c Semantica/Tabela/tabela.c Semantica/semantico.c
 HEADERS_SEMANTICA = Semantica/Ast/ast.h Semantica/Tabela/tabela.h Semantica/semantico.h
+FONTES_INTERPRETADOR = Interpretador/interpretador.c Interpretador/valor.c \
+    Interpretador/exec_expressoes.c Interpretador/exec_condicoes.c \
+    Interpretador/exec_lacos.c Interpretador/ambiente.c Interpretador/lista.c \
+    Interpretador/exec_atribuicao.c Interpretador/exec_funcoes.c
+HEADERS_INTERPRETADOR = Interpretador/valor.h Interpretador/ambiente.h Interpretador/interpretador.h
 
-parser: parser.tab.c parser.tab.h lex.yy.c $(FONTES_SEMANTICA) $(HEADERS_SEMANTICA) Makefile
-	$(CC) $(CPPFLAGS) -I. $(CFLAGS) $(LDFLAGS) -o $@ parser.tab.c lex.yy.c $(FONTES_SEMANTICA) $(LDLIBS)
+parser: parser.tab.c parser.tab.h lex.yy.c $(FONTES_SEMANTICA) $(HEADERS_SEMANTICA) $(FONTES_INTERPRETADOR) $(HEADERS_INTERPRETADOR) Makefile
+	$(CC) $(CPPFLAGS) -I. $(CFLAGS) $(LDFLAGS) -o $@ parser.tab.c lex.yy.c $(FONTES_SEMANTICA) $(FONTES_INTERPRETADOR) $(LDLIBS)
 
 tokens: parser.tab.h lex.yy.c Makefile
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DSO_TOKENS $(LDFLAGS) -o $@ lex.yy.c $(LDLIBS)
