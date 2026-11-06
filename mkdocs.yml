@@ -14,6 +14,7 @@ nav:
   - AST da P4: ast.md
   - Decisões da P4: decisoes.md
   - Funções e integração (P5): p5.md
+  - Interpretador (Sprint 4): interpretador.md
   - Código-fonte: src.md
   - Testes: testes.md
   - Sprints: sprints.md

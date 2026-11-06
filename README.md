@@ -5,13 +5,10 @@ delimitados por `{ }`, implementado em **C + Flex + Bison** pela Equipe 13.
 O objetivo é estudar a construção incremental do léxico e da gramática antes
 de implementar AST, tabela de símbolos e execução.
 
-O parser principal fecha o escopo técnico da **Semana 5: parser e recuperação de erros**.
-Expressões numéricas são calculadas; as cinco fatias reconhecem as demais
-construções e mostram `[OK]`.
-
-Na **Sprint 3 (AST e semântica)**, o parser monta uma AST única do programa,
-imprime essa árvore e a análise semântica a percorre usando a tabela de símbolos
-com escopos por função (P4 e P5). Veja [Funções e integração (P5)](docs/p5.md).
+Na **Sprint 4**, a Pessoa A acrescenta infraestrutura, condições (P2), ambiente,
+listas e atribuições (P4) à AST e à semântica da Sprint 3. Os quatro módulos de
+execução da Pessoa B ainda precisam ser integrados. Consulte o
+[interpretador](docs/interpretador.md) e [funções da Sprint 3](docs/p5.md).
 
 [Documentação no GitHub Pages](https://compiladores-1-grupo13-2026.github.io/Compiladores-1/)
 
@@ -29,7 +26,7 @@ C implementa o projeto; Flex gera o scanner e Bison gera o parser. Make automati
 - `else` e `elif` devem estar na mesma linha do `}` anterior. A quebra de linha
   encerra o condicional; `else` na linha seguinte é diagnosticado como `else sem if`.
 - Listas podem ocupar várias linhas dentro de `[ ]`; seus elementos precisam de vírgulas.
-- `print` e `range` são identificadores comuns. Chamadas são reconhecidas, sem execução.
+- `print` e `range` são identificadores comuns. A execução das chamadas depende do módulo da Pessoa B.
 - Comentários começam com `#` e vão até o fim da linha.
 - Números são inteiros ou decimais, sem notação exponencial; o sinal é operador unário.
   Strings aceitam escapes e uma única linha. Não há indentação significativa.
@@ -51,14 +48,15 @@ git clone https://github.com/Compiladores-1-Grupo13-2026/Compiladores-1.git
 cd Compiladores-1
 ```
 
-Compile e execute:
+Depois de integrar os módulos da Pessoa B, compile e execute:
 
 ```sh
 make clean
 make
 make tokens
 ./tokens < testes/validos/base_programa_referencia.txt
-./parser < testes/validos/base_programa_referencia.txt
+./parser --ast < testes/validos/base_programa_referencia.txt
+./parser < programa.txt
 make test
 ```
 
@@ -70,6 +68,18 @@ artefatos. Eles são ignorados pelo Git. Para ver a recuperação e o código de
 ./parser < testes/invalidos/base_multiplos_erros.txt 2>&1
 echo "$?"  # 1
 ```
+
+O modo padrão executa somente após as análises passarem e mostra os `print` e
+os erros. `--ast` mostra reconhecimentos e a AST, sem executar. No Windows/MSYS2,
+compile com `make parser tokens LDLIBS=-lm`. Erros vão para stderr; sucesso
+retorna 0 e qualquer erro retorna 1. Erros de execução preservam a saída anterior.
+
+| Tipo | Exemplo de diagnóstico | Código |
+| --- | --- | --- |
+| Léxico | `[ERRO LEXICO] Linha 1: caractere invalido '@'` | 1 |
+| Sintático | `[ERRO SINTATICO] Linha 1, coluna 1: syntax error (proximo a 'EOF')` | 1 |
+| Semântico | `[ERRO SEMANTICO] Linha 1: variável 'x' usada antes de ser atribuída` | 1 |
+| Execução | `[ERRO EXECUCAO] Linha 3: indice 5 fora do intervalo (lista de tamanho 2)` | 1 |
 
 Para construir a documentação:
 
@@ -92,28 +102,28 @@ Abra <http://127.0.0.1:8000/Compiladores-1/>. Use `Ctrl+C` para encerrar.
 
 ## Escopo e limitações
 
-A entrega cobre léxico, parser e recuperação de erros da Semana 5 e, na Sprint 3,
-a construção da AST completa, a tabela de símbolos e a análise semântica integradas
-ao parser principal. O programa ainda não é executado (funções não rodam).
-A execução e as fatias dos demais integrantes permanecem fora desta contribuição.
-O parser lê stdin; arquivos de teste da entrega anterior usam `.txt`.
+A implementação A preserva os headers e o despachante do contrato. P2 implementa
+comparações, curto-circuito e condicionais; P4 implementa quadros atual/global,
+listas compartilhadas, índices negativos e atribuições simples/compostas.
 
-Para validar os módulos P4 no Windows (GCC e Python no PATH):
-
-```powershell
-python testes/testar_p4.py
+```sh
+python3 testes/testar_p4.py
+python3 testes/testar_p4.py --runtime
+python3 testes/testar_p4.py --runtime --memcheck
+python3 testes/atualizar_esperados_a.py
 ```
 
-Em Linux, use `python3` ou `make test-p4`. O comando executa somente os dois
-testes unitários da P4. A suíte geral `make test` continua com a P3.
-As novas entradas `.mpy` e saídas esperadas estão em `testes/validos/` e
-`testes/invalidos/`, preparadas
-para integração futura; elas não são executadas pelo runner unitário.
-Para conferir memória dos módulos testados em Linux com Valgrind:
-`make memcheck-p4`. Os testes usam nós pré-montados e simulações mínimas das
-dependências; não fornecem o núcleo de AST, parser ou semântica dos colegas.
-A contribuição fica identificada por comentários `[P4]` em `ast.c`, `ast.h`,
-`semantico.c` e `semantico.h`. Os tipos e o núcleo comum da AST aguardam a P1.
+O primeiro comando testa tabela/P2/P4 com a AST real. `--runtime` inclui os
+contratos de execução e exige os módulos B; `--memcheck` exige Valgrind.
+O último comando regenera somente os 21 históricos A, após compilar e revisar.
+O runner geral usa `--ast` nos históricos e execução em `_exec_`.
+Os casos `.mpy` antigos permanecem fora da suíte geral `.txt`.
+
+A validação C continua pendente: Make/GCC/Flex/Bison estão ausentes neste
+ambiente e faltam os módulos B. Foram preparados 13 casos de execução A,
+com os mesmos cenários dos 17 casos iniciais agrupados; as expectativas
+seguem o contrato e ainda precisam de confirmação com o parser real.
+Veja [arquitetura, mensagens e pendências](docs/interpretador.md).
 
 A [página Início](docs/index.md) apresenta a linguagem e a equipe. O
 [léxico](docs/analisador_lexico/analisador-lexico.md) documenta o catálogo de tokens,
