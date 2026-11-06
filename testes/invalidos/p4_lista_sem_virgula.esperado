@@ -1,3 +1,9 @@
 [ERRO SINTATICO] Linha 1, coluna 9: lista mal formada: faltou ']' (ou ',' entre elementos) (proximo a '2')
 [OK] atribuicao reconhecida
-Resultado: 4
+PROGRAMA [linha 1]
+  ATRIBUICAO [linha 1]
+    IDENTIFICADOR 'lista' [linha 1]
+    LISTA [linha 1]
+  SOMA [linha 2]
+    NUMERO 2 [linha 2]
+    NUMERO 2 [linha 2]
