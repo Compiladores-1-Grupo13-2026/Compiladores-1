@@ -12,24 +12,29 @@ for pasta in validos invalidos; do
     for caso in "testes/$pasta/"*.txt; do
         [ -f "$caso" ] || continue
         total=$((total + 1))
+        modo=--ast
+        case "$caso" in *_exec_*) modo= ;; esac
         status=0
-        timeout 5 ./parser < "$caso" > "$temporario/stdout" 2> "$temporario/stderr" || status=$?
+        timeout 5 ./parser ${modo:+"$modo"} < "$caso" > "$temporario/stdout" 2> "$temporario/stderr" || status=$?
         ok=1
         if [ "$pasta" = validos ]; then
             [ "$status" -eq 0 ] && [ ! -s "$temporario/stderr" ] || ok=0
         else
             # Timeout, sinal ou falha ao iniciar o processo nao contam como rejeicao.
             [ "$status" -gt 0 ] && [ "$status" -lt 124 ] || ok=0
-            grep -Eq '^\[ERRO (SINTATICO|LEXICO|SEMANTICO)\] Linha [1-9][0-9]*' "$temporario/stderr" || ok=0
+            case "$caso" in *_exec_*) [ "$status" -eq 1 ] || ok=0 ;; esac
+            grep -Eq '^\[ERRO (SINTATICO|LEXICO|SEMANTICO|EXECUCAO)\] Linha [1-9][0-9]*' "$temporario/stderr" || ok=0
         fi
         esperado=${caso%.txt}.esperado
         if [ -f "$esperado" ]; then
             # Uma segunda execucao captura a ordem real dos dois descritores.
             # Concatenar stdout e stderr da primeira execucao perderia essa ordem.
             combinado=0
-            timeout 5 ./parser < "$caso" > "$temporario/combinado" 2>&1 || combinado=$?
+            timeout 5 ./parser ${modo:+"$modo"} < "$caso" > "$temporario/combinado" 2>&1 || combinado=$?
+            # Executaveis Windows escrevem CRLF; expectativas usam LF.
+            tr -d '\r' < "$temporario/combinado" > "$temporario/normalizado"
             [ "$combinado" -eq "$status" ] || ok=0
-            diff -u "$esperado" "$temporario/combinado" > "$temporario/diff" || ok=0
+            diff -u "$esperado" "$temporario/normalizado" > "$temporario/diff" || ok=0
         else
             : > "$temporario/diff"
         fi
@@ -54,8 +59,9 @@ for nome in base_programa_referencia base_catalogo_tokens; do
     caso="testes/validos/$nome"
     status=0
     timeout 5 ./tokens < "$caso.txt" > "$temporario/tokens" 2> "$temporario/stderr" || status=$?
+    tr -d '\r' < "$temporario/tokens" > "$temporario/normalizado"
     if [ "$status" -eq 0 ] && [ ! -s "$temporario/stderr" ] &&
-       diff -u "$caso.tokens.esperado" "$temporario/tokens"; then
+       diff -u "$caso.tokens.esperado" "$temporario/normalizado"; then
         printf '[OK] tokens: %s\n' "$nome"
     else
         printf '[FALHOU] tokens: %s\n' "$nome"
