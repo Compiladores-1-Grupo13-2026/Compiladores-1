@@ -18,6 +18,11 @@ static int p4_mesmo_tipo(const char *a, const char *b) {
 
 static const char *p4_ler(NoAST *no, P4Visitar visitar) {
     const char *tipo = visitar(no);
+    /* A P1 ainda classifica NUMERO real como int. Atribuicoes/indices P4
+     * consultam a API real sem mudar o visitante de outra fatia. */
+    double numero;
+    if (no && ast_numero_valor(no, &numero) &&
+        isfinite(numero) && trunc(numero) != numero) return "float";
     return tipo ? tipo : "?";
 }
 
@@ -59,11 +64,17 @@ static const char *p4_indexacao(NoAST *no, P4Visitar visitar, P4Erro erro) {
 
 /* Verifica somente operadores compostos P4. Operadores de expressoes comuns
  * continuam sob responsabilidade da P1; nao ha execucao nem teste de valores. */
+static int p4_numerico(const char *tipo) {
+    return p4_mesmo_tipo(tipo, "int") || p4_mesmo_tipo(tipo, "float") ||
+           p4_mesmo_tipo(tipo, "bool");
+}
+
 static const char *p4_tipo_composto(TipoNo op, const char *alvo, const char *valor) {
     if (p4_mesmo_tipo(alvo, "?") || p4_mesmo_tipo(valor, "?")) return "?";
-    if (p4_mesmo_tipo(alvo, "int") && p4_mesmo_tipo(valor, "int")) {
-        /* O contrato int nao representa o resultado geral de /=. */
-        return op == AST_ATRIB_DIV ? "?" : "int";
+    if (p4_numerico(alvo) && p4_numerico(valor)) {
+        if (op == AST_ATRIB_DIV || p4_mesmo_tipo(alvo, "float") ||
+            p4_mesmo_tipo(valor, "float")) return "float";
+        return "int";
     }
     if (op == AST_ATRIB_SOMA && p4_mesmo_tipo(alvo, valor) &&
         (p4_mesmo_tipo(alvo, "str") || p4_mesmo_tipo(alvo, "lista"))) return alvo;
@@ -282,10 +293,15 @@ const char *semantico_tipo_expr(const NoAST *no) {
         case AST_MAIOR:
         case AST_MENOR_IGUAL:
         case AST_MAIOR_IGUAL:
-        case AST_E:
-        case AST_OU:
         case AST_NAO:
             return "bool";
+
+        case AST_E:
+        case AST_OU: {
+            const char *a = semantico_tipo_expr(no->a);
+            const char *b = semantico_tipo_expr(no->b);
+            return tipos_iguais(a, b) ? a : "?";
+        }
 
         /* ===== FIM [P2] Tipo resultante de comparacoes e logica ===== */
 
@@ -416,19 +432,29 @@ static int tipos_incompativeis(const NoAST *no) {
 /*
  * Verifica se os operandos de uma comparacao possuem tipos compativeis.
  *
- * Igualdade e diferenca:
- *   - permitem comparar valores do mesmo tipo;
- *   - permitem comparar valores numericos;
- *   - nao verificam operandos cujo tipo ainda e desconhecido.
+ * Igualdade e diferenca aceitam quaisquer tipos, conforme o contrato runtime.
  *
  * Comparacoes de ordem:
- *   - neste momento, aceitam apenas operandos numericos;
- *   - ignoram identificadores cujo tipo ainda e desconhecido.
+ *   - aceitam numeros (inclusive bool/float) ou dois textos;
+ *   - consultam os identificadores na tabela e ignoram tipos desconhecidos.
  *
  * Operadores logicos:
  *   - aceitam operandos de qualquer tipo, seguindo a ideia de
  *     avaliacao por verdadeiro/falso.
  */
+static const char *p2_tipo_operando(const NoAST *no) {
+    if (no && no->tipo == AST_IDENTIFICADOR) {
+        Simbolo *simbolo = tabela_buscar(no->texto);
+        return simbolo ? simbolo->tipo : "?";
+    }
+    return semantico_tipo_expr(no);
+}
+
+static int p2_numerico(const char *tipo) {
+    return tipos_numericos(tipo) || strcmp(tipo, "float") == 0 ||
+           strcmp(tipo, "bool") == 0;
+}
+
 static int tipos_incompativeis_p2(const NoAST *no) {
     const char *a;
     const char *b;
@@ -443,22 +469,18 @@ static int tipos_incompativeis_p2(const NoAST *no) {
     if (no->tipo == AST_E || no->tipo == AST_OU)
         return 0;
 
-    a = semantico_tipo_expr(no->a);
-    b = semantico_tipo_expr(no->b);
+    a = p2_tipo_operando(no->a);
+    b = p2_tipo_operando(no->b);
 
     /* Nao verifica expressoes que contenham identificadores desconhecidos. */
     if (a[0] == '?' || b[0] == '?')
         return 0;
 
-    if (eh_comparacao_igualdade(no->tipo)) {
-        if (tipos_numericos(a) && tipos_numericos(b))
-            return 0;
-
-        return !tipos_iguais(a, b);
-    }
+    if (eh_comparacao_igualdade(no->tipo)) return 0;
 
     if (eh_comparacao_ordem(no->tipo))
-        return !tipos_numericos(a) || !tipos_numericos(b);
+        return !((p2_numerico(a) && p2_numerico(b)) ||
+                 (tipos_iguais(a, "str") && tipos_iguais(b, "str")));
 
     return 0;
 }
@@ -571,8 +593,8 @@ static void analisar_operador_p2(NoAST *no) {
     } else {
         snprintf(mensagem, sizeof mensagem,
                  "comparacao entre tipos incompativeis ('%s' e '%s')",
-                 semantico_tipo_expr(no->a),
-                 semantico_tipo_expr(no->b));
+                 p2_tipo_operando(no->a),
+                 p2_tipo_operando(no->b));
     }
 
     erro_semantico(no->linha, mensagem);
