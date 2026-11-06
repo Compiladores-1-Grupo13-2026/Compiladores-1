@@ -1,0 +1,6 @@
+l = [[1, 2], "texto", None, True]
+b = l[0]
+b[-1] = 9
+print(l)
+l[0] = [5]
+print(l, b)

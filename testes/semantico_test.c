@@ -1,7 +1,6 @@
 /* ===== [P4] Testes de atribuicao, listas e indexacao =====
- * Testa os arquivos compartilhados com dados pre-montados e dubles de dependencia.
+ * Testa os arquivos compartilhados com a AST de producao.
  * O callback fornece metadados de teste; nao analisa expressoes da P1. */
-#include "dubles_ast.h"
 #include "Semantica/Ast/ast.h"
 #include "Semantica/Tabela/tabela.h"
 #include "Semantica/semantico.h"
@@ -43,15 +42,15 @@ static const char *visitar(NoAST *no) {
 }
 
 static NoAST *id(const char *nome, int linha) {
-    return teste_texto(AST_IDENTIFICADOR, nome, linha);
+    return ast_criar_texto(AST_IDENTIFICADOR, nome, linha);
 }
 
 static NoAST *numero(int valor, int linha) {
-    return teste_numero(valor, linha);
+    return ast_criar_numero(valor, linha);
 }
 
 static NoAST *texto(const char *valor, int linha) {
-    return teste_texto(AST_STRING, valor, linha);
+    return ast_criar_texto(AST_STRING, valor, linha);
 }
 
 static NoAST *atribuir(TipoNo operador, const char *nome, NoAST *valor, int linha) {
@@ -63,6 +62,7 @@ static void verificar(NoAST *no, const char *tipo, int novos_erros) {
     const char *obtido = visitar(no);
     assert(obtido && strcmp(obtido, tipo) == 0);
     assert(erros == anteriores + novos_erros);
+    ast_liberar(no);
 }
 
 static void tipo_simbolo(const char *nome, const char *tipo, int linha) {
@@ -73,7 +73,6 @@ static void tipo_simbolo(const char *nome, const char *tipo, int linha) {
 
 static void reiniciar(void) {
     tabela_liberar();
-    teste_reiniciar();
     erros = 0;
     ultima_linha = 0;
     mensagens[0] = '\0';
@@ -91,6 +90,7 @@ static void testar_ast(void) {
         assert(no->tipo == operadores[i] && no->linha == 1);
         assert(no->a == alvo && no->b == valor && !no->c && !no->prox);
         assert(strcmp(ast_p4_nome_tipo(no->tipo), nomes[i]) == 0);
+        ast_liberar(no);
     }
     NoAST *primeiro = numero(1, 4), *segundo = texto("dois", 5);
     primeiro->prox = segundo;
@@ -106,19 +106,8 @@ static void testar_ast(void) {
     assert(!ast_p4_nome_tipo(AST_NUMERO) && !ast_p4_imprimir(NULL, 0));
     assert(!ast_p4_imprimir(indice, 0));
 
-    /* O impressor P4 delega apenas a/b/c uma vez e deixa prox para o dono
-     * da sequencia. O spy nao conhece o conteudo de nenhuma outra fatia. */
-    assert(teste_impressao_total() == 0);
-    indexacao->prox = teste_no(AST_NONE, 7);
-    assert(ast_p4_imprimir(indexacao, 2) == 1);
-    assert(teste_impressao_total() == 3);
-    assert(teste_impressao_chamada(0)->no == lista);
-    assert(teste_impressao_chamada(1)->no == indice);
-    assert(teste_impressao_chamada(2)->no == NULL);
-    for (size_t i = 0; i < 3; i++) {
-        assert(teste_impressao_chamada(i)->nivel == 3);
-        assert(teste_impressao_chamada(i)->no != indexacao->prox);
-    }
+    /* A AST real possui cada filho e libera a arvore inteira. */
+    ast_liberar(indexacao);
 }
 
 static void testar_variaveis(void) {
@@ -185,8 +174,8 @@ static void testar_listas_e_indices(void) {
     reiniciar();
     NoAST *elementos = numero(1, 1);
     elementos->prox = texto("dois", 2);
-    elementos->prox->prox = teste_no(AST_BOOL, 3);
-    elementos->prox->prox->prox = teste_no(AST_NONE, 4);
+    elementos->prox->prox = ast_criar(AST_BOOL, NULL, NULL, NULL, 3);
+    elementos->prox->prox->prox = ast_criar(AST_NONE, NULL, NULL, NULL, 4);
     elementos->prox->prox->prox->prox = ast_p4_lista(NULL, 5);
     verificar(atribuir(AST_ATRIBUICAO, "l", ast_p4_lista(elementos, 1), 1), "none", 0);
     tipo_simbolo("l", "lista", 1);
@@ -197,7 +186,7 @@ static void testar_listas_e_indices(void) {
     tipo_simbolo("l", "lista", 1);
 
     verificar(ast_p4_indexacao(id("l", 8),
-                  teste_no(AST_BOOL, 9), 8), P4_TIPO_ERRO, 1);
+                  ast_criar(AST_BOOL, NULL, NULL, NULL, 9), 8), P4_TIPO_ERRO, 1);
     assert(ultima_linha == 9 && strstr(mensagens, "bool"));
     verificar(ast_p4_indexacao(numero(5, 10), numero(0, 10), 10), P4_TIPO_ERRO, 1);
     verificar(ast_p4_atribuicao(AST_ATRIBUICAO, numero(3, 11), numero(2, 11), 11),
@@ -212,6 +201,17 @@ static void testar_listas_e_indices(void) {
     assert(!tabela_buscar("lista_invalida") && ultima_linha == 13);
     assert(tabela_inserir("lista_incerta", CAT_VARIAVEL, "?", 14) == 0);
     verificar(ast_p4_indexacao(id("lista_incerta", 15), numero(0, 15), 15), "?", 0);
+
+    /* Sprint 4: indices vindos de identificadores tipados. */
+    verificar(atribuir(AST_ATRIBUICAO, "indice", texto("zero", 16), 16), "none", 0);
+    verificar(ast_p4_indexacao(id("l", 17), id("indice", 17), 17), P4_TIPO_ERRO, 1);
+    assert(strstr(mensagens, "str"));
+    verificar(atribuir(AST_ATRIBUICAO, "indice",
+              ast_criar_numero_real(1.5, 18), 18), "none", 0);
+    tipo_simbolo("indice", "float", 16);
+    verificar(ast_p4_indexacao(id("l", 19), id("indice", 19), 19), P4_TIPO_ERRO, 1);
+    verificar(atribuir(AST_ATRIBUICAO, "indice", numero(0, 20), 20), "none", 0);
+    verificar(ast_p4_indexacao(id("l", 21), id("indice", 21), 21), "?", 0);
 }
 
 static void testar_compostos(void) {
@@ -225,7 +225,7 @@ static void testar_compostos(void) {
     assert(ultima_linha == 5 && strstr(mensagens, "zero"));
     tipo_simbolo("n", "int", 1);
     verificar(atribuir(AST_ATRIB_DIV, "n", numero(2, 6), 6), "none", 0);
-    tipo_simbolo("n", "?", 1);
+    tipo_simbolo("n", "float", 1);
 
     verificar(atribuir(AST_ATRIBUICAO, "s", texto("a", 7), 7), "none", 0);
     verificar(atribuir(AST_ATRIB_SOMA, "s", texto("b", 8), 8), "none", 0);
@@ -252,14 +252,14 @@ static void testar_regressoes_p4(void) {
     verificar(atribuir(AST_ATRIBUICAO, "n", numero(8, 1), 1), "none", 0);
 
     /* 1. Literal real nao nulo com valor == 0 nao e divisao por zero. */
-    NoAST *divisor = teste_numero_real(0.5, 2);
+    NoAST *divisor = ast_criar_numero_real(0.5, 2);
     assert(divisor->valor == 0);
     verificar(atribuir(AST_ATRIB_DIV, "n", divisor, 2), "none", 0);
-    tipo_simbolo("n", "?", 1);
+    tipo_simbolo("n", "float", 1);
 
     /* 2. Zero real deve gerar erro e conservar o tipo anterior. */
     verificar(atribuir(AST_ATRIBUICAO, "n", numero(8, 3), 3), "none", 0);
-    verificar(atribuir(AST_ATRIB_DIV, "n", teste_numero_real(0.0, 4), 4),
+    verificar(atribuir(AST_ATRIB_DIV, "n", ast_criar_numero_real(0.0, 4), 4),
               P4_TIPO_ERRO, 1);
     tipo_simbolo("n", "int", 1);
     assert(ultima_linha == 4 && strstr(mensagens, "zero"));
@@ -267,7 +267,7 @@ static void testar_regressoes_p4(void) {
     /* 3. Indice fracionario impede a insercao da variavel de destino. */
     verificar(atribuir(AST_ATRIBUICAO, "l", ast_p4_lista(NULL, 5), 5), "none", 0);
     verificar(atribuir(AST_ATRIBUICAO, "destino",
-                  ast_p4_indexacao(id("l", 6), teste_numero_real(1.5, 6), 6), 6),
+                  ast_p4_indexacao(id("l", 6), ast_criar_numero_real(1.5, 6), 6), 6),
               P4_TIPO_ERRO, 1);
     assert(!tabela_buscar("destino") && ultima_linha == 6);
     tipo_simbolo("l", "lista", 5);
@@ -285,6 +285,39 @@ static void testar_regressoes_p4(void) {
     assert(!tabela_buscar("ausente_rhs") && ultima_linha == 10);
 }
 
+/* [P2] Casos antes separados, com a mesma AST e o mesmo executavel de teste. */
+static NoAST *p2_atribuir(const char *nome, NoAST *valor) {
+    return ast_p4_atribuicao(AST_ATRIBUICAO,
+            ast_criar_texto(AST_IDENTIFICADOR, nome, 1), valor, 1);
+}
+
+static void p2_verificar(TipoNo operador, NoAST *a, NoAST *b, int erros) {
+    NoAST *primeiro = p2_atribuir("a", a);
+    primeiro->prox = p2_atribuir("b", b);
+    primeiro->prox->prox = ast_criar(operador,
+        ast_criar_texto(AST_IDENTIFICADOR, "a", 2),
+        ast_criar_texto(AST_IDENTIFICADOR, "b", 2), NULL, 2);
+    NoAST *programa = ast_criar(AST_PROGRAMA, primeiro, NULL, NULL, 1);
+    assert(semantico_analisar(programa) == erros);
+    ast_liberar(programa);
+}
+
+static void testar_comparacoes_p2(void) {
+    p2_verificar(AST_MENOR, ast_criar_texto(AST_STRING, "a", 1),
+              ast_criar_texto(AST_STRING, "b", 1), 0);
+    p2_verificar(AST_MAIOR_IGUAL, ast_criar_numero(1, 1),
+              ast_criar_numero_real(1.5, 1), 0);
+    p2_verificar(AST_MENOR, ast_criar_texto(AST_STRING, "a", 1),
+              ast_criar_numero(1, 1), 1);
+    p2_verificar(AST_MAIOR_IGUAL, ast_criar_numero(1, 1),
+              ast_criar_texto(AST_STRING, "a", 1), 1);
+    p2_verificar(AST_IGUAL, ast_criar_numero(1, 1),
+              ast_criar_texto(AST_STRING, "a", 1), 0);
+    p2_verificar(AST_DIFERENTE, ast_criar(AST_NONE, NULL, NULL, NULL, 1),
+              ast_p4_lista(NULL, 1), 0);
+    puts("[OK] P2: comparacoes numericas, textos, igualdade e identificadores tipados");
+}
+
 int main(void) {
     testar_ast();
     testar_variaveis();
@@ -294,5 +327,6 @@ int main(void) {
     testar_regressoes_p4();
     tabela_liberar();
     puts("[OK] semantica e AST P4: alvos, tipos, listas, indices e escopos");
+    testar_comparacoes_p2();
     return 0;
 }

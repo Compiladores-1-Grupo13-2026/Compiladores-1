@@ -1,0 +1,6 @@
+l = [1, 2]
+indices = [1.5]
+i = indices[0]
+print("antes")
+print(l[i])
+print("depois")

@@ -1,0 +1,56 @@
+[OK] atribuicao reconhecida
+[OK] atribuicao reconhecida
+[OK] return reconhecido
+[OK] def reconhecido
+[OK] atribuicao reconhecida
+[OK] return reconhecido
+[OK] def reconhecido
+[OK] return reconhecido
+[OK] def reconhecido
+[OK] chamada de funcao reconhecida
+[OK] chamada de funcao reconhecida
+[OK] chamada de funcao reconhecida
+[OK] chamada de funcao reconhecida
+PROGRAMA [linha 2]
+  ATRIBUICAO [linha 2]
+    IDENTIFICADOR 'x' [linha 2]
+    NUMERO 100 [linha 2]
+  FUNCAO 'area' [linha 3]
+    PARAMETRO 'largura' [linha 3]
+    PARAMETRO 'altura' [linha 3]
+    BLOCO [linha 3]
+      ATRIBUICAO [linha 4]
+        IDENTIFICADOR 'x' [linha 4]
+        MULTIPLICACAO [linha 4]
+          IDENTIFICADOR 'largura' [linha 4]
+          IDENTIFICADOR 'altura' [linha 4]
+      RETURN [linha 5]
+        IDENTIFICADOR 'x' [linha 5]
+  FUNCAO 'perimetro' [linha 7]
+    PARAMETRO 'largura' [linha 7]
+    PARAMETRO 'altura' [linha 7]
+    BLOCO [linha 7]
+      ATRIBUICAO [linha 8]
+        IDENTIFICADOR 'total' [linha 8]
+        MULTIPLICACAO [linha 8]
+          NUMERO 2 [linha 8]
+          SOMA [linha 8]
+            IDENTIFICADOR 'largura' [linha 8]
+            IDENTIFICADOR 'altura' [linha 8]
+      RETURN [linha 9]
+        IDENTIFICADOR 'total' [linha 9]
+  FUNCAO 'usa_global' [linha 11]
+    BLOCO [linha 11]
+      RETURN [linha 11]
+        SOMA [linha 11]
+          IDENTIFICADOR 'x' [linha 11]
+          NUMERO 1 [linha 11]
+  CHAMADA 'print' [linha 12]
+    CHAMADA 'area' [linha 12]
+      NUMERO 2 [linha 12]
+      NUMERO 3 [linha 12]
+    CHAMADA 'perimetro' [linha 12]
+      NUMERO 2 [linha 12]
+      NUMERO 3 [linha 12]
+    CHAMADA 'usa_global' [linha 12]
+    IDENTIFICADOR 'x' [linha 12]

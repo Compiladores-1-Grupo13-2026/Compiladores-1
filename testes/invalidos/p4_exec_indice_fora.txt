@@ -1,0 +1,4 @@
+l = [1, 2]
+print("antes")
+print(l[5])
+print("depois")

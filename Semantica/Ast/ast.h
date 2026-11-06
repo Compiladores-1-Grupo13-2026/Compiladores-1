@@ -1,26 +1,6 @@
 #ifndef MINIPY_AST_H
 #define MINIPY_AST_H
 
-
-/* ===== [P4] Atribuição, listas e indexação ===== */
-
-/* NoAST, TipoNo e API comum serao acrescentados pela base do grupo. */
-
-/* Os construtores recebem a propriedade dos filhos; cada filho deve ter um
- * unico dono. A lista de elementos ja vem encadeada por ast_anexar/prox. */
-NoAST *ast_p4_atribuicao(TipoNo operador, NoAST *alvo, NoAST *valor, int linha);
-NoAST *ast_p4_lista(NoAST *elementos, int linha);
-NoAST *ast_p4_indexacao(NoAST *base, NoAST *indice, int linha);
-
-/* Retorna NULL para os tipos das outras fatias. O impressor comum pode usar
- * esse nome e percorrer a/b/c/prox no formato acordado (2 espacos por nivel). */
-const char *ast_p4_nome_tipo(TipoNo tipo);
-/* Imprime um no P4 e seus filhos via ast_imprimir; nao percorre no->prox,
- * responsabilidade do impressor comum. Retorna 0 quando nao for um no P4. */
-int ast_p4_imprimir(NoAST *no, int nivel);
-
-/* ===== FIM [P4] Atribuição, listas e indexação ===== */
-=======
 /* Enum comum da Sprint 3. Cada fatia usa somente os seus tipos de nó. */
 typedef enum {
     AST_PROGRAMA, AST_BLOCO,
@@ -68,5 +48,35 @@ void ast_imprimir(NoAST *raiz, int nivel);
 void ast_liberar(NoAST *raiz);
 const char *ast_nome_tipo(TipoNo tipo);
 
+/* ===== [P4] Atribuição, listas e indexação ===== */
+
+/* Os construtores recebem a propriedade dos filhos; cada filho deve ter um
+ * unico dono. A lista de elementos ja vem encadeada por ast_anexar/prox. */
+NoAST *ast_p4_atribuicao(TipoNo operador, NoAST *alvo, NoAST *valor, int linha);
+NoAST *ast_p4_lista(NoAST *elementos, int linha);
+NoAST *ast_p4_indexacao(NoAST *base, NoAST *indice, int linha);
+
+/* Retorna NULL para os tipos das outras fatias. O impressor comum pode usar
+ * esse nome e percorrer a/b/c/prox no formato acordado (2 espacos por nivel). */
+const char *ast_p4_nome_tipo(TipoNo tipo);
+/* Imprime um no P4 e seus filhos via ast_imprimir; nao percorre no->prox,
+ * responsabilidade do impressor comum. Retorna 0 quando nao for um no P4. */
+int ast_p4_imprimir(NoAST *no, int nivel);
+
+/* ===== FIM [P4] Atribuição, listas e indexação ===== */
+
+/* ===== [P5] Funcoes, chamadas e raiz do programa ===== */
+/* Formato dos nos (filhos a/b/c e lista por prox):
+ *   AST_PROGRAMA  a = primeiro comando do arquivo (demais por prox)
+ *   AST_BLOCO     a = primeiro comando entre { } (demais por prox)
+ *   AST_FUNCAO    texto = nome, a = primeiro PARAMETRO, b = BLOCO do corpo
+ *   AST_PARAMETRO texto = nome do parametro
+ *   AST_RETURN    a = expressao devolvida (ou NULL em "return;")
+ *   AST_CHAMADA   texto = nome chamado, a = primeiro argumento (demais por prox) */
+NoAST *ast_p5_funcao(const char *nome, NoAST *parametros, NoAST *corpo, int linha);
+NoAST *ast_p5_chamada(const char *nome, NoAST *argumentos, int linha);
+/* Conta os itens de uma lista encadeada por prox (parametros, argumentos). */
+int ast_p5_contar(const NoAST *lista);
+/* ===== FIM [P5] Funcoes, chamadas e raiz do programa ===== */
 
 #endif

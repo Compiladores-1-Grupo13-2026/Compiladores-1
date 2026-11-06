@@ -1,9 +1,5 @@
 # ===== [P4] Testes de atribuicao, listas, indexacao e tabela =====
-"""Testa somente os modulos P4, sem implementar a base nem a suite dos colegas.
-
-O contrato declarativo e os dubles sao exclusivos deste teste. Os arquivos
-.mpy/.esperado estao preparados para integracao quando o grupo entregar a base.
-"""
+"""Testa tabela/P2/P4 com a AST real; --runtime inclui os modulos da dupla."""
 from __future__ import annotations
 
 import argparse
@@ -30,22 +26,33 @@ def text(data: bytes) -> str:
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--memcheck", action="store_true", help="verifica somente os testes unitarios P4 com Valgrind")
+    parser.add_argument("--memcheck", action="store_true", help="executa os testes com Valgrind")
+    parser.add_argument("--runtime", action="store_true", help="inclui testes de execucao; exige os modulos da Pessoa B")
     args = parser.parse_args()
+    runtime_sources = [ROOT / "Interpretador" / name for name in (
+        "interpretador.c", "valor.c", "exec_expressoes.c", "exec_condicoes.c",
+        "exec_lacos.c", "ambiente.c", "lista.c", "exec_atribuicao.c", "exec_funcoes.c",
+    )]
+    if args.runtime:
+        missing = [str(p.relative_to(ROOT)) for p in runtime_sources if not p.is_file()]
+        if missing:
+            raise SystemExit("Integracao pendente: " + ", ".join(missing))
     if not shutil.which("gcc"):
         raise SystemExit("Dependencia ausente: gcc")
     if args.memcheck and not shutil.which("valgrind"):
         raise SystemExit("Valgrind ausente; execute --memcheck em Linux com Valgrind instalado.")
     extension = ".exe" if os.name == "nt" else ""
-    flags = ["gcc", "-std=c11", "-Wall", "-Wextra", "-Werror", "-I", ROOT]
+    flags = ["gcc", "-std=c11", "-Wall", "-Wextra", "-Werror", "-g", "-I", ROOT]
     tabela = ROOT / "Semantica/Tabela/tabela.c"
-    jobs = (
+    jobs = [
         ("tabela_test", [tabela]),
         ("semantico_test", [
             tabela, ROOT / "Semantica/Ast/ast.c",
-            ROOT / "Semantica/semantico.c", HERE / "dubles_ast.c",
+            ROOT / "Semantica/semantico.c",
         ]),
-    )
+    ]
+    if args.runtime:
+        jobs.append(("runtime_a_test", [ROOT / "Semantica/Ast/ast.c", *runtime_sources]))
     valgrind = [
         "valgrind", "--quiet", "--leak-check=full", "--show-leak-kinds=all",
         "--errors-for-leak-kinds=all", "--error-exitcode=99",
@@ -53,13 +60,12 @@ def main():
     with tempfile.TemporaryDirectory(prefix="minipy-p4-") as temporary:
         for name, sources in jobs:
             binary = Path(temporary) / (name + extension)
-            contract = ["-include", HERE / "contrato_ast_teste.h"] if name == "semantico_test" else []
-            execute(flags + contract + sources + [HERE / (name + ".c"), "-o", binary, "-lm"])
+            execute(flags + sources + [HERE / (name + ".c"), "-o", binary, "-lm"])
             result = execute(valgrind + [binary], timeout=10)
             print(text(result.stdout), end="")
-    print("P4: 2 testes unitarios passaram. Casos .mpy aguardam a base do grupo.")
+    print(f"Pessoa A: {len(jobs)} executaveis de teste passaram com dependencias reais.")
     if args.memcheck:
-        print("Valgrind: nenhum erro nos modulos exercitados pelos testes unitarios P4.")
+        print("Valgrind: nenhum erro nos modulos exercitados pelos testes.")
 
 
 if __name__ == "__main__":

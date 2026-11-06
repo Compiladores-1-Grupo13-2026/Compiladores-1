@@ -1,0 +1,46 @@
+[OK] return reconhecido
+[OK] if reconhecido
+[OK] chamada de funcao reconhecida
+[OK] return reconhecido
+[OK] def reconhecido
+[OK] return reconhecido
+[OK] if reconhecido
+[OK] chamada de funcao reconhecida
+[OK] return reconhecido
+[OK] def reconhecido
+[OK] chamada de funcao reconhecida
+[OK] chamada de funcao reconhecida
+PROGRAMA [linha 2]
+  FUNCAO 'eh_par' [linha 2]
+    PARAMETRO 'n' [linha 2]
+    BLOCO [linha 2]
+      IF [linha 3]
+        IGUAL [linha 3]
+          IDENTIFICADOR 'n' [linha 3]
+          NUMERO 0 [linha 3]
+        BLOCO [linha 3]
+          RETURN [linha 3]
+            BOOL True [linha 3]
+      RETURN [linha 4]
+        CHAMADA 'eh_impar' [linha 4]
+          SUBTRACAO [linha 4]
+            IDENTIFICADOR 'n' [linha 4]
+            NUMERO 1 [linha 4]
+  FUNCAO 'eh_impar' [linha 6]
+    PARAMETRO 'n' [linha 6]
+    BLOCO [linha 6]
+      IF [linha 7]
+        IGUAL [linha 7]
+          IDENTIFICADOR 'n' [linha 7]
+          NUMERO 0 [linha 7]
+        BLOCO [linha 7]
+          RETURN [linha 7]
+            BOOL False [linha 7]
+      RETURN [linha 8]
+        CHAMADA 'eh_par' [linha 8]
+          SUBTRACAO [linha 8]
+            IDENTIFICADOR 'n' [linha 8]
+            NUMERO 1 [linha 8]
+  CHAMADA 'print' [linha 10]
+    CHAMADA 'eh_par' [linha 10]
+      NUMERO 4 [linha 10]

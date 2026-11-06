@@ -1,0 +1,5 @@
+t = ["a"]
+n = [1]
+print("antes")
+print(t[0] < n[0])
+print("depois")

@@ -1,0 +1,8 @@
+print(1 == 1.0, True == 1, None == None, None != 0)
+print("abc" < "abd", "z" >= "a", "a" <= "a", "a" > "b")
+print([1, [2, "a"]] == [1.0, [2, "a"]], [1] != [1, 2])
+print("a" == 1, [] != None, 2 < 3, 3 >= 3)
+
+print(not None, not False, not 0, not 0.0, not "", not [])
+print(not 1, not -2, not 0.5, not "x", not [0])
+print([] or [1], [2] and "fim")
