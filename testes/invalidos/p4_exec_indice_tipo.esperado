@@ -1,0 +1,2 @@
+antes
+[ERRO EXECUCAO] Linha 5: indice de lista deve ser int, recebido 'float'
