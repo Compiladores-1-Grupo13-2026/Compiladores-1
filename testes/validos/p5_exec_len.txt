@@ -1,0 +1,13 @@
+l = [10, 20, 30]
+vazia = []
+print(len(l), len(vazia), len("MiniPy"), len(""))
+print(len("a\tb"), len([1, [2, 3]]), len(range(5)))
+soma = 0
+for i in range(len(l)) {
+    soma += l[i]
+}
+print(soma)
+n = len(l)
+print(n * 2)
+def tamanho(x) { return len(x) }
+print(tamanho("abc"), tamanho([None]))

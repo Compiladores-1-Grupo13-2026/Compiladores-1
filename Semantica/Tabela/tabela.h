@@ -22,7 +22,7 @@ typedef struct Simbolo {
     struct Simbolo *prox;
 } Simbolo;
 
-/* O escopo global (0), print e range sao criados no primeiro uso.
+/* O escopo global (0), print, range e len sao criados no primeiro uso.
  * Cada entrada recebe um ID novo; so funcoes devem chamar esta operacao. */
 void tabela_entrar_escopo(const char *nome_funcao);
 void tabela_sair_escopo(void);

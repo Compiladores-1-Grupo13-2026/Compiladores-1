@@ -818,11 +818,19 @@ static const char *visitar_chamada(NoAST *chamada) {
     if (!simbolo) {
         erro_formatado(chamada->linha, "funcao '%s' nao definida", chamada->texto);
     } else if (simbolo->categoria == CAT_BUILTIN) {
-        /* print aceita qualquer quantidade; range aceita de 1 a 3. */
+        /* print aceita qualquer quantidade; range aceita de 1 a 3; len exatamente 1. */
         if (strcmp(chamada->texto, "range") == 0 && (recebidos < 1 || recebidos > 3))
             erro_formatado(chamada->linha,
                            "funcao 'range' espera de 1 a 3 argumentos, recebeu %d",
                            recebidos);
+        if (strcmp(chamada->texto, "len") == 0) {
+            if (recebidos != 1)
+                erro_formatado(chamada->linha,
+                               "funcao 'len' espera 1 argumento, recebeu %d", recebidos);
+            /* len sempre produz int (ou para com erro de execucao), entao a
+             * semantica ja conhece o tipo: n = len(l) registra n como int. */
+            return "int";
+        }
     } else if (simbolo->categoria == CAT_FUNCAO) {
         /* Fora de funcoes o codigo roda de cima para baixo: o def precisa
          * vir antes. Dentro de um corpo, a chamada so acontece quando a
