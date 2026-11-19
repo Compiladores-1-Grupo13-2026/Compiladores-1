@@ -12,6 +12,7 @@ nav:
   - Analisador sintático: analisador_sintatico/analisador-sintatico.md
   - Analisador semântico: analisador_semantico/analisador-semantico.md
   - AST: ast.md
+  - Otimização: otimizacao.md
   - Decisões técnicas: decisoes.md
   - Funções e chamadas: p5.md
   - Interpretador: interpretador.md
