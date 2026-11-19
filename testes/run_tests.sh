@@ -13,7 +13,10 @@ for pasta in validos invalidos; do
         [ -f "$caso" ] || continue
         total=$((total + 1))
         modo=--ast
-        case "$caso" in *_exec_*) modo= ;; esac
+        case "$caso" in
+            *_exec_*) modo= ;;
+            *_ast_otimizada_*) modo=--ast-otimizada ;;
+        esac
         status=0
         timeout 5 ./parser ${modo:+"$modo"} < "$caso" > "$temporario/stdout" 2> "$temporario/stderr" || status=$?
         ok=1

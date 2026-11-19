@@ -24,8 +24,10 @@ lex.yy.c: $(SCANNER_SOURCE) parser.tab.h
 
 # libm fornece floor e pow para os operadores da P1.
 # [P5] Fontes do interpretador integrado: AST, tabela de simbolos e semantica.
-FONTES_SEMANTICA = Semantica/Ast/ast.c Semantica/Tabela/tabela.c Semantica/semantico.c
-HEADERS_SEMANTICA = Semantica/Ast/ast.h Semantica/Tabela/tabela.h Semantica/semantico.h
+FONTES_SEMANTICA = Semantica/Ast/ast.c Semantica/Tabela/tabela.c Semantica/semantico.c \
+    Semantica/otimizador.c
+HEADERS_SEMANTICA = Semantica/Ast/ast.h Semantica/Tabela/tabela.h Semantica/semantico.h \
+    Semantica/otimizador.h
 FONTES_INTERPRETADOR = Interpretador/interpretador.c Interpretador/valor.c \
     Interpretador/exec_expressoes.c Interpretador/exec_condicoes.c \
     Interpretador/exec_lacos.c Interpretador/ambiente.c Interpretador/lista.c \
@@ -69,19 +71,19 @@ run: parser
 	./parser < "$(ARQ)"
 
 # Valgrind e preferido; usa AddressSanitizer com deteccao de leaks se ausente.
-VALIDOS_MEMCHECK = $(sort $(wildcard testes/validos/p1_*.txt testes/validos/*_exec_*.txt))
+VALIDOS_MEMCHECK = $(sort $(wildcard testes/validos/p1_*.txt testes/validos/*_exec_*.txt testes/validos/*_ast_otimizada_*.txt))
 .PHONY: memcheck parser-memcheck
 memcheck: parser
 	@if command -v valgrind >/dev/null 2>&1; then \
 		for caso in $(VALIDOS_MEMCHECK); do \
-			modo=--ast; case "$$caso" in *_exec_*) modo= ;; esac; \
+			modo=--ast; case "$$caso" in *_exec_*) modo= ;; *_ast_otimizada_*) modo=--ast-otimizada ;; esac; \
 			valgrind --quiet --leak-check=full --errors-for-leak-kinds=definite,indirect,possible --error-exitcode=1 ./parser $$modo < "$$caso" >/dev/null || exit $$?; \
 		done; \
 	else \
 		printf '%s\n' 'valgrind indisponivel; usando AddressSanitizer com deteccao de leaks.'; \
 		$(MAKE) --no-print-directory parser-memcheck || exit $$?; \
 		for caso in $(VALIDOS_MEMCHECK); do \
-			modo=--ast; case "$$caso" in *_exec_*) modo= ;; esac; \
+			modo=--ast; case "$$caso" in *_exec_*) modo= ;; *_ast_otimizada_*) modo=--ast-otimizada ;; esac; \
 			ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 ./parser-memcheck $$modo < "$$caso" >/dev/null || exit $$?; \
 		done; \
 	fi

@@ -41,6 +41,7 @@ NoAST *ast_criar_numero(int valor, int linha);
 /* Preserva literais reais sem alterar a struct compartilhada. */
 NoAST *ast_criar_numero_real(double valor, int linha);
 int ast_numero_valor(const NoAST *no, double *valor);
+int ast_numero_inteiro(const NoAST *no, int *valor);
 /* ===== FIM [P1] API de valores numericos dos literais ===== */
 NoAST *ast_criar_texto(TipoNo tipo, const char *texto, int linha);
 NoAST *ast_anexar(NoAST *lista, NoAST *novo);
