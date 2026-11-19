@@ -1,0 +1,4 @@
+print("antes")
+x = 2 - 2
+print(10 / x)
+print("depois")
