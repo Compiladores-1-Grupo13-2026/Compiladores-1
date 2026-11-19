@@ -15,6 +15,7 @@ typedef struct {
 #include <string.h>
 
 #include "Semantica/semantico.h"
+#include "Semantica/otimizador.h"
 #include "Interpretador/interpretador.h"
 
 static int modo_ast = 0;
@@ -618,14 +619,11 @@ static NoAST *anexar_senao(NoAST *se, NoAST *senao) {
     return se;
 }
 
-/* Fluxo do interpretador (Semana 6):
- * 1. yyparse() le stdin e monta a AST (com recuperacao de erros sintaticos);
- * 2. a AST do programa e impressa;
- * 3. a analise semantica percorre a AST e usa a tabela de simbolos;
- * 4. AST, tabela e textos do scanner sao liberados.
- * O codigo de saida e 1 se houve qualquer erro. */
+/* A AST original pode ser exibida antes da semantica. A otimizacao roda
+ * apos as analises, antes de exibir a AST otimizada ou executar o programa. */
 int main(int argc, char **argv) {
     modo_ast = argc > 1 && strcmp(argv[1], "--ast") == 0;
+    int modo_ast_otimizada = argc > 1 && strcmp(argv[1], "--ast-otimizada") == 0;
     setvbuf(stdout, NULL, _IONBF, 0);
     int status = yyparse();
     emitir_pendente();
@@ -639,8 +637,11 @@ int main(int argc, char **argv) {
     int erros_semanticos = semantico_analisar(raiz_programa);
     int erro_exec = 0;
     if (!modo_ast && status == 0 && erros_lexicos == 0 &&
-        erros_sintaticos == 0 && erros_semanticos == 0)
-        erro_exec = interpretar_programa(raiz_programa);
+        erros_sintaticos == 0 && erros_semanticos == 0) {
+        raiz_programa = otimizar_ast(raiz_programa);
+        if (modo_ast_otimizada) ast_imprimir(raiz_programa, 0);
+        else erro_exec = interpretar_programa(raiz_programa);
+    }
 
     ast_liberar(raiz_programa);
     lexer_liberar_textos();

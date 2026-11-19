@@ -26,6 +26,7 @@ O executável recebe o programa pelo stdin:
 ```sh
 ./parser < programa.txt
 ./parser --ast < programa.txt
+./parser --ast-otimizada < programa.txt
 ./tokens < programa.txt
 make run ARQ=programa.txt
 ```
@@ -33,6 +34,13 @@ make run ARQ=programa.txt
 O modo padrão executa depois das análises. `--ast` mostra reconhecimentos e a
 árvore sintática, sem executar. O modo tokens mostra o resultado do scanner.
 Expressões soltas são descartadas; use `print` para mostrar valores.
+
+Após a análise semântica, o interpretador dobra adições, subtrações e
+multiplicações de literais inteiros cujo resultado cabe em `int`. A visita
+começa pelos filhos, então `(1 + 2) * (3 + 4)` vira `21` na AST. Operações
+com nós de literais reais ou resultados fora do intervalo de `int`, além de
+divisão, divisão inteira, resto e potência, permanecem na árvore. Use
+`--ast-otimizada` para exibir essa árvore sem executar o programa.
 
 ```text
 def fatorial(n) {
