@@ -9,7 +9,9 @@ semântica e a execução. Essa organização permite inspecionar um programa co
 O Flex produz tokens; o Bison constrói a [AST](ast.md). A análise semântica
 consulta a tabela de símbolos sem substituir a árvore por resultados
 calculados. O interpretador percorre os nós para avaliar expressões, escolher
-ramos, repetir blocos e chamar funções.
+ramos, repetir blocos e chamar funções. Depois da análise semântica, o
+[dobramento de constantes](otimizacao.md) simplifica operações elegíveis
+antes da execução.
 
 A entrada passa pelas verificações léxicas, sintáticas e semânticas antes de
 ser executada. Mesmo um `print` escrito antes de um erro de análise não chega
