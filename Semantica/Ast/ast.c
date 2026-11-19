@@ -55,15 +55,24 @@ NoAST *ast_criar_numero_real(double valor, int linha) {
     return no;
 }
 
+static const NumeroRealAST *buscar_numero_real(const NoAST *no) {
+    for (const NumeroRealAST *item = numeros_reais; item; item = item->prox) {
+        if (item->no == no) return item;
+    }
+    return NULL;
+}
+
 int ast_numero_valor(const NoAST *no, double *valor) {
     if (!no || no->tipo != AST_NUMERO || !valor) return 0;
-    for (NumeroRealAST *item = numeros_reais; item; item = item->prox) {
-        if (item->no == no) {
-            *valor = item->valor;
-            return 1;
-        }
-    }
-    *valor = (double) no->valor;
+    const NumeroRealAST *real = buscar_numero_real(no);
+    *valor = real ? real->valor : (double) no->valor;
+    return 1;
+}
+
+int ast_numero_inteiro(const NoAST *no, int *valor) {
+    if (!no || no->tipo != AST_NUMERO || !valor || buscar_numero_real(no))
+        return 0;
+    *valor = no->valor;
     return 1;
 }
 /* ===== FIM [P1] Construcao e leitura de literais numericos ===== */
