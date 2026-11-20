@@ -1,3 +1,4 @@
+
 /* Contrato de execucao da Pessoa A. Liga as implementacoes reais;
  * nao substitui valores, expressoes, lacos nem funcoes da Pessoa B. */
 #include "Interpretador/ambiente.h"
@@ -25,77 +26,218 @@ static void testar_verdade_e_comparacoes(void) {
     verdade(valor_int(-1), 1);
     verdade(valor_real(0.5), 1);
     verdade(valor_str("x"), 1);
+
     NoAST *funcao = ast_criar_texto(AST_FUNCAO, "f", 1);
     verdade(valor_funcao(funcao), 1);
-    Valor a = valor_funcao(funcao), b = valor_funcao(funcao);
+
+    Valor a = valor_funcao(funcao);
+    Valor b = valor_funcao(funcao);
+
     assert(comparar_valores(AST_IGUAL, a, b, 1).u.booleano);
     ast_liberar(funcao);
-    assert(comparar_valores(AST_IGUAL, valor_int(1), valor_real(1), 1).u.booleano);
-    assert(comparar_valores(AST_IGUAL, valor_int(1), valor_bool(1), 1).u.booleano);
-    assert(comparar_valores(AST_DIFERENTE, valor_int(1), valor_none(), 1).u.booleano);
-    assert(comparar_valores(AST_IGUAL, valor_none(), valor_none(), 1).u.booleano);
-    assert(!comparar_valores(AST_MENOR_IGUAL, valor_real(NAN), valor_int(1), 1).u.booleano);
+
+    assert(comparar_valores(AST_IGUAL, valor_int(1),
+                            valor_real(1), 1).u.booleano);
+
+    assert(comparar_valores(AST_IGUAL, valor_int(1),
+                            valor_bool(1), 1).u.booleano);
+
+    assert(comparar_valores(AST_DIFERENTE, valor_int(1),
+                            valor_none(), 1).u.booleano);
+
+    assert(comparar_valores(AST_IGUAL, valor_none(),
+                            valor_none(), 1).u.booleano);
+
+    assert(!comparar_valores(AST_MENOR_IGUAL, valor_real(NAN),
+                             valor_int(1), 1).u.booleano);
+
     a = valor_str("abc");
     b = valor_str("abd");
+
     assert(comparar_valores(AST_MENOR, a, b, 1).u.booleano);
     assert(comparar_valores(AST_MAIOR_IGUAL, b, a, 1).u.booleano);
+
     valor_liberar(a);
     valor_liberar(b);
 
-    Lista *l1 = lista_criar(), *l2 = lista_criar();
+    Lista *l1 = lista_criar();
+    Lista *l2 = lista_criar();
+
     lista_adicionar(l1, valor_str("item"));
     lista_adicionar(l2, valor_str("item"));
+
     a = valor_lista(l1);
     b = valor_lista(l2);
+
     assert(comparar_valores(AST_IGUAL, a, b, 1).u.booleano);
+
     lista_adicionar(l2, valor_int(2));
+
     assert(comparar_valores(AST_DIFERENTE, a, b, 1).u.booleano);
+
     valor_liberar(a);
     valor_liberar(b);
 }
 
 static void testar_ambiente_e_memoria(void) {
     ambiente_iniciar();
+
     assert(ambiente_profundidade() == 0);
+
     char nome[] = "global";
     ambiente_definir(nome, valor_str("original"));
+
     nome[0] = 'X';
-    assert(strcmp(ambiente_buscar("global")->u.texto, "original") == 0);
+
+    assert(strcmp(ambiente_buscar("global")->u.texto,
+                  "original") == 0);
+
     ambiente_entrar();
     ambiente_definir("chamador", valor_int(42));
     ambiente_definir("global", valor_str("local"));
+
     ambiente_entrar();
+
     assert(ambiente_profundidade() == 2);
     assert(!ambiente_buscar("chamador"));
-    assert(strcmp(ambiente_buscar("global")->u.texto, "original") == 0);
+
+    assert(strcmp(ambiente_buscar("global")->u.texto,
+                  "original") == 0);
+
     ambiente_sair();
+
     assert(ambiente_buscar("chamador")->u.inteiro == 42);
-    assert(strcmp(ambiente_buscar("global")->u.texto, "local") == 0);
+
+    assert(strcmp(ambiente_buscar("global")->u.texto,
+                  "local") == 0);
+
     ambiente_sair();
     ambiente_sair(); /* Nao remove o global. */
+
     assert(ambiente_profundidade() == 0);
 
     Lista *lista = lista_criar();
+
     assert(lista->referencias == 1 && lista->tamanho == 0);
-    for (int i = 0; i < 1000; i++) lista_adicionar(lista, valor_int(i));
-    assert(lista->tamanho == 1000 && lista->capacidade >= 1000);
+
+    for (int i = 0; i < 1000; i++)
+        lista_adicionar(lista, valor_int(i));
+
+    assert(lista->tamanho == 1000);
+    assert(lista->capacidade >= 1000);
+
     Valor original = valor_lista(lista);
     Valor copia = valor_copiar(original);
-    assert(copia.u.lista == lista && lista->referencias == 2);
+
+    assert(copia.u.lista == lista);
+    assert(lista->referencias == 2);
+
     ambiente_definir("a", original);
     ambiente_definir("b", copia);
     ambiente_definir("a", valor_none());
-    assert(lista->referencias == 1 && lista->itens[999].u.inteiro == 999);
 
-    Valor texto = valor_str("proprio"), duplicado = valor_copiar(texto);
+    assert(lista->referencias == 1);
+    assert(lista->itens[999].u.inteiro == 999);
+
+    Valor texto = valor_str("proprio");
+    Valor duplicado = valor_copiar(texto);
+
     assert(texto.u.texto != duplicado.u.texto);
+
     texto.u.texto[0] = 'X';
+
     assert(strcmp(duplicado.u.texto, "proprio") == 0);
+
     valor_liberar(texto);
     valor_liberar(duplicado);
+
     ambiente_liberar();
     ambiente_liberar();
-    assert(!ambiente_buscar("b") && ambiente_profundidade() == 0);
+
+    assert(!ambiente_buscar("b"));
+    assert(ambiente_profundidade() == 0);
+}
+
+/* Cria uma lista de inteiros para os testes de operacoes. */
+static Valor criar_lista_teste(const long long *valores, int tamanho) {
+    Lista *lista = lista_criar();
+
+    for (int i = 0; i < tamanho; i++)
+        lista_adicionar(lista, valor_int(valores[i]));
+
+    return valor_lista(lista);
+}
+
+/* [P4] Testa concatenacao e repeticao de listas. */
+static void testar_operacoes_listas(void) {
+    const long long valores_a[] = {1, 2};
+    const long long valores_b[] = {3};
+
+    Valor a = criar_lista_teste(valores_a, 2);
+    Valor b = criar_lista_teste(valores_b, 1);
+
+    /* Concatenacao de duas listas. */
+    Valor soma = operar_aritmetica(AST_SOMA, a, b, 1);
+
+    assert(soma.tipo == VAL_LISTA);
+    assert(soma.u.lista->tamanho == 3);
+
+    assert(soma.u.lista->itens[0].u.inteiro == 1);
+    assert(soma.u.lista->itens[1].u.inteiro == 2);
+    assert(soma.u.lista->itens[2].u.inteiro == 3);
+
+    /* A concatenacao nao modifica as listas originais. */
+    assert(a.u.lista->tamanho == 2);
+    assert(b.u.lista->tamanho == 1);
+
+    assert(a.u.lista->itens[0].u.inteiro == 1);
+    assert(a.u.lista->itens[1].u.inteiro == 2);
+    assert(b.u.lista->itens[0].u.inteiro == 3);
+
+    /* Repeticao: lista * inteiro. */
+    Valor repetida =
+        operar_aritmetica(AST_MULTIPLICACAO, a, valor_int(3), 1);
+
+    assert(repetida.tipo == VAL_LISTA);
+    assert(repetida.u.lista->tamanho == 6);
+
+    for (int i = 0; i < 6; i++)
+        assert(repetida.u.lista->itens[i].u.inteiro == (i % 2) + 1);
+
+    /* Repeticao: inteiro * lista. */
+    Valor invertida =
+        operar_aritmetica(AST_MULTIPLICACAO, valor_int(2), b, 1);
+
+    assert(invertida.tipo == VAL_LISTA);
+    assert(invertida.u.lista->tamanho == 2);
+    assert(invertida.u.lista->itens[0].u.inteiro == 3);
+    assert(invertida.u.lista->itens[1].u.inteiro == 3);
+
+    /* Repeticao por zero produz lista vazia. */
+    Valor vazia =
+        operar_aritmetica(AST_MULTIPLICACAO, a, valor_int(0), 1);
+
+    assert(vazia.tipo == VAL_LISTA);
+    assert(vazia.u.lista->tamanho == 0);
+
+    /* Repeticao negativa tambem produz lista vazia. */
+    Valor negativa =
+        operar_aritmetica(AST_MULTIPLICACAO, a, valor_int(-2), 1);
+
+    assert(negativa.tipo == VAL_LISTA);
+    assert(negativa.u.lista->tamanho == 0);
+
+    /* Os operandos originais continuam intactos. */
+    assert(a.u.lista->tamanho == 2);
+    assert(b.u.lista->tamanho == 1);
+
+    valor_liberar(a);
+    valor_liberar(b);
+    valor_liberar(soma);
+    valor_liberar(repetida);
+    valor_liberar(invertida);
+    valor_liberar(vazia);
+    valor_liberar(negativa);
 }
 
 static NoAST *booleano(int valor) {
@@ -106,38 +248,87 @@ static NoAST *booleano(int valor) {
 
 static void testar_curto_circuito(void) {
     /* O identificador ausente provocaria erro se o RHS fosse avaliado. */
-    NoAST *no = ast_criar(AST_E, booleano(0),
-                         ast_criar_texto(AST_IDENTIFICADOR, "ausente", 1), NULL, 1);
+    NoAST *no = ast_criar(
+        AST_E,
+        booleano(0),
+        ast_criar_texto(AST_IDENTIFICADOR, "ausente", 1),
+        NULL,
+        1
+    );
+
     Valor v = interpretar_no(no);
+
     assert(v.tipo == VAL_BOOL && !v.u.booleano);
+
     valor_liberar(v);
     ast_liberar(no);
-    no = ast_criar(AST_OU, ast_criar_texto(AST_STRING, "operando", 1),
-                   ast_criar_texto(AST_IDENTIFICADOR, "ausente", 1), NULL, 1);
+
+    no = ast_criar(
+        AST_OU,
+        ast_criar_texto(AST_STRING, "operando", 1),
+        ast_criar_texto(AST_IDENTIFICADOR, "ausente", 1),
+        NULL,
+        1
+    );
+
     v = interpretar_no(no);
-    assert(v.tipo == VAL_STR && strcmp(v.u.texto, "operando") == 0);
+
+    assert(v.tipo == VAL_STR);
+    assert(strcmp(v.u.texto, "operando") == 0);
+
     valor_liberar(v);
     ast_liberar(no);
-    no = ast_criar(AST_OU, ast_criar_numero(0, 1), ast_criar_numero(5, 1), NULL, 1);
+
+    no = ast_criar(
+        AST_OU,
+        ast_criar_numero(0, 1),
+        ast_criar_numero(5, 1),
+        NULL,
+        1
+    );
+
     v = interpretar_no(no);
+
     assert(v.tipo == VAL_INT && v.u.inteiro == 5);
+
     valor_liberar(v);
     ast_liberar(no);
 }
 
 static void testar_if_preserva_sinal(void) {
-    const TipoNo comandos[] = {AST_BREAK, AST_CONTINUE, AST_RETURN};
-    const Sinal sinais[] = {SINAL_BREAK, SINAL_CONTINUE, SINAL_RETURN};
+    const TipoNo comandos[] = {
+        AST_BREAK,
+        AST_CONTINUE,
+        AST_RETURN
+    };
+
+    const Sinal sinais[] = {
+        SINAL_BREAK,
+        SINAL_CONTINUE,
+        SINAL_RETURN
+    };
+
     for (int i = 0; i < 3; i++) {
-        NoAST *comando = ast_criar(comandos[i], NULL, NULL, NULL, 1);
-        NoAST *bloco = ast_criar(AST_BLOCO, comando, NULL, NULL, 1);
-        NoAST *no = ast_criar(AST_IF, booleano(1), bloco, NULL, 1);
+        NoAST *comando =
+            ast_criar(comandos[i], NULL, NULL, NULL, 1);
+
+        NoAST *bloco =
+            ast_criar(AST_BLOCO, comando, NULL, NULL, 1);
+
+        NoAST *no =
+            ast_criar(AST_IF, booleano(1), bloco, NULL, 1);
+
         sinal_atual = SINAL_NORMAL;
+
         valor_liberar(interpretar_no(no));
+
         assert(sinal_atual == sinais[i]);
+
         sinal_atual = SINAL_NORMAL;
+
         valor_liberar(valor_retorno);
         valor_retorno = valor_none();
+
         ast_liberar(no);
     }
 }
@@ -145,8 +336,11 @@ static void testar_if_preserva_sinal(void) {
 int main(void) {
     testar_verdade_e_comparacoes();
     testar_ambiente_e_memoria();
+    testar_operacoes_listas();
     testar_curto_circuito();
     testar_if_preserva_sinal();
-    puts("[OK] Pessoa A: verdade, comparacoes, escopos, referencias e sinais");
+
+    puts("[OK] Pessoa A: verdade, comparacoes, escopos, referencias, listas e sinais");
+
     return 0;
 }
