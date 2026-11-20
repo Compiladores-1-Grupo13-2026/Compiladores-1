@@ -72,6 +72,26 @@ static Valor chamar_range(NoAST *chamada, Valor *valores, size_t quantidade) {
     return valor_lista(lista);
 }
 
+/* len(x): quantidade de itens de uma lista ou de caracteres de um texto.
+ * A semantica ja barra a aridade errada quando o nome e o builtin; a
+ * conferencia aqui mantem o executor seguro por conta propria. */
+static Valor chamar_len(NoAST *chamada, Valor *valores, size_t quantidade) {
+    if (quantidade != 1)
+        erro_execucao(chamada->linha, "funcao 'len' espera 1 argumento, recebeu %zu",
+                      quantidade);
+    Valor argumento = valores[0];
+    long long tamanho = 0;
+    if (argumento.tipo == VAL_LISTA)
+        tamanho = argumento.u.lista->tamanho;
+    else if (argumento.tipo == VAL_STR)
+        tamanho = (long long) strlen(argumento.u.texto); /* escapes ja decodificados */
+    else
+        erro_execucao(chamada->linha, "'%s' nao tem len()", valor_nome_tipo(argumento));
+    /* Le o tamanho ANTES de liberar: liberar pode destruir a lista ou o texto. */
+    liberar_argumentos(valores, quantidade);
+    return valor_int(tamanho);
+}
+
 static Valor chamar_usuario(NoAST *chamada, Valor *valores, size_t quantidade) {
     /* Os argumentos ja foram avaliados no quadro de quem chama. Buscar o
      * destino depois disso preserva os efeitos dessas avaliacoes. */
@@ -125,6 +145,8 @@ Valor executar_funcao(NoAST *no) {
                 return chamar_print(valores, quantidade);
             if (strcmp(no->texto, "range") == 0)
                 return chamar_range(no, valores, quantidade);
+            if (strcmp(no->texto, "len") == 0)
+                return chamar_len(no, valores, quantidade);
             return chamar_usuario(no, valores, quantidade);
         }
         default:
