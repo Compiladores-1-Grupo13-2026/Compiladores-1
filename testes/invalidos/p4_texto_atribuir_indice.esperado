@@ -1,0 +1,12 @@
+[OK] atribuicao reconhecida
+[OK] atribuicao reconhecida
+PROGRAMA [linha 1]
+  ATRIBUICAO [linha 1]
+    IDENTIFICADOR 'nome' [linha 1]
+    STRING 'MiniPy' [linha 1]
+  ATRIBUICAO [linha 2]
+    INDEXACAO [linha 2]
+      IDENTIFICADOR 'nome' [linha 2]
+      NUMERO 0 [linha 2]
+    STRING 'X' [linha 2]
+[ERRO SEMANTICO] Linha 2: 'str' não permite atribuição por índice (texto é imutável)

@@ -285,6 +285,41 @@ static void testar_regressoes_p4(void) {
     assert(!tabela_buscar("ausente_rhs") && ultima_linha == 10);
 }
 
+/* Sprint 5: textos aceitam leitura s[i] (tipo str), mas nao atribuicao. */
+static void testar_indexar_texto(void) {
+    reiniciar();
+    verificar(atribuir(AST_ATRIBUICAO, "s", texto("MiniPy", 1), 1), "none", 0);
+    verificar(ast_p4_indexacao(id("s", 2), numero(0, 2), 2), "str", 0);
+    verificar(ast_p4_indexacao(id("s", 3), ast_criar(AST_NEGATIVO, numero(1, 3),
+                  NULL, NULL, 3), 3), "str", 0);
+
+    /* O resultado de s[i] entra na tabela com tipo str. */
+    verificar(atribuir(AST_ATRIBUICAO, "c", ast_p4_indexacao(id("s", 4), numero(1, 4), 4), 4),
+              "none", 0);
+    tipo_simbolo("c", "str", 4);
+
+    /* Indice de tipo errado continua sendo erro, com mensagem de texto. */
+    verificar(ast_p4_indexacao(id("s", 5), texto("a", 5), 5), P4_TIPO_ERRO, 1);
+    assert(ultima_linha == 5 && strstr(mensagens, "texto"));
+    verificar(ast_p4_indexacao(id("s", 6), ast_criar_numero_real(0.5, 6), 6),
+              P4_TIPO_ERRO, 1);
+
+    /* Escrita simples e composta sao recusadas; s continua str. */
+    mensagens[0] = '\0';
+    verificar(ast_p4_atribuicao(AST_ATRIBUICAO,
+                  ast_p4_indexacao(id("s", 7), numero(0, 7), 7), texto("X", 7), 7),
+              P4_TIPO_ERRO, 1);
+    assert(ultima_linha == 7 && strstr(mensagens, "atribuição por índice"));
+    verificar(ast_p4_atribuicao(AST_ATRIB_SOMA,
+                  ast_p4_indexacao(id("s", 8), numero(0, 8), 8), texto("X", 8), 8),
+              P4_TIPO_ERRO, 1);
+    tipo_simbolo("s", "str", 1);
+
+    /* Base int continua invalida (p4_base_nao_lista / p4_exec_base_tipo). */
+    verificar(ast_p4_indexacao(numero(5, 9), numero(0, 9), 9), P4_TIPO_ERRO, 1);
+    assert(strstr(mensagens, "lista ou str"));
+}
+
 /* [P2] Casos antes separados, com a mesma AST e o mesmo executavel de teste. */
 static NoAST *p2_atribuir(const char *nome, NoAST *valor) {
     return ast_p4_atribuicao(AST_ATRIBUICAO,
@@ -325,6 +360,7 @@ int main(void) {
     testar_listas_e_indices();
     testar_compostos();
     testar_regressoes_p4();
+    testar_indexar_texto();
     tabela_liberar();
     puts("[OK] semantica e AST P4: alvos, tipos, listas, indices e escopos");
     testar_comparacoes_p2();
