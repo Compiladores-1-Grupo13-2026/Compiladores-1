@@ -60,8 +60,10 @@ protegido contra atribuição.
 
 Listas podem ser vazias, heterogêneas e aninhadas. Seus elementos são analisados
 individualmente. Quando conhecidos, o tipo da base de uma indexação deve ser
-lista e o índice deve ser inteiro. O tipo do resultado de `lista[i]` continua
-desconhecido, pois não há informação estática por elemento.
+lista ou `str` e o índice deve ser inteiro. O tipo do resultado de `lista[i]`
+continua desconhecido, pois não há informação estática por elemento. Já
+`texto[i]` tem tipo `str`. Atribuir a `texto[i]` é erro semântico, porque
+texto é imutável.
 
 ## Expressões e condições
 

@@ -160,7 +160,23 @@ Saída:
 
 Listas podem ser vazias, aninhadas e heterogêneas. A indexação exige um
 inteiro, aceita posições negativas contadas a partir do fim e verifica os
-limites da lista. Strings não são indexáveis nesta implementação.
+limites da lista.
+
+Textos também podem ser indexados, só para leitura. `s[i]` devolve um texto
+novo com um caractere e segue as mesmas regras de índice das listas. Como na
+iteração do `for`, a posição conta bytes, sem decodificar UTF-8. Atribuir a
+`s[i]` é erro, porque texto é imutável.
+
+```text
+nome = "MiniPy"
+print(nome[0], nome[-1])
+```
+
+Saída:
+
+```text
+M y
+```
 
 Uma atribuição simples avalia o lado direito antes de avaliar o alvo. Uma
 atribuição composta fixa o alvo e copia seu valor anterior antes de avaliar
@@ -261,7 +277,9 @@ usam o prefixo `[ERRO EXECUCAO] Linha N:` e interrompem a execução por
 | Comparação de ordem incompatível | `comparacao '<' entre tipos incompativeis ('str' e 'int')` |
 | Índice fora dos limites | `indice 5 fora do intervalo (lista de tamanho 2)` |
 | Índice de tipo inválido | `indice de lista deve ser int, recebido 'float'` |
+| Índice fora do texto | `indice 3 fora do intervalo (texto de tamanho 3)` |
 | Base não indexável | `'int' nao pode ser indexado` |
+| Atribuição por índice em texto | `'str' nao permite atribuicao por indice` |
 | Objeto não iterável | `'int' nao e iteravel` |
 | Limite de laço | `laco excedeu o limite de 1000000 iteracoes` |
 | Limite de chamadas | `limite de recursao excedido (1000 chamadas)` |

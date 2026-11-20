@@ -58,7 +58,7 @@ Os nomes abaixo omitem o prefixo `AST_` do enum `TipoNo`.
 | `BREAK`, `CONTINUE` | Sem filhos |
 | `ATRIBUICAO`, `ATRIB_SOMA`, `ATRIB_SUB`, `ATRIB_MULT`, `ATRIB_DIV` | `a`: alvo; `b`: expressão do valor |
 | `LISTA` | `a`: primeiro elemento; os demais seguem por `prox` |
-| `INDEXACAO` | `a`: identificador da lista; `b`: índice |
+| `INDEXACAO` | `a`: identificador da lista ou do texto; `b`: índice |
 | `FUNCAO` | `texto`: nome; `a`: primeiro parâmetro; `b`: bloco do corpo |
 | `PARAMETRO` | `texto`: nome do parâmetro; os demais seguem por `prox` |
 | `RETURN` | `a`: expressão devolvida, ou `NULL` para `return;` |
