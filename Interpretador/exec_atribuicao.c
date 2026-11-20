@@ -1,19 +1,37 @@
 #include "Interpretador/interpretador.h"
 #include "Interpretador/ambiente.h"
 
+#include <string.h>
+
+/* [P4] Posicao real de um indice em uma colecao de "tamanho" itens.
+ * Comum a listas e textos: negativo conta do fim, fora do tamanho e erro.
+ * "colecao" so muda a mensagem ("lista" ou "texto"). */
+static int posicao_indice(Valor indice, long long tamanho, const char *colecao, int linha) {
+    if (indice.tipo != VAL_INT)
+        erro_execucao(linha, "indice de %s deve ser int, recebido '%s'",
+                      colecao, valor_nome_tipo(indice));
+    long long original = indice.u.inteiro;
+    long long posicao = original;
+    if (posicao < 0) posicao += tamanho;
+    if (posicao < 0 || posicao >= tamanho)
+        erro_execucao(linha, "indice %lld fora do intervalo (%s de tamanho %lld)",
+                      original, colecao, tamanho);
+    return (int)posicao;
+}
+
 static int indice_lista(Valor base, Valor indice, int linha) {
     if (base.tipo != VAL_LISTA)
         erro_execucao(linha, "'%s' nao pode ser indexado", valor_nome_tipo(base));
-    if (indice.tipo != VAL_INT)
-        erro_execucao(linha, "indice de lista deve ser int, recebido '%s'",
-                      valor_nome_tipo(indice));
-    long long original = indice.u.inteiro;
-    long long posicao = original;
-    if (posicao < 0) posicao += base.u.lista->tamanho;
-    if (posicao < 0 || posicao >= base.u.lista->tamanho)
-        erro_execucao(linha, "indice %lld fora do intervalo (lista de tamanho %d)",
-                      original, base.u.lista->tamanho);
-    return (int)posicao;
+    return posicao_indice(indice, base.u.lista->tamanho, "lista", linha);
+}
+
+/* [P4] Sprint 5: s[i] devolve um texto NOVO de 1 caractere. Como na
+ * iteracao do for, o texto e percorrido por bytes (sem decodificar UTF-8). */
+static Valor caractere_texto(Valor base, Valor indice, int linha) {
+    const char *texto = base.u.texto;
+    int posicao = posicao_indice(indice, (long long)strlen(texto), "texto", linha);
+    char caractere[2] = { texto[posicao], '\0' };
+    return valor_str(caractere);
 }
 
 static Valor ler_variavel(NoAST *no) {
@@ -42,8 +60,13 @@ Valor executar_atribuicao(NoAST *no) {
     if (no->tipo == AST_INDEXACAO) {
         Valor base = interpretar_no(no->a);
         Valor indice = interpretar_no(no->b);
-        int posicao = indice_lista(base, indice, no->linha);
-        Valor resultado = valor_copiar(base.u.lista->itens[posicao]);
+        Valor resultado;
+        if (base.tipo == VAL_STR) {
+            resultado = caractere_texto(base, indice, no->linha);
+        } else {
+            int posicao = indice_lista(base, indice, no->linha);
+            resultado = valor_copiar(base.u.lista->itens[posicao]);
+        }
         valor_liberar(indice);
         valor_liberar(base);
         return resultado;
@@ -62,6 +85,9 @@ Valor executar_atribuicao(NoAST *no) {
     if (alvo->tipo == AST_INDEXACAO) {
         base = ler_variavel(alvo->a);
         Valor indice = interpretar_no(alvo->b);
+        /* [P4] Texto e imutavel, como no Python: so a leitura s[i] e permitida. */
+        if (base.tipo == VAL_STR)
+            erro_execucao(alvo->linha, "'str' nao permite atribuicao por indice");
         posicao = indice_lista(base, indice, alvo->linha);
         valor_liberar(indice);
         if (!simples) anterior = valor_copiar(base.u.lista->itens[posicao]);
