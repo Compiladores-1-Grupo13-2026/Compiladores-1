@@ -39,14 +39,17 @@ static const char *p4_indexacao(NoAST *no, P4Visitar visitar, P4Erro erro) {
     const char *base = p4_ler(no->a, visitar);
     const char *indice = p4_ler(no->b, visitar);
     int invalido = p4_mesmo_tipo(base, P4_TIPO_ERRO) || p4_mesmo_tipo(indice, P4_TIPO_ERRO);
+    /* Sprint 5: textos tambem sao indexaveis (somente leitura). */
+    int texto = p4_mesmo_tipo(base, "str");
     if (!p4_mesmo_tipo(base, P4_TIPO_ERRO) && !p4_mesmo_tipo(base, "lista") &&
-        !p4_mesmo_tipo(base, "?")) {
-        erro(no->linha, "indexação exige lista; recebido '%s'", base);
+        !texto && !p4_mesmo_tipo(base, "?")) {
+        erro(no->linha, "indexação exige lista ou str; recebido '%s'", base);
         invalido = 1;
     }
     if (!p4_mesmo_tipo(indice, P4_TIPO_ERRO) && !p4_mesmo_tipo(indice, "int") &&
         !p4_mesmo_tipo(indice, "?")) {
-        erro(no->b->linha, "índice de lista deve ser int; recebido '%s'", indice);
+        erro(no->b->linha, "índice de %s deve ser int; recebido '%s'",
+             texto ? "texto" : "lista", indice);
         invalido = 1;
     }
     /* A P1 preserva reais fora de NoAST.valor e ainda os classifica como int.
@@ -55,11 +58,13 @@ static const char *p4_indexacao(NoAST *no, P4Visitar visitar, P4Erro erro) {
     double valor_indice;
     if (p4_mesmo_tipo(indice, "int") && ast_numero_valor(no->b, &valor_indice) &&
         (!isfinite(valor_indice) || trunc(valor_indice) != valor_indice)) {
-        erro(no->b->linha, "índice de lista deve ser inteiro finito");
+        erro(no->b->linha, "índice de %s deve ser inteiro finito", texto ? "texto" : "lista");
         invalido = 1;
     }
-    /* O contrato nao guarda tipo por elemento: uma leitura l[i] tem tipo ?. */
-    return invalido ? P4_TIPO_ERRO : "?";
+    if (invalido) return P4_TIPO_ERRO;
+    /* s[i] e sempre um texto de 1 caractere. O contrato nao guarda tipo por
+     * elemento de lista: uma leitura l[i] tem tipo ?. */
+    return texto ? "str" : "?";
 }
 
 /* Verifica somente operadores compostos P4. Operadores de expressoes comuns
@@ -107,6 +112,11 @@ static const char *p4_atribuicao(NoAST *no, P4Visitar visitar, P4Erro erro) {
     } else if (alvo->tipo == AST_INDEXACAO) {
         tipo_alvo = p4_indexacao(alvo, visitar, erro);
         invalido = p4_mesmo_tipo(tipo_alvo, P4_TIPO_ERRO);
+        /* Texto e imutavel, como no Python: s[i] so pode ser lido. */
+        if (p4_mesmo_tipo(tipo_alvo, "str")) {
+            erro(alvo->linha, "'str' não permite atribuição por índice (texto é imutável)");
+            invalido = 1;
+        }
     } else {
         erro(alvo->linha, "alvo inválido de atribuição: esperado identificador ou indexação");
         invalido = 1;
@@ -818,11 +828,19 @@ static const char *visitar_chamada(NoAST *chamada) {
     if (!simbolo) {
         erro_formatado(chamada->linha, "funcao '%s' nao definida", chamada->texto);
     } else if (simbolo->categoria == CAT_BUILTIN) {
-        /* print aceita qualquer quantidade; range aceita de 1 a 3. */
+        /* print aceita qualquer quantidade; range aceita de 1 a 3; len exatamente 1. */
         if (strcmp(chamada->texto, "range") == 0 && (recebidos < 1 || recebidos > 3))
             erro_formatado(chamada->linha,
                            "funcao 'range' espera de 1 a 3 argumentos, recebeu %d",
                            recebidos);
+        if (strcmp(chamada->texto, "len") == 0) {
+            if (recebidos != 1)
+                erro_formatado(chamada->linha,
+                               "funcao 'len' espera 1 argumento, recebeu %d", recebidos);
+            /* len sempre produz int (ou para com erro de execucao), entao a
+             * semantica ja conhece o tipo: n = len(l) registra n como int. */
+            return "int";
+        }
     } else if (simbolo->categoria == CAT_FUNCAO) {
         /* Fora de funcoes o codigo roda de cima para baixo: o def precisa
          * vir antes. Dentro de um corpo, a chamada so acontece quando a

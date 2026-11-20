@@ -1,0 +1,5 @@
+textos = ["abc"]
+s = textos[0]
+print("antes")
+s[0] = "X"
+print("depois")

@@ -1,0 +1,2 @@
+nome = "MiniPy"
+nome[0] = "X"

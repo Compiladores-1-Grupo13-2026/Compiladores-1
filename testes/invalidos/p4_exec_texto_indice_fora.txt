@@ -1,0 +1,4 @@
+nome = "abc"
+print("antes")
+print(nome[3])
+print("depois")
