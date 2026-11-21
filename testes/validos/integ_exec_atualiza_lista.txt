@@ -1,0 +1,23 @@
+def ajustar_preco(preco, taxa) {
+    if preco >= 100 {
+        return preco - (preco // taxa);
+    } else {
+        return preco + 5;
+    }
+}
+
+precos = [50, 120, 80, 200, 30];
+i = 0;
+for p in precos {
+    precos[i] = ajustar_preco(p, 10);
+    i += 1;
+}
+
+soma = 0;
+k = 0;
+while k < len(precos) {
+    soma += precos[k];
+    k += 1;
+}
+
+print(soma);
