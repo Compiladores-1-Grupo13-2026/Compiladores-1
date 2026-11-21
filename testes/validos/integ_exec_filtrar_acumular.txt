@@ -1,0 +1,20 @@
+def pontuar(n) {
+    if n % 2 == 0 {
+        return (n ** 2) // 2;
+    } elif n > 10 {
+        return n * 3 - 1;
+    } else {
+        return n + 1;
+    }
+}
+
+valores = [2, 5, 12, 7, 8, 15];
+total = 0;
+for x in valores {
+    if x == 7 {
+        continue;
+    }
+    p = pontuar(x);
+    total += p;
+}
+print(total);

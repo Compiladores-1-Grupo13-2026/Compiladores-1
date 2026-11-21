@@ -1,0 +1,20 @@
+def proximo_alvo(base, passo) {
+    return base * passo + 3;
+}
+
+itens = [4, 9, 14, 21, 30, 40];
+alvo = proximo_alvo(5, 4);
+idx = 0;
+encontrado = -1;
+
+while idx < len(itens) {
+    atual = itens[idx];
+    if atual >= alvo {
+        encontrado = idx;
+        break;
+    }
+    idx += 1;
+}
+
+resultado = encontrado * 100 + itens[encontrado];
+print(resultado);
