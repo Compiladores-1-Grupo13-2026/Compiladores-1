@@ -1,3 +1,13 @@
 [OK] atribuicao reconhecida
 [OK] atribuicao reconhecida
 [OK] if reconhecido
+PROGRAMA [linha 4]
+  ATRIBUICAO [linha 4]
+    IDENTIFICADOR 'x' [linha 4]
+    NUMERO 1 [linha 4]
+  IF [linha 5]
+    IDENTIFICADOR 'x' [linha 5]
+    BLOCO [linha 5]
+      ATRIBUICAO [linha 5]
+        IDENTIFICADOR 'y' [linha 5]
+        NUMERO 1 [linha 5]

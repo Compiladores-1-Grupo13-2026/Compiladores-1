@@ -1,0 +1,8 @@
+return 1
+def calcula(n) {
+    local = n * 2
+    return local
+}
+print(calcula(3))
+print(local)
+print(n)

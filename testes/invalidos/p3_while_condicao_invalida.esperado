@@ -1,3 +1,6 @@
 [ERRO SINTATICO] Linha 1, coluna 1: condicao invalida no while (proximo a '{')
 [OK] continue reconhecido
-Resultado: 4
+PROGRAMA [linha 2]
+  SOMA [linha 2]
+    NUMERO 2 [linha 2]
+    NUMERO 2 [linha 2]

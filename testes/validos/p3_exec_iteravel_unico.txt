@@ -1,0 +1,11 @@
+contador = [0]
+itens = [1, 2, 3]
+def obter() { contador[0] += 1; return itens; }
+for item in obter() {
+    print(item)
+    if item == 1 { itens[1] = 9; itens = [7]; }
+}
+print(contador, itens)
+lista = [4, 5]
+for lista in lista { print(lista) }
+print(lista)

@@ -1,0 +1,46 @@
+[OK] return reconhecido
+[OK] if reconhecido
+[OK] return reconhecido
+[OK] def reconhecido
+[OK] return reconhecido
+[OK] def reconhecido
+[OK] chamada de funcao reconhecida
+[OK] chamada de funcao reconhecida
+[OK] chamada de funcao reconhecida
+[OK] chamada de funcao reconhecida
+[OK] chamada de funcao reconhecida
+[OK] for reconhecido
+[OK] chamada de funcao reconhecida
+PROGRAMA [linha 2]
+  FUNCAO 'maximo' [linha 2]
+    PARAMETRO 'a' [linha 2]
+    PARAMETRO 'b' [linha 2]
+    BLOCO [linha 2]
+      IF [linha 3]
+        MAIOR [linha 3]
+          IDENTIFICADOR 'a' [linha 3]
+          IDENTIFICADOR 'b' [linha 3]
+        BLOCO [linha 3]
+          RETURN [linha 3]
+            IDENTIFICADOR 'a' [linha 3]
+      RETURN [linha 4]
+        IDENTIFICADOR 'b' [linha 4]
+  FUNCAO 'nada' [linha 6]
+    BLOCO [linha 6]
+      RETURN [linha 6]
+  CHAMADA 'print' [linha 7]
+    STRING 'maior:' [linha 7]
+    CHAMADA 'maximo' [linha 7]
+      CHAMADA 'maximo' [linha 7]
+        NUMERO 1 [linha 7]
+        NUMERO 7 [linha 7]
+      NUMERO 3 [linha 7]
+  FOR 'i' [linha 8]
+    CHAMADA 'range' [linha 8]
+      NUMERO 0 [linha 8]
+      NUMERO 10 [linha 8]
+      NUMERO 2 [linha 8]
+    BLOCO [linha 8]
+      CHAMADA 'print' [linha 8]
+        IDENTIFICADOR 'i' [linha 8]
+  CHAMADA 'nada' [linha 9]

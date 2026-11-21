@@ -1,0 +1,5 @@
+l = [8]
+z = 0
+print("antes")
+l[0] /= z
+print("depois")

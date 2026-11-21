@@ -1,0 +1,9 @@
+# print aceita varios argumentos; range aceita de 1 a 3; chamadas aninhadas
+def maximo(a, b) {
+    if a > b { return a }
+    return b
+}
+def nada() { return; }
+print("maior:", maximo(maximo(1, 7), 3))
+for i in range(0, 10, 2) { print(i) }
+nada()

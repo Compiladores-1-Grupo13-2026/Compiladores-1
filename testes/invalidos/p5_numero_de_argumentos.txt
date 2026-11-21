@@ -1,0 +1,6 @@
+def soma(a, b) { return a + b }
+soma(1)
+soma(1, 2, 3)
+for i in range() { print(i) }
+x = 5
+x(1)

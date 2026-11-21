@@ -1,0 +1,14 @@
+PROGRAMA
+  ATRIBUICAO [linha 2]
+    IDENTIFICADOR 'texto' [linha 2]
+    STRING '# preservado' [linha 2]
+  ATRIBUICAO [linha 4]
+    IDENTIFICADOR 'itens' [linha 4]
+    LISTA [linha 4]
+      NUMERO 1 [linha 4]
+      NUMERO 2 [linha 4]
+NOME	CATEGORIA	TIPO	ESCOPO	LINHA
+print	builtin	funcao	0	0
+range	builtin	funcao	0	0
+texto	variavel	str	0	2
+itens	variavel	lista	0	4

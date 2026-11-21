@@ -1,1 +1,10 @@
+[OK] atribuicao reconhecida
+[OK] for reconhecido
+PROGRAMA [linha 1]
+  FOR 'i' [linha 1]
+    NUMERO 10 [linha 1]
+    BLOCO [linha 1]
+      ATRIBUICAO [linha 2]
+        IDENTIFICADOR 'x' [linha 2]
+        IDENTIFICADOR 'i' [linha 2]
 [ERRO SEMANTICO] Linha 1: iteravel do 'for' nao pode ser um numero literal

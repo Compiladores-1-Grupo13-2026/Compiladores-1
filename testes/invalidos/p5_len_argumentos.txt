@@ -1,0 +1,7 @@
+l = [1, 2]
+len()
+len(l, l)
+len = 5
+def len(x) { return 0 }
+n = len(l)
+print(n + "a")

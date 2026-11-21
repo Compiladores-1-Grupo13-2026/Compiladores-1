@@ -1,0 +1,26 @@
+l = [1, 2]
+l[0] += 5
+b = l
+b[1] = 9
+print(l, l[-1])
+b = [7]
+print(l, b)
+
+x = 8
+x += 2
+x -= 3
+x *= 4
+x /= 2
+print(x)
+x = "a"
+x += "b"
+x *= 3
+print(x)
+
+l = [1, 2, 3]
+print(l[0], l[-1], l[-3])
+l[-2] = 8
+l[-1] *= 2
+print(l)
+vazia = []
+print(vazia)

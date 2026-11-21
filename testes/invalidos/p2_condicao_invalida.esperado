@@ -1,3 +1,6 @@
 [ERRO SINTATICO] Linha 1, coluna 1: condicao invalida no if (proximo a '{')
 [OK] atribuicao reconhecida
-Resultado: 4
+PROGRAMA [linha 2]
+  SOMA [linha 2]
+    NUMERO 2 [linha 2]
+    NUMERO 2 [linha 2]

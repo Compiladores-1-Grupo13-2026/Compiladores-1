@@ -1,0 +1,11 @@
+x = 0
+if x > 1 { print("a") } elif x == 0 { print("b") } else { print("c") }
+if True { print("if") } else { print("errado") }
+if False { print("errado") } else { print("else") }
+if False { print("errado") }
+
+x = 0
+print(False and 10 / x)
+print(True or 10 / x)
+print(x == 0 or 10 / x > 1)
+print(0 or 5, "" or "texto", "ok" and 7)

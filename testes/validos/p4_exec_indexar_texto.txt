@@ -1,0 +1,16 @@
+nome = "MiniPy"
+print(nome[0], nome[-1])
+i = 2
+print(nome[i], nome[i - 3])
+for i in range(6) { print(i, nome[i]); }
+invertido = ""
+for i in range(1, 7) { invertido += nome[-i]; }
+print(invertido)
+primeira = nome[0]
+primeira += "!"
+print(primeira, nome)
+letra = "a"
+print(letra[0] == letra[-1])
+textos = ["abc", "de"]
+t = textos[1]
+print(t[0], textos)

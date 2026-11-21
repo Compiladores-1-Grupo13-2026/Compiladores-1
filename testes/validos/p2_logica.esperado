@@ -1,8 +1,28 @@
-Resultado: 1
-Resultado: 1
-Resultado: 1
-Resultado: 1
-Resultado: 1
-Resultado: 1
-Resultado: 1
-Resultado: 1
+PROGRAMA [linha 1]
+  NAO [linha 1]
+    IGUAL [linha 1]
+      NUMERO 1 [linha 1]
+      NUMERO 2 [linha 1]
+  OU [linha 2]
+    BOOL True [linha 2]
+    E [linha 2]
+      BOOL False [linha 2]
+      BOOL False [linha 2]
+  MENOR [linha 3]
+    NUMERO 1 [linha 3]
+    NUMERO 2 [linha 3]
+  MENOR_IGUAL [linha 3]
+    NUMERO 2 [linha 3]
+    NUMERO 2 [linha 3]
+  MAIOR [linha 3]
+    NUMERO 3 [linha 3]
+    NUMERO 2 [linha 3]
+  MAIOR_IGUAL [linha 3]
+    NUMERO 3 [linha 3]
+    NUMERO 3 [linha 3]
+  DIFERENTE [linha 3]
+    NUMERO 1 [linha 3]
+    NUMERO 2 [linha 3]
+  IGUAL [linha 3]
+    NUMERO 1 [linha 3]
+    NUMERO 1 [linha 3]

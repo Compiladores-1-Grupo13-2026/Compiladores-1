@@ -1,0 +1,4 @@
+def f(n) { return f(n + 1); }
+print("antes")
+f(0)
+print("nao deve aparecer")

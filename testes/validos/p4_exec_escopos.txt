@@ -1,0 +1,9 @@
+x = 10
+def ler() { return x }
+def chamar() {
+    x = 99
+    return ler()
+}
+def alterar(lista) { lista[0] += 2; return lista }
+l = [1]
+print(chamar(), x, alterar(l), l)

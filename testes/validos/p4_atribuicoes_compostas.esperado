@@ -1,0 +1,20 @@
+PROGRAMA
+  ATRIBUICAO [linha 1]
+    IDENTIFICADOR 'x' [linha 1]
+    NUMERO 8 [linha 1]
+  ATRIB_SOMA [linha 2]
+    IDENTIFICADOR 'x' [linha 2]
+    NUMERO 2 [linha 2]
+  ATRIB_SUB [linha 3]
+    IDENTIFICADOR 'x' [linha 3]
+    NUMERO 1 [linha 3]
+  ATRIB_MULT [linha 4]
+    IDENTIFICADOR 'x' [linha 4]
+    NUMERO 3 [linha 4]
+  ATRIB_DIV [linha 5]
+    IDENTIFICADOR 'x' [linha 5]
+    NUMERO 2 [linha 5]
+NOME	CATEGORIA	TIPO	ESCOPO	LINHA
+print	builtin	funcao	0	0
+range	builtin	funcao	0	0
+x	variavel	?	0	1

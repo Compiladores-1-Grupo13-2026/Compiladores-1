@@ -7,6 +7,10 @@ lex.yy.c
 /parser
 /parser-memcheck
 /tokens
+/parser.exe
+/tokens.exe
+/parser-memcheck.exe
+__pycache__/
 
 # Relatorio opcional do Bison (bison -v).
 /parser.output

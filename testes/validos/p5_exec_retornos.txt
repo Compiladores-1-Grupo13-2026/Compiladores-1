@@ -1,0 +1,10 @@
+def vazio() { }
+def sem_valor() { return; }
+def texto(t) { return t + "!"; }
+def criar() { l = [1, "local"]; return l; }
+def alterar(l) { l[0] += 4; return l; }
+def dobro(x) { return x * 2; }
+def aplicar(f, x) { return f(x); }
+l = criar()
+print(vazio(), sem_valor(), texto("oi"), alterar(l), l, aplicar(dobro, 3))
+print(dobro)

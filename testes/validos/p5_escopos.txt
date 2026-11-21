@@ -1,0 +1,12 @@
+# Cada funcao tem seu escopo; a global x pode ser lida dentro da funcao
+x = 100
+def area(largura, altura) {
+    x = largura * altura
+    return x
+}
+def perimetro(largura, altura) {
+    total = 2 * (largura + altura)
+    return total
+}
+def usa_global() { return x + 1 }
+print(area(2, 3), perimetro(2, 3), usa_global(), x)

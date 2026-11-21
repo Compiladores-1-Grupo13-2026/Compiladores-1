@@ -9,3 +9,23 @@
 [OK] continue reconhecido
 [OK] break reconhecido
 [OK] while reconhecido
+PROGRAMA [linha 1]
+  WHILE [linha 1]
+    NUMERO 1 [linha 1]
+    BLOCO [linha 1]
+      BREAK [linha 1]
+      CONTINUE [linha 1]
+  FOR 'i' [linha 2]
+    CHAMADA 'range' [linha 2]
+      NUMERO 3 [linha 2]
+    BLOCO [linha 2]
+      CONTINUE [linha 2]
+  WHILE [linha 3]
+    NUMERO 1 [linha 3]
+    BLOCO [linha 3]
+      BREAK [linha 3]
+  WHILE [linha 4]
+    NUMERO 0 [linha 4]
+    BLOCO [linha 4]
+      CONTINUE [linha 5]
+      BREAK [linha 6]

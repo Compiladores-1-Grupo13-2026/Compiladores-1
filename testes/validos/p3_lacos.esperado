@@ -1,2 +1,7 @@
 [OK] break reconhecido
 [OK] while reconhecido
+PROGRAMA [linha 1]
+  WHILE [linha 1]
+    NUMERO 1 [linha 1]
+    BLOCO [linha 1]
+      BREAK [linha 2]

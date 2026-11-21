@@ -1,0 +1,4 @@
+print("antes")
+x = 0
+print(7 % x)
+print("depois")

@@ -1,0 +1,4 @@
+def f(a, a) { return a }
+def g() { return 1 }
+def g() { return 2 }
+def print(texto) { return texto }

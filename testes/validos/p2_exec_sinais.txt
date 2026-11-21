@@ -1,0 +1,10 @@
+def escolher(n) {
+    if n { return "sim" } else { return "nao" }
+    print("nao executar")
+}
+print(escolher(1), escolher(0))
+for i in [0, 1, 2, 3] {
+    if i == 1 { continue }
+    if i == 3 { break }
+    print(i)
+}

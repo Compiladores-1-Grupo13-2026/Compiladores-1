@@ -1,0 +1,9 @@
+def eh_par(n) {
+    if n == 0 { return True; }
+    return eh_impar(n - 1)
+}
+def eh_impar(n) {
+    if n == 0 { return False; }
+    return eh_par(n - 1)
+}
+print(eh_par(8), eh_impar(8), eh_impar(7))

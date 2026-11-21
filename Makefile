@@ -23,8 +23,19 @@ lex.yy.c: $(SCANNER_SOURCE) parser.tab.h
 	$(FLEX) -o lex.yy.c $(SCANNER_SOURCE)
 
 # libm fornece floor e pow para os operadores da P1.
-parser: parser.tab.c parser.tab.h lex.yy.c Semantica/Ast/ast.c Semantica/Ast/ast.h Semantica/semantico.c Semantica/semantico.h Makefile
-	$(CC) $(CPPFLAGS) -I. $(CFLAGS) $(LDFLAGS) -o $@ parser.tab.c lex.yy.c Semantica/Ast/ast.c Semantica/semantico.c $(LDLIBS)
+# [P5] Fontes do interpretador integrado: AST, tabela de simbolos e semantica.
+FONTES_SEMANTICA = Semantica/Ast/ast.c Semantica/Tabela/tabela.c Semantica/semantico.c \
+    Semantica/otimizador.c
+HEADERS_SEMANTICA = Semantica/Ast/ast.h Semantica/Tabela/tabela.h Semantica/semantico.h \
+    Semantica/otimizador.h
+FONTES_INTERPRETADOR = Interpretador/interpretador.c Interpretador/valor.c \
+    Interpretador/exec_expressoes.c Interpretador/exec_condicoes.c \
+    Interpretador/exec_lacos.c Interpretador/ambiente.c Interpretador/lista.c \
+    Interpretador/exec_atribuicao.c Interpretador/exec_funcoes.c
+HEADERS_INTERPRETADOR = Interpretador/valor.h Interpretador/ambiente.h Interpretador/interpretador.h
+
+parser: parser.tab.c parser.tab.h lex.yy.c $(FONTES_SEMANTICA) $(HEADERS_SEMANTICA) $(FONTES_INTERPRETADOR) $(HEADERS_INTERPRETADOR) Makefile
+	$(CC) $(CPPFLAGS) -I. $(CFLAGS) $(LDFLAGS) -o $@ parser.tab.c lex.yy.c $(FONTES_SEMANTICA) $(FONTES_INTERPRETADOR) $(LDLIBS)
 
 tokens: parser.tab.h lex.yy.c Makefile
 	$(CC) $(CPPFLAGS) $(CFLAGS) -DSO_TOKENS $(LDFLAGS) -o $@ lex.yy.c $(LDLIBS)
@@ -44,25 +55,41 @@ p4: parser.tab.c tokens
 	@test -n "$(ARQ)" || { echo 'Uso: make p4 ARQ=arquivo.py' >&2; exit 1; }
 	./tokens < "$(ARQ)"
 
-# ===== [P1] Verificacao de memoria dos casos validos de expressoes =====
+# [P4] Sprint 3: verifica a fatia contra o contrato sem implementar a base
+# pendente de P1/P2/P5. O script P3 continua responsavel pela suite anterior.
+PYTHON ?= python3
+.PHONY: test-p4 memcheck-p4
+test-p4:
+	$(PYTHON) testes/testar_p4.py
+
+memcheck-p4:
+	$(PYTHON) testes/testar_p4.py --memcheck
+# ===== [P1] Execucao e verificacao de memoria =====
+.PHONY: run
+run: parser
+	@test -n "$(ARQ)" || { printf '%s\n' 'Uso: make run ARQ=arquivo.txt' >&2; exit 1; }
+	./parser < "$(ARQ)"
+
 # Valgrind e preferido; usa AddressSanitizer com deteccao de leaks se ausente.
-VALIDOS_P1 = $(wildcard testes/validos/p1_*.txt)
+VALIDOS_MEMCHECK = $(sort $(wildcard testes/validos/p1_*.txt testes/validos/*_exec_*.txt testes/validos/*_ast_otimizada_*.txt))
 .PHONY: memcheck parser-memcheck
 memcheck: parser
 	@if command -v valgrind >/dev/null 2>&1; then \
-		for caso in $(VALIDOS_P1); do \
-			valgrind --quiet --leak-check=full --errors-for-leak-kinds=all --error-exitcode=1 ./parser < "$$caso" >/dev/null || exit $$?; \
+		for caso in $(VALIDOS_MEMCHECK); do \
+			modo=--ast; case "$$caso" in *_exec_*) modo= ;; *_ast_otimizada_*) modo=--ast-otimizada ;; esac; \
+			valgrind --quiet --leak-check=full --errors-for-leak-kinds=definite,indirect,possible --error-exitcode=1 ./parser $$modo < "$$caso" >/dev/null || exit $$?; \
 		done; \
 	else \
 		printf '%s\n' 'valgrind indisponivel; usando AddressSanitizer com deteccao de leaks.'; \
 		$(MAKE) --no-print-directory parser-memcheck || exit $$?; \
-		for caso in $(VALIDOS_P1); do \
-			ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 ./parser-memcheck < "$$caso" >/dev/null || exit $$?; \
+		for caso in $(VALIDOS_MEMCHECK); do \
+			modo=--ast; case "$$caso" in *_exec_*) modo= ;; *_ast_otimizada_*) modo=--ast-otimizada ;; esac; \
+			ASAN_OPTIONS=detect_leaks=1:halt_on_error=1 ./parser-memcheck $$modo < "$$caso" >/dev/null || exit $$?; \
 		done; \
 	fi
 
-parser-memcheck: parser.tab.c parser.tab.h lex.yy.c Semantica/Ast/ast.c Semantica/Ast/ast.h Semantica/semantico.c Semantica/semantico.h Makefile
-	$(CC) $(CPPFLAGS) -I. $(CFLAGS) -g -fsanitize=address -fno-omit-frame-pointer $(LDFLAGS) -o $@ parser.tab.c lex.yy.c Semantica/Ast/ast.c Semantica/semantico.c $(LDLIBS) -fsanitize=address
+parser-memcheck: parser.tab.c parser.tab.h lex.yy.c $(FONTES_SEMANTICA) $(HEADERS_SEMANTICA) $(FONTES_INTERPRETADOR) $(HEADERS_INTERPRETADOR) Makefile
+	$(CC) $(CPPFLAGS) -I. $(CFLAGS) -g -fsanitize=address -fno-omit-frame-pointer $(LDFLAGS) -o $@ parser.tab.c lex.yy.c $(FONTES_SEMANTICA) $(FONTES_INTERPRETADOR) $(LDLIBS) -fsanitize=address
 # ===== FIM [P1] Verificacao de memoria dos casos validos de expressoes =====
 
 clean:

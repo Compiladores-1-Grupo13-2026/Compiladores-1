@@ -1,10 +1,29 @@
-Resultado: 2
-Resultado: 3
-Resultado: 4
-[OK] if reconhecido
-Resultado: 5
-Resultado: 6
-[OK] if reconhecido
-Resultado: 7
 [OK] if reconhecido
 [OK] if reconhecido
+[OK] if reconhecido
+[OK] if reconhecido
+PROGRAMA [linha 1]
+  IF [linha 1]
+    NUMERO 1 [linha 1]
+    BLOCO [linha 1]
+      NUMERO 2 [linha 1]
+    IF [linha 1]
+      NUMERO 0 [linha 1]
+      BLOCO [linha 1]
+        NUMERO 3 [linha 1]
+      BLOCO [linha 1]
+        NUMERO 4 [linha 1]
+  IF [linha 2]
+    NUMERO 1 [linha 2]
+    BLOCO [linha 2]
+      IF [linha 2]
+        NUMERO 0 [linha 2]
+        BLOCO [linha 2]
+          NUMERO 5 [linha 2]
+        BLOCO [linha 2]
+          NUMERO 6 [linha 2]
+    BLOCO [linha 2]
+      NUMERO 7 [linha 2]
+  IF [linha 3]
+    NUMERO 1 [linha 3]
+    BLOCO [linha 3]

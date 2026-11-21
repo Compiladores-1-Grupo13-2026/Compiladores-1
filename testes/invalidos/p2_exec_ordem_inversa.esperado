@@ -1,0 +1,2 @@
+antes
+[ERRO EXECUCAO] Linha 4: comparacao '>=' entre tipos incompativeis ('int' e 'str')

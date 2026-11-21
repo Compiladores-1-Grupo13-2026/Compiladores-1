@@ -1,0 +1,3 @@
+print("antes")
+print(range(1, 5, 0))
+print("nao deve aparecer")

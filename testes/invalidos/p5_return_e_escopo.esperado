@@ -1,0 +1,31 @@
+[OK] return reconhecido
+[OK] atribuicao reconhecida
+[OK] return reconhecido
+[OK] def reconhecido
+[OK] chamada de funcao reconhecida
+[OK] chamada de funcao reconhecida
+[OK] chamada de funcao reconhecida
+[OK] chamada de funcao reconhecida
+PROGRAMA [linha 1]
+  RETURN [linha 1]
+    NUMERO 1 [linha 1]
+  FUNCAO 'calcula' [linha 2]
+    PARAMETRO 'n' [linha 2]
+    BLOCO [linha 2]
+      ATRIBUICAO [linha 3]
+        IDENTIFICADOR 'local' [linha 3]
+        MULTIPLICACAO [linha 3]
+          IDENTIFICADOR 'n' [linha 3]
+          NUMERO 2 [linha 3]
+      RETURN [linha 4]
+        IDENTIFICADOR 'local' [linha 4]
+  CHAMADA 'print' [linha 6]
+    CHAMADA 'calcula' [linha 6]
+      NUMERO 3 [linha 6]
+  CHAMADA 'print' [linha 7]
+    IDENTIFICADOR 'local' [linha 7]
+  CHAMADA 'print' [linha 8]
+    IDENTIFICADOR 'n' [linha 8]
+[ERRO SEMANTICO] Linha 1: 'return' fora de uma funcao
+[ERRO SEMANTICO] Linha 7: variável 'local' usada antes de ser atribuída
+[ERRO SEMANTICO] Linha 8: variável 'n' usada antes de ser atribuída

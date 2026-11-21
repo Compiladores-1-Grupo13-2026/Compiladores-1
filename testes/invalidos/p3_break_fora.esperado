@@ -1,1 +1,8 @@
+[OK] atribuicao reconhecida
+[OK] break reconhecido
+PROGRAMA [linha 1]
+  ATRIBUICAO [linha 1]
+    IDENTIFICADOR 'x' [linha 1]
+    NUMERO 1 [linha 1]
+  BREAK [linha 2]
 [ERRO SEMANTICO] Linha 2: 'break' fora de um laco

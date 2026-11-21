@@ -1,0 +1,3 @@
+print("antes")
+while 1 { }
+print("nao deve aparecer")

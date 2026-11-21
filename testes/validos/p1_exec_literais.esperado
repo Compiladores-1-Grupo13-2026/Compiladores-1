@@ -1,0 +1,4 @@
+7 3.5 True False None
+linha1
+linha2 a	b barra\fim aspas" simples'
+['a\'b', 'a\\b', 'x\ny', 'x\ty', 2.0, None, False, []]

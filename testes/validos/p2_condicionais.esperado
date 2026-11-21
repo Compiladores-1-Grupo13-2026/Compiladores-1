@@ -1,2 +1,9 @@
 [OK] atribuicao reconhecida
 [OK] if reconhecido
+PROGRAMA [linha 1]
+  IF [linha 1]
+    NUMERO 1 [linha 1]
+    BLOCO [linha 1]
+      ATRIBUICAO [linha 2]
+        IDENTIFICADOR 'x' [linha 2]
+        NUMERO 1 [linha 2]

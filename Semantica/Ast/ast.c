@@ -55,15 +55,24 @@ NoAST *ast_criar_numero_real(double valor, int linha) {
     return no;
 }
 
+static const NumeroRealAST *buscar_numero_real(const NoAST *no) {
+    for (const NumeroRealAST *item = numeros_reais; item; item = item->prox) {
+        if (item->no == no) return item;
+    }
+    return NULL;
+}
+
 int ast_numero_valor(const NoAST *no, double *valor) {
     if (!no || no->tipo != AST_NUMERO || !valor) return 0;
-    for (NumeroRealAST *item = numeros_reais; item; item = item->prox) {
-        if (item->no == no) {
-            *valor = item->valor;
-            return 1;
-        }
-    }
-    *valor = (double) no->valor;
+    const NumeroRealAST *real = buscar_numero_real(no);
+    *valor = real ? real->valor : (double) no->valor;
+    return 1;
+}
+
+int ast_numero_inteiro(const NoAST *no, int *valor) {
+    if (!no || no->tipo != AST_NUMERO || !valor || buscar_numero_real(no))
+        return 0;
+    *valor = no->valor;
     return 1;
 }
 /* ===== FIM [P1] Construcao e leitura de literais numericos ===== */
@@ -121,6 +130,7 @@ const char *ast_nome_tipo(TipoNo tipo) {
         case AST_FOR: return "FOR";
         case AST_BREAK: return "BREAK";
         case AST_CONTINUE: return "CONTINUE";
+
         case AST_ATRIBUICAO: return "ATRIBUICAO";
         case AST_ATRIB_SOMA: return "ATRIB_SOMA";
         case AST_ATRIB_SUB: return "ATRIB_SUB";
@@ -128,13 +138,91 @@ const char *ast_nome_tipo(TipoNo tipo) {
         case AST_ATRIB_DIV: return "ATRIB_DIV";
         case AST_LISTA: return "LISTA";
         case AST_INDEXACAO: return "INDEXACAO";
+
+
+        /* ===== [P5] Nomes dos nos de funcoes ===== */
         case AST_FUNCAO: return "FUNCAO";
         case AST_PARAMETRO: return "PARAMETRO";
         case AST_RETURN: return "RETURN";
         case AST_CHAMADA: return "CHAMADA";
+        /* ===== FIM [P5] Nomes dos nos de funcoes ===== */
     }
     return "DESCONHECIDO";
 }
+
+/* ===== [P4] Atribuição, listas e indexação ===== */
+
+NoAST *ast_p4_atribuicao(TipoNo operador, NoAST *alvo, NoAST *valor, int linha) {
+    return ast_criar(operador, alvo, valor, NULL, linha);
+}
+
+NoAST *ast_p4_lista(NoAST *elementos, int linha) {
+    return ast_criar(AST_LISTA, elementos, NULL, NULL, linha);
+}
+
+NoAST *ast_p4_indexacao(NoAST *base, NoAST *indice, int linha) {
+    return ast_criar(AST_INDEXACAO, base, indice, NULL, linha);
+}
+
+const char *ast_p4_nome_tipo(TipoNo tipo) {
+    switch (tipo) {
+        case AST_ATRIBUICAO: return "ATRIBUICAO";
+        case AST_ATRIB_SOMA: return "ATRIB_SOMA";
+        case AST_ATRIB_SUB: return "ATRIB_SUB";
+        case AST_ATRIB_MULT: return "ATRIB_MULT";
+        case AST_ATRIB_DIV: return "ATRIB_DIV";
+        case AST_LISTA: return "LISTA";
+        case AST_INDEXACAO: return "INDEXACAO";
+        default: return NULL;
+    }
+}
+
+int ast_p4_imprimir(NoAST *no, int nivel) {
+    const char *nome = no ? ast_p4_nome_tipo(no->tipo) : NULL;
+    if (!nome) return 0;
+    printf("%*s%s [linha %d]\n", nivel * 2, "", nome, no->linha);
+    ast_imprimir(no->a, nivel + 1);
+    ast_imprimir(no->b, nivel + 1);
+    ast_imprimir(no->c, nivel + 1);
+    return 1;
+}
+
+/* ===== FIM [P4] Atribuição, listas e indexação ===== */
+
+/* ===== [P5] Construtores de funcoes e chamadas ===== */
+
+/* def nome(parametros) { corpo }: o nome fica em texto, os parametros
+ * (ja encadeados por prox) no filho a e o BLOCO do corpo no filho b. */
+NoAST *ast_p5_funcao(const char *nome, NoAST *parametros, NoAST *corpo, int linha) {
+    NoAST *no = ast_criar_texto(AST_FUNCAO, nome, linha);
+    if (!no) {
+        ast_liberar(parametros);
+        ast_liberar(corpo);
+        return NULL;
+    }
+    no->a = parametros;
+    no->b = corpo;
+    return no;
+}
+
+/* nome(argumentos): os argumentos sao expressoes encadeadas por prox. */
+NoAST *ast_p5_chamada(const char *nome, NoAST *argumentos, int linha) {
+    NoAST *no = ast_criar_texto(AST_CHAMADA, nome, linha);
+    if (!no) {
+        ast_liberar(argumentos);
+        return NULL;
+    }
+    no->a = argumentos;
+    return no;
+}
+
+int ast_p5_contar(const NoAST *lista) {
+    int total = 0;
+    for (; lista; lista = lista->prox) total++;
+    return total;
+}
+
+/* ===== FIM [P5] Construtores de funcoes e chamadas ===== */
 
 static void imprimir_texto(const char *texto) {
     putchar('\'');

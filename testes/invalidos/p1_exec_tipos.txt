@@ -1,0 +1,4 @@
+def subtrair(x) { return "a" - x; }
+print("antes")
+print(subtrair(1))
+print("depois")

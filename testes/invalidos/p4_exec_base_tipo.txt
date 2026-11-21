@@ -1,0 +1,5 @@
+valores = [3]
+x = valores[0]
+print("antes")
+print(x[0])
+print("depois")

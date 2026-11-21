@@ -1,0 +1,31 @@
+[OK] return reconhecido
+[OK] def reconhecido
+[OK] return reconhecido
+[OK] def reconhecido
+[OK] return reconhecido
+[OK] def reconhecido
+[OK] return reconhecido
+[OK] def reconhecido
+PROGRAMA [linha 1]
+  FUNCAO 'f' [linha 1]
+    PARAMETRO 'a' [linha 1]
+    PARAMETRO 'a' [linha 1]
+    BLOCO [linha 1]
+      RETURN [linha 1]
+        IDENTIFICADOR 'a' [linha 1]
+  FUNCAO 'g' [linha 2]
+    BLOCO [linha 2]
+      RETURN [linha 2]
+        NUMERO 1 [linha 2]
+  FUNCAO 'g' [linha 3]
+    BLOCO [linha 3]
+      RETURN [linha 3]
+        NUMERO 2 [linha 3]
+  FUNCAO 'print' [linha 4]
+    PARAMETRO 'texto' [linha 4]
+    BLOCO [linha 4]
+      RETURN [linha 4]
+        IDENTIFICADOR 'texto' [linha 4]
+[ERRO SEMANTICO] Linha 1: parametro 'a' repetido na funcao 'f'
+[ERRO SEMANTICO] Linha 3: funcao 'g' ja definida na linha 2
+[ERRO SEMANTICO] Linha 4: nao e permitido redefinir a funcao embutida 'print'

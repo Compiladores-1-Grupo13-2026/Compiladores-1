@@ -1,0 +1,4 @@
+# Comentario antes dos comandos
+texto = "# preservado" # Comentario depois da string
+# Comentario entre comandos
+itens = [1, 2] # Comentario depois da lista

@@ -1,2 +1,0 @@
-def (a, b) { return a; }
-2 + 2;

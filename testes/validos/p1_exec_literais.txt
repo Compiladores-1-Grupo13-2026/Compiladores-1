@@ -1,0 +1,3 @@
+print(7, 3.5, True, False, None)
+print("linha1\nlinha2", "a\tb", "barra\\fim", "aspas\"", 'simples\'')
+print(["a'b", "a\\b", "x\ny", "x\ty", 4 / 2, None, False, []])

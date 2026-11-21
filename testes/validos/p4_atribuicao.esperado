@@ -1,2 +1,9 @@
 [OK] atribuicao reconhecida
 [OK] atribuicao reconhecida
+PROGRAMA [linha 1]
+  ATRIBUICAO [linha 1]
+    IDENTIFICADOR 'x' [linha 1]
+    NUMERO 10 [linha 1]
+  ATRIBUICAO [linha 2]
+    IDENTIFICADOR 'y' [linha 2]
+    NUMERO 20 [linha 2]
