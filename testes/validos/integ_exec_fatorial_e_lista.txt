@@ -1,0 +1,22 @@
+def fatorial_limitado(n) {
+    acc = 1;
+    atual = n;
+    while atual > 1 {
+        acc = acc * atual;
+        atual -= 1;
+    }
+    return acc;
+}
+
+entradas = [0, 3, 4, 6, 2];
+resumo = 0;
+
+for item in entradas {
+    if item == 0 or not (item < 5) {
+        resumo += item + 10;
+    } else {
+        resumo += fatorial_limitado(item);
+    }
+}
+
+print(resumo);

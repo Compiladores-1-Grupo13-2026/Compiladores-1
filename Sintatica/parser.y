@@ -40,9 +40,6 @@ static void diagnostico(int linha, int coluna, const char *mensagem);
     diagnostico((loc).first_line, (loc).first_column, (mensagem))
 #define RECONHECIDO(mensagem) do { emitir_pendente(); if (modo_ast) puts(mensagem); } while (0)
 
-/* O contrato da AST guarda inteiros em valor; a API P1 preserva numeros reais
- * em um registro auxiliar sem alterar a struct compartilhada. */
-/* ===== [P1] Conversao de literais numericos para nos AST ===== */
 static NoAST *criar_numero_p1(double valor, int linha) {
     if (isfinite(valor) && valor >= INT_MIN && valor <= INT_MAX &&
         trunc(valor) == valor)
@@ -61,7 +58,6 @@ static NoAST *anexar_senao(NoAST *se, NoAST *senao);
 %}
 
 %locations
-/* Os dois conflitos intencionais sao ELSE do if versus ELSE sem if. */
 %expect 2
 
 %union {
@@ -86,22 +82,16 @@ static NoAST *anexar_senao(NoAST *se, NoAST *senao);
 %token WHILE FOR IN BREAK CONTINUE
 %token ASSIGN PLUSEQ MINUSEQ TIMESEQ DIVEQ LBRACKET RBRACKET
 %token DEF RETURN
-
-/* Tipos retornados pelas regras */
 %type <expr> expr chamada_funcao
 %destructor { ast_liberar($$.ast); } <expr>
-
-/* [P5] Todo comando devolve um no da AST; listas usam o campo prox. */
 %type <no> programa elemento bloco comando
-%type <no> comando_if lista_elif                               /* P2 */
-%type <no> laco_while laco_for break_stmt continue_stmt        /* P3 */
-%type <no> atribuicao alvo lista elementos indexacao           /* P4 */
-%type <no> def_funcao params_opt params comando_return args_opt args /* P5 */
+%type <no> comando_if lista_elif
+%type <no> laco_while laco_for break_stmt continue_stmt
+%type <no> atribuicao alvo lista elementos indexacao
+%type <no> def_funcao params_opt params comando_return args_opt args
 %type <operador> op_atrib
-/* Nos descartados pela recuperacao de erros sao liberados aqui. */
 %destructor { ast_liberar($$); } <no>
 
-/* Contrato de precedencia da Sprint 0, na ordem exata do plano. */
 %left OR
 %left AND
 %precedence NOT
@@ -136,11 +126,11 @@ elemento:
     ;
 
 comando:
-      laco_while                   /* P3 */
-    | laco_for                     /* P3 */
-    | break_stmt                   /* P3 */
-    | continue_stmt                /* P3 */
-    | atribuicao terminador { $$ = $1; }  /* P4 */
+      laco_while       /* P3 */
+    | laco_for         /* P3 */
+    | break_stmt       /* P3 */
+    | continue_stmt    /* P3 */
+    | atribuicao terminador { $$ = $1; } /* P4 */
     | expr terminador  {
           emitir_pendente();
           $$ = $1.ast;
@@ -161,13 +151,12 @@ bloco:
     ;
 
 /* A abertura e a ancora dos erros de cabecalho. So aqui imprimimos o
-- diagnostico e voltamos ao modo normal: antes disso ainda ha tokens a descartar. */
+ * diagnostico e voltamos ao modo normal: antes disso ainda ha tokens a descartar. */
 inicio_bloco:
       %empty { emitir_pendente(); yyerrok; }
     ;
 
 /* ===== [P1] EXPRESSOES E LITERAIS ===== */
-/* Terminadores e recuperacao abaixo sao apoio compartilhado do parser. */
 terminador:
     SEMICOLON
   | NEWLINE
@@ -247,12 +236,8 @@ expr:
         $$.ast = ast_criar_texto(AST_IDENTIFICADOR, $1, @1.first_line);
     }
 ;
-/* ===== FIM [P1] EXPRESSOES E LITERAIS ===== */
 
 /* ===== [P2] CONDICOES E LOGICA ===== */
-/* Comparacoes, operadores logicos e comandos if / elif / else. */
-
-/* Operadores de comparacao e logica. */
 expr:
       expr EQ expr {
           $$.numero = isnan($1.numero) || isnan($3.numero) ? NAN : ($1.numero == $3.numero);
@@ -292,7 +277,6 @@ expr:
       }
     ;
 
-/* Comandos condicionais. */
 comando:
       comando_if
     ;
@@ -320,7 +304,7 @@ comando_if:
           preparar_diagnostico(@1.first_line, @1.first_column, "condicao invalida no if");
       } bloco { yyerrok; ast_liberar($4); $$ = NULL; }
     /* Nao aceitar IF expr error: interceptava expressoes incompletas e
-- confundia a abertura do bloco com a ausencia de bloco. */
+     * confundia a abertura do bloco com a ausencia de bloco. */
     | IF error terminador {
           ERRO_SINTATICO(@1, "bloco ausente no if (esperado '{')"); yyerrok;
           $$ = NULL;
@@ -346,11 +330,7 @@ lista_elif:
 
 /* ===== FIM [P2] CONDICOES E LOGICA ===== */
 
-
 /* ===== [P3] LACOS ===== */
-/* [P5/integracao] As regras com recuperacao de erro passaram a gerar os nos
- * AST_WHILE (a = condicao, b = corpo) e AST_FOR (texto = variavel,
- * a = iteravel, b = corpo). As copias sem recuperacao foram unificadas aqui. */
 laco_while:
       WHILE expr bloco {
           $$ = ast_criar(AST_WHILE, $2.ast, $3, NULL, @1.first_line);
@@ -364,7 +344,6 @@ laco_while:
 
 laco_for:
       FOR ID IN expr bloco {
-          /* O texto de ID pertence ao scanner; ast_criar_texto guarda uma copia. */
           $$ = ast_criar_texto(AST_FOR, $2, @1.first_line);
           if ($$) { $$->a = $4.ast; $$->b = $5; }
           else { ast_liberar($4.ast); ast_liberar($5); }
@@ -379,22 +358,21 @@ laco_for:
     ;
 
 break_stmt:
-    BREAK terminador {
-        $$ = ast_criar(AST_BREAK, NULL, NULL, NULL, @1.first_line);
-        RECONHECIDO("[OK] break reconhecido");
-    }
-;
+      BREAK terminador {
+          $$ = ast_criar(AST_BREAK, NULL, NULL, NULL, @1.first_line);
+          RECONHECIDO("[OK] break reconhecido");
+      }
+    ;
 
 continue_stmt:
-    CONTINUE terminador {
-        $$ = ast_criar(AST_CONTINUE, NULL, NULL, NULL, @1.first_line);
-        RECONHECIDO("[OK] continue reconhecido");
-    }
-;
+      CONTINUE terminador {
+          $$ = ast_criar(AST_CONTINUE, NULL, NULL, NULL, @1.first_line);
+          RECONHECIDO("[OK] continue reconhecido");
+      }
+    ;
+
 /* ===== [P4] ATRIBUICAO, LISTAS E COMENTARIOS ===== */
 /* Atribuicoes, listas e indexacao. Comentarios sao ignorados no scanner. */
-/* [P5/integracao] As acoes AST que a P4 deixou preparadas (comentadas) foram
- * ativadas: as regras agora devolvem nos via ast_p4_atribuicao/lista/indexacao. */
 
 /* Atribuicao simples e composta: x = 1, x += 1, l[0] = 1 */
 atribuicao:
@@ -418,18 +396,15 @@ op_atrib:
     | DIVEQ   { $$ = AST_ATRIB_DIV; }
     ;
 
-/* Alvo valido: variavel ou posicao de lista. */
 alvo:
       ID        { $$ = ast_criar_texto(AST_IDENTIFICADOR, $1, @1.first_line); }
     | indexacao { $$ = $1; }
     ;
 
-/* Literais que nao podem ficar a esquerda de "=" (ex.: 3 = x). */
 literal:
       NUM | STRING | TRUE | FALSE | NONE
     ;
 
-/* Lista [a, b]. Como STRING e NONE, seu valor numerico e NAN. */
 expr:
       lista       { $$.numero = NAN; $$.ast = $1; }
     | indexacao   { $$.numero = NAN; $$.ast = $1; }
@@ -458,7 +433,6 @@ elementos:
     | elementos COMMA expr { $$ = ast_anexar($1, $3.ast); }
     ;
 
-/* Indexacao l[0]. */
 indexacao:
       ID LBRACKET expr RBRACKET {
           $$ = ast_p4_indexacao(ast_criar_texto(AST_IDENTIFICADOR, $1, @1.first_line),
@@ -467,9 +441,7 @@ indexacao:
     ;
 
 /* ===== [P5] FUNCOES E CHAMADAS ===== */
-/* Definicoes de funcoes, parametros, return e chamadas com argumentos.
- * Cada regra devolve um no da AST; a verificacao (nome existe? quantos
- * argumentos? return dentro de funcao?) fica para a analise semantica. */
+/* Definicoes de funcoes, parametros, return e chamadas com argumentos. */
 
 comando:
       def_funcao
@@ -560,7 +532,6 @@ args:
 
 %%
 
-/* P4: preserva o terminador para a regra externa e consome um eventual ']'. */
 static void sincronizar_lista(void) {
     while (yychar != FIM && yychar != NEWLINE && yychar != SEMICOLON &&
            yychar != RBRACE && yychar != RBRACKET) yychar = yylex();
@@ -589,7 +560,6 @@ static void preparar_diagnostico(int linha, int coluna, const char *mensagem) {
 }
 
 static void diagnostico(int linha, int coluna, const char *mensagem) {
-    /* A regra especifica substitui a mensagem generica ainda pendente. */
     const char *lexema = erro_pendente ? erro_lexema : lexema_atual();
     if (!erro_pendente) erros_sintaticos++;
     fprintf(stderr, "[ERRO SINTATICO] Linha %d, coluna %d: %s (proximo a '%s')\n",
@@ -608,19 +578,15 @@ void yyerror(const char *mensagem) {
     snprintf(erro_lexema, sizeof erro_lexema, "%s", lexema_atual());
 }
 
-/* ===== [P5] Encadeamento de elif/else e fluxo principal ===== */
-/* Desce pelos filhos c da cadeia de IFs e pendura "senao" no ultimo. */
 static NoAST *anexar_senao(NoAST *se, NoAST *senao) {
     if (!se) return senao;
     NoAST *ultimo = se;
     while (ultimo->c && ultimo->c->tipo == AST_IF) ultimo = ultimo->c;
-    if (ultimo->c) ast_liberar(senao);   /* nao deve ocorrer: ja ha um else */
+    if (ultimo->c) ast_liberar(senao);
     else ultimo->c = senao;
     return se;
 }
 
-/* A AST original pode ser exibida antes da semantica. A otimizacao roda
- * apos as analises, antes de exibir a AST otimizada ou executar o programa. */
 int main(int argc, char **argv) {
     modo_ast = argc > 1 && strcmp(argv[1], "--ast") == 0;
     int modo_ast_otimizada = argc > 1 && strcmp(argv[1], "--ast-otimizada") == 0;
@@ -630,10 +596,6 @@ int main(int argc, char **argv) {
 
     if (modo_ast && raiz_programa) ast_imprimir(raiz_programa, 0);
 
-    /* Roda mesmo apos erros sintaticos (como ja fazia a P1), analisando os
-     * comandos que a recuperacao preservou. Limitacao: um def descartado
-     * pela recuperacao nao entra na AST, entao suas chamadas sao relatadas
-     * como "funcao nao definida". */
     int erros_semanticos = semantico_analisar(raiz_programa);
     int erro_exec = 0;
     if (!modo_ast && status == 0 && erros_lexicos == 0 &&
@@ -648,4 +610,3 @@ int main(int argc, char **argv) {
     return status != 0 || erros_semanticos != 0 || erro_exec != 0 ||
            erros_sintaticos != 0 || erros_lexicos != 0;
 }
-/* ===== FIM [P5] Encadeamento de elif/else e fluxo principal ===== */
