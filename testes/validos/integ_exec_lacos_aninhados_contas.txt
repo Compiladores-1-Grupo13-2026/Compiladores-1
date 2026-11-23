@@ -1,0 +1,27 @@
+def peso_celula(linha, col, val) {
+    if (linha + col) % 2 == 0 {
+        return val * 2 + linha;
+    } elif val < 0 {
+        return -val + col;
+    } else {
+        return val - col;
+    }
+}
+
+linhas = [1, 2, 3];
+cols = [2, 4];
+total = 0;
+r_idx = 0;
+
+for r in linhas {
+    c_idx = 0;
+    while c_idx < len(cols) {
+        c = cols[c_idx];
+        base_val = (r * 5) - (c * 2);
+        total += peso_celula(r_idx, c_idx, base_val);
+        c_idx += 1;
+    }
+    r_idx += 1;
+}
+
+print(total);

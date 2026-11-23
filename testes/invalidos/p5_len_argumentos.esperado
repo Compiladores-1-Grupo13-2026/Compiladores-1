@@ -1,0 +1,40 @@
+[OK] atribuicao reconhecida
+[OK] chamada de funcao reconhecida
+[OK] chamada de funcao reconhecida
+[OK] atribuicao reconhecida
+[OK] return reconhecido
+[OK] def reconhecido
+[OK] chamada de funcao reconhecida
+[OK] atribuicao reconhecida
+[OK] chamada de funcao reconhecida
+PROGRAMA [linha 1]
+  ATRIBUICAO [linha 1]
+    IDENTIFICADOR 'l' [linha 1]
+    LISTA [linha 1]
+      NUMERO 1 [linha 1]
+      NUMERO 2 [linha 1]
+  CHAMADA 'len' [linha 2]
+  CHAMADA 'len' [linha 3]
+    IDENTIFICADOR 'l' [linha 3]
+    IDENTIFICADOR 'l' [linha 3]
+  ATRIBUICAO [linha 4]
+    IDENTIFICADOR 'len' [linha 4]
+    NUMERO 5 [linha 4]
+  FUNCAO 'len' [linha 5]
+    PARAMETRO 'x' [linha 5]
+    BLOCO [linha 5]
+      RETURN [linha 5]
+        NUMERO 0 [linha 5]
+  ATRIBUICAO [linha 6]
+    IDENTIFICADOR 'n' [linha 6]
+    CHAMADA 'len' [linha 6]
+      IDENTIFICADOR 'l' [linha 6]
+  CHAMADA 'print' [linha 7]
+    SOMA [linha 7]
+      IDENTIFICADOR 'n' [linha 7]
+      STRING 'a' [linha 7]
+[ERRO SEMANTICO] Linha 5: nao e permitido redefinir a funcao embutida 'len'
+[ERRO SEMANTICO] Linha 2: funcao 'len' espera 1 argumento, recebeu 0
+[ERRO SEMANTICO] Linha 3: funcao 'len' espera 1 argumento, recebeu 2
+[ERRO SEMANTICO] Linha 4: não é permitido atribuir ao nome de função ou builtin 'len'
+[ERRO SEMANTICO] Linha 7: operacao entre tipos incompativeis ('int' e 'str')

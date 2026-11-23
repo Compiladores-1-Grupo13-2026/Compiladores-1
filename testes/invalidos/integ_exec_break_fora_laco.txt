@@ -1,0 +1,13 @@
+def avaliar(lista) {
+    soma = 0;
+    for item in lista {
+        soma += item * 2;
+    }
+    if soma > 10 {
+        break;
+    }
+    return soma;
+}
+
+nums = [3, 4, 5];
+print(avaliar(nums));

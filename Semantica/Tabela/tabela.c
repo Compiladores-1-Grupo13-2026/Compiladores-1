@@ -88,6 +88,7 @@ static void inicializar(void) {
     atual->id = 0;
     inserir_em(atual, "print", CAT_BUILTIN, "funcao", 0);
     inserir_em(atual, "range", CAT_BUILTIN, "funcao", 0);
+    inserir_em(atual, "len", CAT_BUILTIN, "funcao", 0);
 }
 
 void tabela_entrar_escopo(const char *nome_funcao) {

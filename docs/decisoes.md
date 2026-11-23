@@ -100,7 +100,9 @@ print(a);
 
 A saída é `[6, 2]`. Índices precisam ser inteiros e podem ser negativos.
 A gramática aceita a forma `nome[indice]`; sublistas podem ser acessadas
-atribuindo uma delas a outro identificador. Textos não são indexáveis.
+atribuindo uma delas a outro identificador. Textos aceitam apenas leitura
+por índice: `s[i]` devolve um texto novo de um caractere, e `s[i] = x` é
+recusado porque texto é imutável, como no Python.
 
 Cada valor devolvido pela avaliação pertence a quem o recebeu.
 `ambiente_definir` e `lista_adicionar` assumem o valor recebido; buscas no
