@@ -1,0 +1,40 @@
+# Exemplo 03 - Laços
+# Mostra while, for com range, for sobre listas, break, continue e laços
+# aninhados.
+# Executar na raiz do projeto: ./parser < exemplos/03_lacos.txt
+# A saída esperada está em docs/exemplos.md.
+
+# while repete enquanto a condição for verdadeira.
+contador = 3
+while contador > 0 {
+    print("faltam", contador)
+    contador -= 1
+}
+print("fim!")
+
+# range(inicio, fim) vai de inicio até fim - 1.
+soma = 0
+for i in range(1, 11) { soma += i }
+print("soma de 1 a 10:", soma)
+
+# range(inicio, fim, passo) também aceita passo negativo.
+for i in range(10, 0, -3) { print(i) }
+
+# for percorre os elementos de uma lista, em ordem.
+frutas = ["maca", "banana", "uva"]
+for fruta in frutas { print(fruta) }
+
+# continue pula para a próxima volta; break encerra o laço.
+# Resultado: os ímpares de 1 a 7.
+for n in range(1, 10) {
+    if n % 2 == 0 { continue; }
+    if n > 7 { break; }
+    print(n)
+}
+
+# Laços aninhados: uma pequena tabuada.
+for i in range(1, 3) {
+    for j in range(1, 3) {
+        print(i, "x", j, "=", i * j)
+    }
+}

@@ -1,0 +1,46 @@
+# Exemplo 01 - Valores, variáveis e contas
+# Mostra os tipos básicos da MiniPy, as operações aritméticas e as
+# atribuições compostas.
+# Executar na raiz do projeto: ./parser < exemplos/01_expressoes.txt
+# A saída esperada está em docs/exemplos.md.
+
+# Valores básicos: inteiro, real, texto, booleano e None.
+idade = 20
+altura = 1.75
+nome = "Ana"
+estudante = True
+nada = None
+# print aceita vários argumentos e os separa por espaço.
+print(nome, idade, altura, estudante, nada)
+
+# Inteiros: soma, subtração, multiplicação, divisão inteira (//),
+# resto (%) e potência (**).
+a = 17
+b = 5
+print(a + b, a - b, a * b)
+print(a // b, a % b, b ** 3)
+
+# A divisão com / sempre produz um número real.
+print(a / b, 10 / 2)
+
+# Misturar inteiro e real também produz real.
+print(altura * 2, idade + 0.5)
+
+# Precedência: ** vem antes de * e /, que vêm antes de + e -.
+# A potência associa à direita: 2 ** 3 ** 2 é 2 ** 9.
+print(2 + 3 * 4, (2 + 3) * 4, 2 ** 3 ** 2)
+
+# Textos: + concatena e * repete.
+saudacao = "Ola, " + nome
+print(saudacao)
+print("-" * 10)
+
+# Atribuições compostas atualizam a própria variável.
+pontos = 10
+pontos += 5
+pontos -= 3
+pontos *= 2
+print(pontos)
+# /= usa a divisão real, então o resultado passa a ser real.
+pontos /= 4
+print(pontos)

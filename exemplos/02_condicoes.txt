@@ -1,0 +1,40 @@
+# Exemplo 02 - Condições e lógica
+# Mostra if/elif/else, comparações, and/or/not e o curto-circuito.
+# Executar na raiz do projeto: ./parser < exemplos/02_condicoes.txt
+# A saída esperada está em docs/exemplos.md.
+
+# Blocos usam chaves. elif e else ficam na mesma linha do } anterior.
+nota = 7.5
+if nota >= 9 {
+    print("Excelente")
+} elif nota >= 7 {
+    print("Aprovado")
+} else {
+    print("Reprovado")
+}
+
+# Comparações produzem True ou False. Textos são comparados em ordem
+# alfabética.
+x = 4
+print(x == 4, x != 4, x < 10, "abc" < "abd")
+
+# and, or e not. As comparações são avaliadas antes de and/or.
+tem_ingresso = True
+idade = 15
+print(tem_ingresso and idade >= 18)
+print(tem_ingresso or idade >= 18)
+print(not tem_ingresso)
+
+# Curto-circuito: se o lado esquerdo do and for falso, o lado direito
+# nem é avaliado. Por isso, a divisão por zero abaixo nunca acontece.
+divisor = 0
+if divisor != 0 and 10 / divisor > 1 {
+    print("nao aparece")
+} else {
+    print("divisao evitada")
+}
+
+# or devolve o primeiro valor verdadeiro. Texto vazio conta como falso,
+# então o valor padrão é usado.
+apelido = ""
+print(apelido or "sem apelido")

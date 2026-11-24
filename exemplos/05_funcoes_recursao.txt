@@ -1,0 +1,51 @@
+# Exemplo 05 - Funções e recursão
+# Mostra def, parâmetros, return, recursão e listas passadas a funções.
+# Executar na raiz do projeto: ./parser < exemplos/05_funcoes_recursao.txt
+# A saída esperada está em docs/exemplos.md.
+
+# Uma função deve ser definida antes de ser chamada.
+def quadrado(x) {
+    return x * x
+}
+print(quadrado(4), quadrado(1.5))
+
+# Variáveis criadas dentro da função são locais.
+def maior(lista) {
+    resultado = lista[0]
+    for item in lista {
+        if item > resultado { resultado = item }
+    }
+    return resultado
+}
+print(maior([3, 8, 2, 7]))
+
+# Funções que percorrem um texto.
+def contar(texto, alvo) {
+    total = 0
+    for c in texto {
+        if c == alvo { total += 1 }
+    }
+    return total
+}
+print(contar("banana", "a"))
+
+# Recursão: a função chama a si mesma até chegar ao caso base.
+def fatorial(n) {
+    if n <= 1 { return 1; }
+    return n * fatorial(n - 1)
+}
+def fibonacci(n) {
+    if n <= 1 { return n; }
+    return fibonacci(n - 1) + fibonacci(n - 2)
+}
+print(fatorial(5), fatorial(10))
+print(fibonacci(10))
+
+# Listas são passadas por referência: a função altera a lista original.
+# Sem return, a função devolve None; a chamada solta descarta o valor.
+def dobrar_todos(lista) {
+    for i in range(len(lista)) { lista[i] *= 2 }
+}
+valores = [1, 2, 3]
+dobrar_todos(valores)
+print(valores)
