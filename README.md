@@ -102,9 +102,13 @@ Os detalhes de ambiente estão no [guia de compilação](docs/src.md).
 
 O site MkDocs apresenta a [linguagem](docs/index.md), a [AST](docs/ast.md), as
 [decisões técnicas](docs/decisoes.md), o [interpretador](docs/interpretador.md)
-e as [funções](docs/p5.md). A organização dos fontes está em
+e as [funções](docs/funcoes.md). A organização dos fontes está em
 [Código-fonte](docs/src.md); recursos e limites estão em
 [Estado do projeto](docs/sprints.md).
+
+Para aprender a usar o interpretador, comece pelo
+[manual de uso](docs/exemplos.md), que acompanha os programas comentados da
+pasta [`exemplos/`](exemplos/).
 
 Para gerar e visualizar a documentação em um ambiente Python isolado:
 

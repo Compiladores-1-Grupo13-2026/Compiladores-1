@@ -33,6 +33,9 @@ typedef struct NoAST {
     char *texto;            /* ID, STRING e nomes; o no e dono da copia */
     struct NoAST *a, *b, *c;
     struct NoAST *prox;     /* proximo item de uma lista */
+    /* [P4] E2: tipo inferido pela semantica ("int", "str", ...) ou NULL.
+     * Aponta para texto constante; nao precisa de free. */
+    const char *tipo_inferido;
 } NoAST;
 
 NoAST *ast_criar(TipoNo tipo, NoAST *a, NoAST *b, NoAST *c, int linha);
@@ -63,6 +66,10 @@ const char *ast_p4_nome_tipo(TipoNo tipo);
 /* Imprime um no P4 e seus filhos via ast_imprimir; nao percorre no->prox,
  * responsabilidade do impressor comum. Retorna 0 quando nao for um no P4. */
 int ast_p4_imprimir(NoAST *no, int nivel);
+
+/* E2 (--ast-tipos): com ativo != 0, ast_imprimir mostra " : tipo" nos nos
+ * com tipo_inferido. Desligado por padrao, entao --ast nao muda. */
+void ast_p4_mostrar_tipos(int ativo);
 
 /* ===== FIM [P4] Atribuição, listas e indexação ===== */
 

@@ -80,7 +80,7 @@ tabulação, barra e apóstrofo.
 
 `print` avalia todos os argumentos antes de imprimir, separa os valores por
 um espaço e termina com uma quebra de linha. `print()` imprime apenas a
-quebra de linha. Veja também [Funções e chamadas](p5.md).
+quebra de linha. Veja também [Funções e chamadas](funcoes.md).
 
 ## Expressões e textos
 
@@ -231,7 +231,7 @@ locais. Uma função sem retorno explícito, ou com `return;`, devolve `None`.
 A busca durante a execução consulta o quadro atual e depois o global.
 Quadros de chamadas intermediárias não ficam visíveis, e funções não
 capturam variáveis de escopos externos. O limite é de **1000 chamadas
-aninhadas**. Detalhes e exemplos estão em [Funções e chamadas](p5.md).
+aninhadas**. Detalhes e exemplos estão em [Funções e chamadas](funcoes.md).
 
 ## Programa completo
 

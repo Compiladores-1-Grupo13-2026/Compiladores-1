@@ -72,7 +72,7 @@ o programa no ponto da falha.
 
 - [Código-fonte e compilação](src.md): dependências, organização e comandos.
 - [Interpretador](interpretador.md): valores, operações, controle de fluxo e memória.
-- [Funções e chamadas](p5.md): parâmetros, retorno, recursão e funções embutidas.
+- [Funções e chamadas](funcoes.md): parâmetros, retorno, recursão e funções embutidas.
 - [Analisador léxico](analisador_lexico/analisador-lexico.md),
   [sintático](analisador_sintatico/analisador-sintatico.md) e
   [semântico](analisador_semantico/analisador-semantico.md): as etapas de análise.

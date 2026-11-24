@@ -1,0 +1,67 @@
+# Exemplo 04 - Listas e textos
+# Mostra listas, índices positivos e negativos, alteração de elementos,
+# compartilhamento por referência, indexação de textos e len().
+# Executar na raiz do projeto: ./parser < exemplos/04_listas_e_textos.txt
+# A saída esperada está em docs/exemplos.md.
+
+# ---------- Listas ----------
+notas = [7, 9, 5, 10]
+print(notas)
+# O índice 0 é o primeiro elemento; -1 é o último. len() conta os itens.
+print(notas[0], notas[-1], len(notas))
+
+# Elementos podem ser trocados ou atualizados pelo índice.
+notas[2] = 6
+notas[0] += 1
+print(notas)
+
+# Média: soma com for e divide pela quantidade.
+soma = 0
+for n in notas { soma += n }
+print("media:", soma / len(notas))
+
+# Atribuir uma lista a outra variável não copia: as duas apontam para a
+# mesma lista. Alterar copia também altera notas.
+copia = notas
+copia[0] = 0
+print(notas)
+
+# Listas podem conter listas. Não há indexação encadeada (m[1][0]),
+# então use uma variável intermediária.
+matriz = [[1, 2], [3, 4]]
+linha = matriz[1]
+print(linha[0], len(matriz))
+
+# Uma lista pode ocupar várias linhas.
+alunos = [
+    "Ana",
+    "Bruno",
+    "Carla"
+]
+for i in range(len(alunos)) { print(i, alunos[i]) }
+
+# ---------- Textos ----------
+palavra = "MiniPy"
+# Textos também aceitam índices positivos e negativos, e len().
+print(palavra[0], palavra[-1], len(palavra))
+
+# for percorre um texto letra por letra.
+vogais = 0
+for letra in palavra {
+    if letra == "a" or letra == "e" or letra == "i" or letra == "o" or letra == "u" {
+        vogais += 1
+    }
+}
+print("vogais:", vogais)
+
+# Inverter um texto com índices negativos.
+invertido = ""
+for i in range(1, len(palavra) + 1) { invertido += palavra[-i] }
+print(invertido)
+
+# Primeira letra de cada nome da lista.
+iniciais = ""
+for nome in alunos { iniciais += nome[0] }
+print(iniciais)
+
+# Textos não podem ser alterados por índice: palavra[0] = "m" gera erro.

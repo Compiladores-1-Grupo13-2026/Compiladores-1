@@ -1,0 +1,5 @@
+x = 2 + 3
+y = x * 1.5
+nome = "ab"
+l = [x, nome]
+print(l[0], nome[0], len(nome), x > 1 and True)
