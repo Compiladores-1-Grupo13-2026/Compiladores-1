@@ -1,3 +1,4 @@
+
 #include "semantico.h"
 #include "Tabela/tabela.h"
 
@@ -304,6 +305,10 @@ const char *semantico_tipo_expr(const NoAST *no) {
             if (tipos_iguais(a, "str") && tipos_iguais(b, "str"))
                 return "str";
 
+            /* Issue #24: concatenacao de duas listas produz uma nova lista. */
+            if (tipos_iguais(a, "lista") && tipos_iguais(b, "lista"))
+                return "lista";
+
             return "?";
         }
 
@@ -317,7 +322,15 @@ const char *semantico_tipo_expr(const NoAST *no) {
             const char *b = semantico_tipo_expr(no->b);
             if (no->tipo == AST_MULTIPLICACAO &&
                 ((tipos_iguais(a, "str") && (tipos_iguais(b, "int") || tipos_iguais(b, "bool"))) ||
-                 ((tipos_iguais(a, "int") || tipos_iguais(a, "bool")) && tipos_iguais(b, "str")))) return "str";
+                 ((tipos_iguais(a, "int") || tipos_iguais(a, "bool")) && tipos_iguais(b, "str"))))
+                return "str";
+
+            /* Issue #24: lista * int e int * lista produzem uma lista. */
+            if (no->tipo == AST_MULTIPLICACAO &&
+                ((tipos_iguais(a, "lista") && tipos_iguais(b, "int")) ||
+                 (tipos_iguais(a, "int") && tipos_iguais(b, "lista"))))
+                return "lista";
+
             if (!tipos_numericos(a) || !tipos_numericos(b)) return "?";
             if (no->tipo == AST_POTENCIA) {
                 double expoente;
@@ -474,9 +487,21 @@ static int tipos_incompativeis(const NoAST *no) {
         tipos_iguais(a, "str") && tipos_iguais(b, "str"))
         return 0;
 
+    /* Issue #24: concatenacao de duas listas e permitida. */
+    if (no->tipo == AST_SOMA &&
+        tipos_iguais(a, "lista") && tipos_iguais(b, "lista"))
+        return 0;
+
     if (no->tipo == AST_MULTIPLICACAO &&
         ((tipos_iguais(a, "str") && (tipos_iguais(b, "int") || tipos_iguais(b, "bool"))) ||
-         ((tipos_iguais(a, "int") || tipos_iguais(a, "bool")) && tipos_iguais(b, "str")))) return 0;
+         ((tipos_iguais(a, "int") || tipos_iguais(a, "bool")) && tipos_iguais(b, "str"))))
+        return 0;
+
+    /* Issue #24: repeticao de lista com inteiro, nos dois sentidos. */
+    if (no->tipo == AST_MULTIPLICACAO &&
+        ((tipos_iguais(a, "lista") && tipos_iguais(b, "int")) ||
+         (tipos_iguais(a, "int") && tipos_iguais(b, "lista"))))
+        return 0;
 
     return !tipos_numericos(a) || !tipos_numericos(b);
 }
