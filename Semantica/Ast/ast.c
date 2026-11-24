@@ -30,6 +30,7 @@ NoAST *ast_criar(TipoNo tipo, NoAST *a, NoAST *b, NoAST *c, int linha) {
     no->a = a;
     no->b = b;
     no->c = c;
+    no->tipo_inferido = NULL;   /* [P4] E2: preenchido pela semantica */
     return no;
 }
 
@@ -177,10 +178,23 @@ const char *ast_p4_nome_tipo(TipoNo tipo) {
     }
 }
 
+/* E2 (--ast-tipos): estado do impressor; desligado por padrao. */
+static int p4_mostrar_tipos;
+
+void ast_p4_mostrar_tipos(int ativo) {
+    p4_mostrar_tipos = ativo;
+}
+
+static void p4_imprimir_tipo(const NoAST *no) {
+    if (p4_mostrar_tipos && no->tipo_inferido) printf(" : %s", no->tipo_inferido);
+}
+
 int ast_p4_imprimir(NoAST *no, int nivel) {
     const char *nome = no ? ast_p4_nome_tipo(no->tipo) : NULL;
     if (!nome) return 0;
-    printf("%*s%s [linha %d]\n", nivel * 2, "", nome, no->linha);
+    printf("%*s%s", nivel * 2, "", nome);
+    p4_imprimir_tipo(no);
+    printf(" [linha %d]\n", no->linha);
     ast_imprimir(no->a, nivel + 1);
     ast_imprimir(no->b, nivel + 1);
     ast_imprimir(no->c, nivel + 1);
@@ -270,6 +284,7 @@ void ast_imprimir(NoAST *raiz, int nivel) {
         default:
             break;
     }
+    p4_imprimir_tipo(raiz);     /* [P4] E2: " : tipo" so no modo --ast-tipos */
     printf(" [linha %d]\n", raiz->linha);
 
     ast_imprimir(raiz->a, nivel + 1);

@@ -180,6 +180,37 @@ const char *semantico_p4_visitar(NoAST *no, P4Visitar visitar, P4Erro erro) {
     }
 }
 
+/* E2 (--ast-tipos): "AST anotada" da semana 7. Um tipo pode apontar para
+ * Simbolo.tipo, que some em tabela_liberar(); por isso o no guarda o literal
+ * estatico equivalente. "?" (tipo desconhecido) fica sem anotacao. */
+static const char *p4_tipo_fixo(const char *tipo) {
+    static const char *const conhecidos[] = {
+        "int", "float", "str", "bool", "none", "lista", "funcao", P4_TIPO_ERRO
+    };
+    if (!tipo) return NULL;
+    for (size_t i = 0; i < sizeof conhecidos / sizeof conhecidos[0]; i++) {
+        if (strcmp(tipo, conhecidos[i]) == 0) return conhecidos[i];
+    }
+    return NULL;
+}
+
+/* Guarda em no->tipo_inferido o tipo calculado pelo visitante e devolve o
+ * mesmo tipo, sem mudar a analise. Atribuicoes sao comandos: ficam sem tipo. */
+static const char *p4_anotar_tipo(NoAST *no, const char *tipo) {
+    if (!no) return tipo;
+    switch (no->tipo) {
+        case AST_ATRIBUICAO:
+        case AST_ATRIB_SOMA:
+        case AST_ATRIB_SUB:
+        case AST_ATRIB_MULT:
+        case AST_ATRIB_DIV:
+            return tipo;
+        default:
+            no->tipo_inferido = p4_tipo_fixo(tipo);
+            return tipo;
+    }
+}
+
 /* ===== FIM [P4] Atribuição, listas e indexação ===== */
 
 /* ===== [P1] Analise semantica de expressoes e literais ===== */
@@ -934,8 +965,8 @@ static const char *visitar(NoAST *no) {
         case AST_RETURN:
             visitar_return(no);
             return "none";
-        case AST_CHAMADA:
-            return visitar_chamada(no);
+        case AST_CHAMADA:       /* [P4] E2: anota o tipo (len -> int) */
+            return p4_anotar_tipo(no, visitar_chamada(no));
         case AST_IF:            /* [P2] a = condicao, b = bloco, c = elif/else */
             visitar(no->a);
             visitar(no->b);
@@ -953,14 +984,14 @@ static const char *visitar(NoAST *no) {
 
     /* [P4] Atribuicoes, listas, indexacao e leitura de identificadores. */
     const char *tipo_p4 = semantico_p4_visitar(no, visitar, erro_formatado);
-    if (tipo_p4) return tipo_p4;
+    if (tipo_p4) return p4_anotar_tipo(no, tipo_p4);              /* [P4] E2 */
 
     /* [P1]/[P2] Expressoes: filhos primeiro (pos-ordem), depois o operador. */
     visitar(no->a);
     visitar(no->b);
     visitar(no->c);
     verificar_no(no);
-    return semantico_tipo_expr(no);
+    return p4_anotar_tipo(no, semantico_tipo_expr(no));           /* [P4] E2 */
 }
 
 int semantico_analisar(NoAST *raiz) {

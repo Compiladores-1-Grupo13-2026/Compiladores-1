@@ -590,6 +590,8 @@ static NoAST *anexar_senao(NoAST *se, NoAST *senao) {
 int main(int argc, char **argv) {
     modo_ast = argc > 1 && strcmp(argv[1], "--ast") == 0;
     int modo_ast_otimizada = argc > 1 && strcmp(argv[1], "--ast-otimizada") == 0;
+    /* [P4] E2: AST anotada com os tipos inferidos pela semantica. */
+    int modo_ast_tipos = argc > 1 && strcmp(argv[1], "--ast-tipos") == 0;
     setvbuf(stdout, NULL, _IONBF, 0);
     int status = yyparse();
     emitir_pendente();
@@ -597,8 +599,13 @@ int main(int argc, char **argv) {
     if (modo_ast && raiz_programa) ast_imprimir(raiz_programa, 0);
 
     int erros_semanticos = semantico_analisar(raiz_programa);
+    /* [P4] E2: imprime a arvore original (antes da otimizacao), sem executar. */
+    if (modo_ast_tipos && raiz_programa) {
+        ast_p4_mostrar_tipos(1);
+        ast_imprimir(raiz_programa, 0);
+    }
     int erro_exec = 0;
-    if (!modo_ast && status == 0 && erros_lexicos == 0 &&
+    if (!modo_ast && !modo_ast_tipos && status == 0 && erros_lexicos == 0 &&
         erros_sintaticos == 0 && erros_semanticos == 0) {
         raiz_programa = otimizar_ast(raiz_programa);
         if (modo_ast_otimizada) ast_imprimir(raiz_programa, 0);

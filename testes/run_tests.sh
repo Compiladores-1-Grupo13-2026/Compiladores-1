@@ -16,6 +16,7 @@ for pasta in validos invalidos; do
         case "$caso" in
             *_exec_*) modo= ;;
             *_ast_otimizada_*) modo=--ast-otimizada ;;
+            *_ast_tipos_*) modo=--ast-tipos ;;
         esac
         status=0
         timeout 5 ./parser ${modo:+"$modo"} < "$caso" > "$temporario/stdout" 2> "$temporario/stderr" || status=$?
