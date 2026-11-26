@@ -4,6 +4,17 @@
 %option noyywrap yylineno nounput noinput
 
 %{
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Lexico/scanner.l
+ * Descrição: regras Flex da análise léxica, com reconhecimento
+ *            de tokens, rastreamento de posições e diagnóstico léxico.
+ */
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
