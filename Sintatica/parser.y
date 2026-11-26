@@ -7,6 +7,17 @@ typedef struct {
 }
 
 %{
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Sintatica/parser.y
+ * Descrição: gramática Bison, construção da AST e diagnósticos
+ *            sintáticos, além do ponto de entrada do executável parser.
+ */
+
 #include <limits.h>
 #include <math.h>
 
