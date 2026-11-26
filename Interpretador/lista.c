@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Interpretador/lista.c
+ * Descrição: criação de listas, inclusão de itens, construção
+ *            do valor de lista e liberação do vetor e de seus elementos.
+ */
+
 #include "Interpretador/valor.h"
 #include "Interpretador/interpretador.h"
 

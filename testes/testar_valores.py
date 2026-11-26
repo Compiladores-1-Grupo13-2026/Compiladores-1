@@ -1,3 +1,12 @@
+# FGA0003 - Compiladores 1
+# Curso de Engenharia de Software
+# Universidade de Brasília (UnB)
+# Equipe 13 - MiniPy
+#
+# Arquivo: testes/testar_valores.py
+# Descrição: compilação e execução dos testes de valores,
+#            com conferência de diagnósticos e uso opcional de Valgrind.
+
 """Verifica precisao, limites e memoria de Valor com os modulos reais."""
 from __future__ import annotations
 

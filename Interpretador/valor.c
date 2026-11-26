@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Interpretador/valor.c
+ * Descrição: construtores de valores simples e referências a
+ *            funções, cópia, liberação, impressão e nomes dos tipos.
+ */
+
 #include "Interpretador/valor.h"
 #include "Interpretador/interpretador.h"
 

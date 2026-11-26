@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Interpretador/valor.h
+ * Descrição: definição dos tipos de valores e da estrutura de
+ *            listas, com as operações de criação e gerenciamento.
+ */
+
 #ifndef MINIPY_VALOR_H
 #define MINIPY_VALOR_H
 
