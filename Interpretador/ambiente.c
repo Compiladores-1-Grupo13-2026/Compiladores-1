@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Interpretador/ambiente.c
+ * Descrição: gerenciamento dos quadros global e de chamadas,
+ *            com definição, busca e liberação de variáveis.
+ */
+
 #include "Interpretador/ambiente.h"
 #include "Interpretador/interpretador.h"
 

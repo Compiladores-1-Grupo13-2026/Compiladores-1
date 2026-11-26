@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Interpretador/interpretador.h
+ * Descrição: interface do interpretador e dos módulos de execução,
+ *            incluindo sinais de controle e operações compartilhadas.
+ */
+
 #ifndef MINIPY_INTERPRETADOR_H
 #define MINIPY_INTERPRETADOR_H
 

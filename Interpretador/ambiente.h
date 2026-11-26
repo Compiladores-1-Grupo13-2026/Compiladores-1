@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Interpretador/ambiente.h
+ * Descrição: interface do ambiente de execução para gerenciar
+ *            quadros e definir, localizar e liberar valores associados a nomes.
+ */
+
 #ifndef MINIPY_AMBIENTE_H
 #define MINIPY_AMBIENTE_H
 
