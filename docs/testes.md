@@ -1,7 +1,7 @@
 # Testes e validação
 
-A suíte verifica o MiniPy desde os tokens até a execução da AST. São **108
-programas: 46 válidos e 62 inválidos**, além de três verificações do scanner.
+A suíte verifica o MiniPy desde os tokens até a execução da AST. São 125
+programas: 56 válidos e 69 inválidos, além de três verificações do scanner.
 
 ```sh
 make test
@@ -11,8 +11,8 @@ O alvo compila `parser` e `tokens` e chama `testes/run_tests.sh`. O resumo
 esperado da suíte atual é:
 
 ```text
-validos: 46/46 passaram.
-invalidos: 62/62 passaram.
+validos: 56/56 passaram.
+invalidos: 69/69 passaram.
 Total de falhas: 0
 ```
 
@@ -20,11 +20,11 @@ Total de falhas: 0
 
 O nome do arquivo determina o modo do parser usado pelo runner:
 
-| Conjunto | Quantidade | Modo | Verificação |
-| --- | ---: | --- | --- |
-| Históricos | 66: 25 válidos e 41 inválidos | `--ast` | Reconhecimento, AST, semântica e recuperação |
-| Nomes contendo `_exec_` | 42: 21 válidos e 21 inválidos | Execução padrão | Saída, operações, fluxo e erros dinâmicos |
-| Scanner isolado | 3 verificações | `tokens` | Catálogo, programa de referência e caractere inválido |
+| Conjunto | Modo | Verificação |
+| --- | --- | --- |
+| Arquivos válidos | Conforme o nome do arquivo | Reconhecimento, AST, semântica e execução |
+| Arquivos inválidos | Conforme o nome do arquivo | Diagnósticos léxicos, sintáticos e semânticos |
+| Scanner isolado | `tokens` | Catálogo, programa de referência e caractere inválido |
 
 | Caso | Critério de aprovação |
 | --- | --- |
@@ -58,16 +58,16 @@ a sequência dos diagnósticos e das saídas.
 Os verificadores abaixo usam dependências reais e exigem Python e GCC:
 
 ```sh
-python3 testes/testar_p4.py --runtime
-python3 testes/testar_valores.py
+python3 testes/testar_p4.py --runtime --memcheck
+python3 testes/testar_valores.py --memcheck
 python3 testes/verificar_b.py
 ```
 
-O primeiro comando compila três executáveis para tabela, semântica e contratos
-de execução. O segundo acrescenta o quarto executável, com precisão acima de
-`2**53`, fronteiras de `long long`, estouros controlados e posse de valores.
-O último confere 62 resultados e nove verificações de integração, incluindo
-o bloqueio da execução após erros de análise e o programa de referência.
+O primeiro comando verifica tabela, semântica, AST e contratos de execução
+com dependências reais, incluindo testes com Valgrind. O segundo verifica
+precisão inteira, limites e posse de valores. O último confere 67 expectativas
+e nove verificações de integração, incluindo o bloqueio da execução após
+erros de análise e o programa de referência.
 
 Para observar a recuperação sem executar:
 
@@ -93,21 +93,20 @@ python3 testes/testar_valores.py --memcheck
 como alternativa quando compilador e sistema oferecem o runtime necessário.
 Os verificadores Python com `--memcheck` exigem Valgrind.
 
-Na validação local de **6 de novembro de 2026**:
+## Validação final no Linux — 26 de novembro de 2026
 
 | Verificação | Resultado |
 | --- | --- |
-| Compilação GCC, Flex e Bison | Sucesso com `-Wall -Wextra -Werror` no compilador e `-Wall -Werror` no Bison |
-| Suíte no Windows e no Linux | 108/108 programas e três verificações de tokens passaram |
-| Testes unitários | Quatro executáveis passaram |
-| AddressSanitizer Windows | 108 programas e quatro unitários passaram sem diagnóstico de acesso inválido |
-| Valgrind 3.25.1 Linux | 46/46 válidos e quatro unitários passaram |
-| `make memcheck` Linux | Código de saída 0 |
+| Compilação com GCC, Flex e Bison | Sucesso |
+| Suíte geral | 125/125 programas aprovados e três verificações de tokens aprovadas |
+| Verificador B | 67 expectativas conferidas, sem divergências; nove verificações adicionais aprovadas |
+| Testes P4 com runtime e memcheck | Aprovados; Valgrind sem erros nos módulos exercitados |
+| Testes de valores P1 com memcheck | Aprovados |
+| `make memcheck` | Código de saída 0; execução dos casos selecionados com Valgrind |
 
-O Valgrind verificou acessos inválidos e blocos definitivamente, indiretamente
-ou possivelmente perdidos. Buffers globais do Flex permanecem alcançáveis até
-o encerramento; eles não são blocos perdidos. Os unitários verificam todos
-os tipos de vazamento.
+Todas as verificações acima foram executadas localmente em Linux. O alvo
+`make memcheck` utiliza Valgrind quando disponível e mantém a saída silenciosa
+quando não há erros.
 
 O AddressSanitizer usado no Windows não oferece LeakSanitizer; os vazamentos
 foram verificados no Linux. O contrato admite alocações temporárias não
