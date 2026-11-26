@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Semantica/semantico.c
+ * Descrição: percurso da AST para verificar tipos, nomes, escopos
+ *            e regras de controle de fluxo e emitir diagnósticos semânticos.
+ */
+
 
 #include "semantico.h"
 #include "Tabela/tabela.h"
