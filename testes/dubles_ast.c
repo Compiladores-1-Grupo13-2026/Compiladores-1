@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: testes/dubles_ast.c
+ * Descrição: dublês de AST para testes da P4, com nós em memória
+ *            estática e registro de chamadas de impressão.
+ */
+
 /* ===== [P4] Dubles de teste das dependencias da AST ===== */
 /* Dubles exclusivos dos testes P4. Sem alocacao dinamica, interpretacao,
  * percurso, liberacao ou impressao geral da AST das outras fatias. */

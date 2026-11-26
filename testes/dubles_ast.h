@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: testes/dubles_ast.h
+ * Descrição: interface dos dublês de AST para preparar nós
+ *            e inspecionar as chamadas de impressão registradas.
+ */
+
 /* ===== [P4] Dubles de teste das dependencias da AST ===== */
 #ifndef MINIPY_P4_DUBLES_H
 #define MINIPY_P4_DUBLES_H

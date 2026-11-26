@@ -1,4 +1,13 @@
 #!/bin/sh
+# FGA0003 - Compiladores 1
+# Curso de Engenharia de Software
+# Universidade de Brasília (UnB)
+# Equipe 13 - MiniPy
+#
+# Arquivo: testes/run_tests.sh
+# Descrição: execução da suíte de casos válidos, inválidos e
+#            de tokens, com verificação de status, saídas e diagnósticos.
+
 # P3: execute de qualquer diretorio; expectativas sao revisadas e versionadas.
 set -u
 cd "$(dirname "$0")/.." || exit 1

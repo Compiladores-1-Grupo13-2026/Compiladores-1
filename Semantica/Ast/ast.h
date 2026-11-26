@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Semantica/Ast/ast.h
+ * Descrição: definição dos tipos e da estrutura dos nós da AST
+ *            e interface para construção, leitura, impressão e liberação.
+ */
+
 #ifndef MINIPY_AST_H
 #define MINIPY_AST_H
 

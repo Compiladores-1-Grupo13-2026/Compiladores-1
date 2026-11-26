@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Semantica/Tabela/tabela.h
+ * Descrição: definição da estrutura e das categorias dos símbolos
+ *            e interface de gerenciamento da tabela e dos escopos.
+ */
+
 #ifndef MINIPY_TABELA_H
 #define MINIPY_TABELA_H
 

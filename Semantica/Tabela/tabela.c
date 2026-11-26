@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Semantica/Tabela/tabela.c
+ * Descrição: implementação da tabela de símbolos por hash, com
+ *            gerenciamento de escopos, inserção, busca e impressão.
+ */
+
 #include "tabela.h"
 
 #include <stdio.h>

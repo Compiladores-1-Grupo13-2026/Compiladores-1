@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Semantica/semantico.h
+ * Descrição: interface da análise semântica de programas e
+ *            expressões, com o contrato da visita de nós da P4.
+ */
+
 #ifndef MINIPY_SEMANTICO_H
 #define MINIPY_SEMANTICO_H
 

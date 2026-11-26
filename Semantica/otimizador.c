@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Semantica/otimizador.c
+ * Descrição: percurso da AST para dobrar somas, subtrações e
+ *            multiplicações de literais inteiros cujo resultado cabe em int.
+ */
+
 #include "otimizador.h"
 
 #include <limits.h>

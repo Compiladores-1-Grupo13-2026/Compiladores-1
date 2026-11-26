@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: testes/semantico_test.c
+ * Descrição: testes de nós da AST e de regras semânticas
+ *            para variáveis, escopos, listas, indexação e comparações.
+ */
+
 /* ===== [P4] Testes de atribuicao, listas e indexacao =====
  * Testa os arquivos compartilhados com a AST de producao.
  * O callback fornece metadados de teste; nao analisa expressoes da P1. */

@@ -1,3 +1,12 @@
+# FGA0003 - Compiladores 1
+# Curso de Engenharia de Software
+# Universidade de Brasília (UnB)
+# Equipe 13 - MiniPy
+#
+# Arquivo: Makefile
+# Descrição: regras para gerar e compilar o parser e o scanner,
+#            executar o MiniPy, rodar testes e verificar memória.
+
 CC = gcc
 BISON = bison
 FLEX = flex

@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Interpretador/interpretador.c
+ * Descrição: coordenação da execução do programa, com despacho
+ *            dos nós da AST, execução de blocos e tratamento de erros.
+ */
+
 #include "Interpretador/interpretador.h"
 #include "Interpretador/ambiente.h"
 

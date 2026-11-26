@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Semantica/Ast/ast.c
+ * Descrição: construção, encadeamento, impressão e liberação de
+ *            nós da AST, com armazenamento de literais numéricos reais.
+ */
+
 #include "ast.h"
 
 #include <stdio.h>

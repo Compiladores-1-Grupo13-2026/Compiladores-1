@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: testes/tabela_test.c
+ * Descrição: testes de escopos, busca, colisões de hash,
+ *            duplicatas e propriedade da memória na tabela de símbolos.
+ */
+
 /* ===== [P4] Testes da tabela de simbolos ===== */
 #include "Semantica/Tabela/tabela.h"
 

@@ -1,3 +1,12 @@
+# FGA0003 - Compiladores 1
+# Curso de Engenharia de Software
+# Universidade de Brasília (UnB)
+# Equipe 13 - MiniPy
+#
+# Arquivo: testes/testar_p4.py
+# Descrição: compilação e execução dos testes de tabela,
+#            semântica e, opcionalmente, do interpretador e de memória.
+
 # ===== [P4] Testes de atribuicao, listas, indexacao e tabela =====
 """Testa tabela/P2/P4 com a AST real; --runtime inclui os modulos da dupla."""
 from __future__ import annotations

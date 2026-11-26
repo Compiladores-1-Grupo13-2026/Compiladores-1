@@ -1,3 +1,12 @@
+# FGA0003 - Compiladores 1
+# Curso de Engenharia de Software
+# Universidade de Brasília (UnB)
+# Equipe 13 - MiniPy
+#
+# Arquivo: testes/atualizar_esperados_a.py
+# Descrição: atualização das saídas esperadas de 21 casos
+#            históricos a partir da execução do parser no modo --ast.
+
 """Regenera somente os 21 casos historicos A, usando o parser real em --ast."""
 from pathlib import Path
 import subprocess

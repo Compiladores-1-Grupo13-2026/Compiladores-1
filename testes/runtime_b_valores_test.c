@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: testes/runtime_b_valores_test.c
+ * Descrição: testes de precisão e limites inteiros, erros
+ *            de estouro e propriedade dos valores copiados.
+ */
+
 /* Limites numericos e posse de valores usando os modulos reais da dupla. */
 #include "Interpretador/interpretador.h"
 

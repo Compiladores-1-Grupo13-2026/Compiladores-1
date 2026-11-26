@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: testes/runtime_a_test.c
+ * Descrição: testes de execução para comparações, condições,
+ *            curto-circuito, ambiente, memória e operações com listas.
+ */
+
 
 /* Contrato de execucao da Pessoa A. Liga as implementacoes reais;
  * nao substitui valores, expressoes, lacos nem funcoes da Pessoa B. */

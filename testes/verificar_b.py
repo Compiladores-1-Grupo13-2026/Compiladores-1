@@ -1,3 +1,12 @@
+# FGA0003 - Compiladores 1
+# Curso de Engenharia de Software
+# Universidade de Brasília (UnB)
+# Equipe 13 - MiniPy
+#
+# Arquivo: testes/verificar_b.py
+# Descrição: conferência de saídas esperadas do parser e do
+#            scanner e verificação de casos de integração.
+
 """Confere historicos e casos novos B sem escrever arquivos de referencia."""
 from pathlib import Path
 import subprocess
