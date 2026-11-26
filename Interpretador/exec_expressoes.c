@@ -1,3 +1,14 @@
+/*
+ * FGA0003 - Compiladores 1
+ * Curso de Engenharia de Software
+ * Universidade de Brasília (UnB)
+ * Equipe 13 - MiniPy
+ *
+ * Arquivo: Interpretador/exec_expressoes.c
+ * Descrição: avaliação de literais e operações aritméticas, com
+ *            concatenação e repetição de textos e listas.
+ */
+
 
 #include "Interpretador/interpretador.h"
 
