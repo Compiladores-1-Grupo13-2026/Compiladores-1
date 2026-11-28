@@ -2,7 +2,6 @@
 
 O projeto usa C, Flex e Bison. O `main` está em `Sintatica/parser.y` e
 coordena o parser, a análise semântica, a execução e a liberação dos recursos.
-`src/main.c` está vazio e não é o ponto de entrada do executável.
 
 ## Organização do código
 
