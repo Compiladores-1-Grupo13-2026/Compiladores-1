@@ -4,13 +4,13 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Interpretador/lista.c
+ * Arquivo: src/interpretador/lista.c
  * Descrição: criação de listas, inclusão de itens, construção
  *            do valor de lista e liberação do vetor e de seus elementos.
  */
 
-#include "Interpretador/valor.h"
-#include "Interpretador/interpretador.h"
+#include "interpretador/valor.h"
+#include "interpretador/interpretador.h"
 
 #include <limits.h>
 #include <stdint.h>

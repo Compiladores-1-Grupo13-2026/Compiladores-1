@@ -4,13 +4,13 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Interpretador/interpretador.c
+ * Arquivo: src/interpretador/interpretador.c
  * Descrição: coordenação da execução do programa, com despacho
  *            dos nós da AST, execução de blocos e tratamento de erros.
  */
 
-#include "Interpretador/interpretador.h"
-#include "Interpretador/ambiente.h"
+#include "interpretador/interpretador.h"
+#include "interpretador/ambiente.h"
 
 #include <setjmp.h>
 #include <stdarg.h>

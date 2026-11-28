@@ -219,8 +219,8 @@ atribuições inválidas.
 Na [AST](ast.md), uma definição usa `AST_FUNCAO`, com parâmetros em `a` e
 corpo em `b`; `AST_CHAMADA` guarda os argumentos em `a`; `AST_RETURN`
 guarda a expressão em `a`, ou `NULL`. As sequências usam `prox`.
-O executor das chamadas está em `Interpretador/exec_funcoes.c`, e os quadros
-ficam em `Interpretador/ambiente.c`.
+O executor das chamadas está em `src/interpretador/exec_funcoes.c`, e os quadros
+ficam em `src/interpretador/ambiente.c`.
 
 A cobertura de recursão, escopos, argumentos, builtins, retorno e limites,
 junto dos resultados de validação, está em [Testes](testes.md).

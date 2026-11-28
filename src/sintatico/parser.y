@@ -1,5 +1,5 @@
 %code requires {
-#include "Semantica/Ast/ast.h"
+#include "ast/ast.h"
 typedef struct {
     double numero;
     NoAST *ast;
@@ -13,7 +13,7 @@ typedef struct {
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Sintatica/parser.y
+ * Arquivo: src/sintatico/parser.y
  * Descrição: gramática Bison, construção da AST e diagnósticos
  *            sintáticos, além do ponto de entrada do executável parser.
  */
@@ -25,9 +25,9 @@ typedef struct {
 #include <stdlib.h>
 #include <string.h>
 
-#include "Semantica/semantico.h"
-#include "Semantica/otimizador.h"
-#include "Interpretador/interpretador.h"
+#include "semantico/semantico.h"
+#include "otimizador/otimizador.h"
+#include "interpretador/interpretador.h"
 
 static int modo_ast = 0;
 

@@ -28,10 +28,10 @@ def main():
         raise SystemExit("Dependencia ausente: gcc")
     if args.memcheck and not shutil.which("valgrind"):
         raise SystemExit("Valgrind ausente; execute --memcheck em Linux.")
-    sources = [ROOT / "Semantica/Ast/ast.c", *sorted((ROOT / "Interpretador").glob("*.c"))]
+    sources = [ROOT / "src/ast/ast.c", *sorted((ROOT / "src/interpretador").glob("*.c"))]
     with tempfile.TemporaryDirectory(prefix="minipy-valores-") as temporary:
         binary = Path(temporary) / ("valores_test.exe" if os.name == "nt" else "valores_test")
-        command = ["gcc", "-std=c11", "-Wall", "-Wextra", "-Werror", "-g", "-I", str(ROOT)]
+        command = ["gcc", "-std=c11", "-Wall", "-Wextra", "-Werror", "-g", "-I", str(ROOT), "-I", str(ROOT / "src")]
         subprocess.run(command + [str(s) for s in sources] + [
             str(ROOT / "testes/runtime_b_valores_test.c"), "-o", str(binary), "-lm",
         ], cwd=ROOT, check=True)

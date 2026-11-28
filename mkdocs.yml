@@ -1,6 +1,9 @@
 site_name: MiniPy — Equipe 13
 site_description: Especificação, documentação e execução da MiniPy — Equipe 13 de Compiladores 1.
 docs_dir: docs
+# Dependencias do site; ficam em docs/ mas nao sao publicadas como pagina.
+exclude_docs: |
+  requirements.txt
 site_url: https://compiladores-1-grupo13-2026.github.io/Compiladores-1/
 repo_url: https://github.com/Compiladores-1-Grupo13-2026/Compiladores-1
 theme:

@@ -1,4 +1,4 @@
-# MiniPy — Equipe 13
+# MiniPy - Equipe 13
 
 Interpretador didático de um subconjunto de Python, implementado em **C + Flex +
 Bison**. O MiniPy executa expressões, condicionais, laços, listas e funções com
@@ -161,8 +161,8 @@ aninhadas. Consulte os detalhes no [interpretador](docs/interpretador.md).
       </a>
     </td>
     <td align="center">
-      <a href="https://github.com/Antedeguemon21">
-        <img src="https://github.com/Antedeguemon21.png" width="100" alt="Leonardo"/><br />
+      <a href="https://github.com/LeonardoRodriguesMarrtinns99">
+        <img src="https://github.com/LeonardoRodriguesMarrtinns99.png" width="100" alt="Leonardo"/><br />
         <sub><b>Leonardo</b></sub>
       </a>
     </td>

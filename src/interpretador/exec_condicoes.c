@@ -4,12 +4,12 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Interpretador/exec_condicoes.c
+ * Arquivo: src/interpretador/exec_condicoes.c
  * Descrição: avaliação do valor lógico, de comparações e de
  *            operadores lógicos com curto-circuito, além de condicionais.
  */
 
-#include "Interpretador/interpretador.h"
+#include "interpretador/interpretador.h"
 
 #include <string.h>
 

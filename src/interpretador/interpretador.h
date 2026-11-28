@@ -4,7 +4,7 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Interpretador/interpretador.h
+ * Arquivo: src/interpretador/interpretador.h
  * Descrição: interface do interpretador e dos módulos de execução,
  *            incluindo sinais de controle e operações compartilhadas.
  */
@@ -12,8 +12,8 @@
 #ifndef MINIPY_INTERPRETADOR_H
 #define MINIPY_INTERPRETADOR_H
 
-#include "Semantica/Ast/ast.h"
-#include "Interpretador/valor.h"
+#include "ast/ast.h"
+#include "interpretador/valor.h"
 
 /* break, continue e return interrompem a execucao no meio de um bloco. */
 typedef enum { SINAL_NORMAL, SINAL_BREAK, SINAL_CONTINUE, SINAL_RETURN } Sinal;

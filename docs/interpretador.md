@@ -51,7 +51,7 @@ o programa no ponto em que ocorreu; a saída já impressa é preservada.
 | `exec_atribuicao.c` | Lê nomes, atribui valores e acessa listas |
 | `exec_funcoes.c` | Executa definições, chamadas, retornos e builtins |
 
-Todos esses arquivos ficam em `Interpretador/`. O formato dos nós está em
+Todos esses arquivos ficam em `src/interpretador/`. O formato dos nós está em
 [AST](ast.md), e as políticas de tipos e memória estão em
 [Decisões técnicas](decisoes.md).
 

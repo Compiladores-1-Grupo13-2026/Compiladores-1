@@ -17,9 +17,9 @@ LDLIBS = -lfl -lm
 # Remove alvos incompletos quando uma receita falha.
 .DELETE_ON_ERROR:
 
-# Preserva os caminhos ja existentes neste repositorio.
-PARSER_SOURCE = Sintatica/parser.y
-SCANNER_SOURCE = Lexico/scanner.l
+# Todo o codigo-fonte fica em src/, uma pasta por fase do pipeline.
+PARSER_SOURCE = src/sintatico/parser.y
+SCANNER_SOURCE = src/lexico/scanner.l
 TEST_SCRIPT ?= testes/run_tests.sh
 
 .PHONY: all test clean
@@ -32,22 +32,23 @@ lex.yy.c: $(SCANNER_SOURCE) parser.tab.h
 	$(FLEX) -o lex.yy.c $(SCANNER_SOURCE)
 
 # libm fornece floor e pow para os operadores da P1.
-# [P5] Fontes do interpretador integrado: AST, tabela de simbolos e semantica.
-FONTES_SEMANTICA = Semantica/Ast/ast.c Semantica/Tabela/tabela.c Semantica/semantico.c \
-    Semantica/otimizador.c
-HEADERS_SEMANTICA = Semantica/Ast/ast.h Semantica/Tabela/tabela.h Semantica/semantico.h \
-    Semantica/otimizador.h
-FONTES_INTERPRETADOR = Interpretador/interpretador.c Interpretador/valor.c \
-    Interpretador/exec_expressoes.c Interpretador/exec_condicoes.c \
-    Interpretador/exec_lacos.c Interpretador/ambiente.c Interpretador/lista.c \
-    Interpretador/exec_atribuicao.c Interpretador/exec_funcoes.c
-HEADERS_INTERPRETADOR = Interpretador/valor.h Interpretador/ambiente.h Interpretador/interpretador.h
+# [P5] Fontes do interpretador integrado: AST, tabela de simbolos, semantica
+# e otimizador. Os includes partem de src/ (ex.: "ast/ast.h").
+FONTES_SEMANTICA = src/ast/ast.c src/semantico/tabela.c src/semantico/semantico.c \
+    src/otimizador/otimizador.c
+HEADERS_SEMANTICA = src/ast/ast.h src/semantico/tabela.h src/semantico/semantico.h \
+    src/otimizador/otimizador.h
+FONTES_INTERPRETADOR = src/interpretador/interpretador.c src/interpretador/valor.c \
+    src/interpretador/exec_expressoes.c src/interpretador/exec_condicoes.c \
+    src/interpretador/exec_lacos.c src/interpretador/ambiente.c src/interpretador/lista.c \
+    src/interpretador/exec_atribuicao.c src/interpretador/exec_funcoes.c
+HEADERS_INTERPRETADOR = src/interpretador/valor.h src/interpretador/ambiente.h src/interpretador/interpretador.h
 
 parser: parser.tab.c parser.tab.h lex.yy.c $(FONTES_SEMANTICA) $(HEADERS_SEMANTICA) $(FONTES_INTERPRETADOR) $(HEADERS_INTERPRETADOR) Makefile
-	$(CC) $(CPPFLAGS) -I. $(CFLAGS) $(LDFLAGS) -o $@ parser.tab.c lex.yy.c $(FONTES_SEMANTICA) $(FONTES_INTERPRETADOR) $(LDLIBS)
+	$(CC) $(CPPFLAGS) -I. -Isrc $(CFLAGS) $(LDFLAGS) -o $@ parser.tab.c lex.yy.c $(FONTES_SEMANTICA) $(FONTES_INTERPRETADOR) $(LDLIBS)
 
 tokens: parser.tab.h lex.yy.c Makefile
-	$(CC) $(CPPFLAGS) $(CFLAGS) -DSO_TOKENS $(LDFLAGS) -o $@ lex.yy.c $(LDLIBS)
+	$(CC) $(CPPFLAGS) -Isrc $(CFLAGS) -DSO_TOKENS $(LDFLAGS) -o $@ lex.yy.c $(LDLIBS)
 
 # P1 fornece o alvo de build; o script de testes pertence a P3.
 test:
@@ -98,7 +99,7 @@ memcheck: parser
 	fi
 
 parser-memcheck: parser.tab.c parser.tab.h lex.yy.c $(FONTES_SEMANTICA) $(HEADERS_SEMANTICA) $(FONTES_INTERPRETADOR) $(HEADERS_INTERPRETADOR) Makefile
-	$(CC) $(CPPFLAGS) -I. $(CFLAGS) -g -fsanitize=address -fno-omit-frame-pointer $(LDFLAGS) -o $@ parser.tab.c lex.yy.c $(FONTES_SEMANTICA) $(FONTES_INTERPRETADOR) $(LDLIBS) -fsanitize=address
+	$(CC) $(CPPFLAGS) -I. -Isrc $(CFLAGS) -g -fsanitize=address -fno-omit-frame-pointer $(LDFLAGS) -o $@ parser.tab.c lex.yy.c $(FONTES_SEMANTICA) $(FONTES_INTERPRETADOR) $(LDLIBS) -fsanitize=address
 # ===== FIM [P1] Verificacao de memoria dos casos validos de expressoes =====
 
 clean:

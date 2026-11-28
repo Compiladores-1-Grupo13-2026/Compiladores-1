@@ -4,13 +4,13 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Interpretador/exec_funcoes.c
+ * Arquivo: src/interpretador/exec_funcoes.c
  * Descrição: definição e chamada de funções, tratamento de
  *            retornos e execução das funções embutidas print, range e len.
  */
 
-#include "Interpretador/interpretador.h"
-#include "Interpretador/ambiente.h"
+#include "interpretador/interpretador.h"
+#include "interpretador/ambiente.h"
 
 #include <limits.h>
 #include <stdint.h>

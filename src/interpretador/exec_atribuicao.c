@@ -4,13 +4,13 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Interpretador/exec_atribuicao.c
+ * Arquivo: src/interpretador/exec_atribuicao.c
  * Descrição: execução de atribuições simples e compostas, leitura
  *            de variáveis, criação de listas e indexação de listas e textos.
  */
 
-#include "Interpretador/interpretador.h"
-#include "Interpretador/ambiente.h"
+#include "interpretador/interpretador.h"
+#include "interpretador/ambiente.h"
 
 #include <string.h>
 

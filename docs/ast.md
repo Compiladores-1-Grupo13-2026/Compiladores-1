@@ -1,7 +1,7 @@
 # Árvore sintática abstrata
 
 A AST registra a estrutura do programa que será analisado e executado. O parser
-constrói a árvore em `Semantica/Ast/ast.c`; a análise semântica a percorre antes
+constrói a árvore em `src/ast/ast.c`; a análise semântica a percorre antes
 de o interpretador avaliar os nós. Parênteses e terminadores organizam a
 gramática, mas não precisam de nós próprios.
 
@@ -15,7 +15,7 @@ quando não há erros léxicos, sintáticos ou semânticos.
 
 ## Estrutura comum
 
-`Semantica/Ast/ast.h` define todos os tipos de nó e a estrutura compartilhada:
+`src/ast/ast.h` define todos os tipos de nó e a estrutura compartilhada:
 
 ~~~c
 typedef struct NoAST {

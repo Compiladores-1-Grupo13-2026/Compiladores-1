@@ -10,7 +10,7 @@
  */
 
 /* Limites numericos e posse de valores usando os modulos reais da dupla. */
-#include "Interpretador/interpretador.h"
+#include "interpretador/interpretador.h"
 
 #include <assert.h>
 #include <limits.h>
