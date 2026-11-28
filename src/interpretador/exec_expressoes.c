@@ -4,13 +4,13 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Interpretador/exec_expressoes.c
+ * Arquivo: src/interpretador/exec_expressoes.c
  * Descrição: avaliação de literais e operações aritméticas, com
  *            concatenação e repetição de textos e listas.
  */
 
 
-#include "Interpretador/interpretador.h"
+#include "interpretador/interpretador.h"
 
 #include <limits.h>
 #include <math.h>

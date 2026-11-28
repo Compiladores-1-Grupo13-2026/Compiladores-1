@@ -2,7 +2,7 @@
 
 A análise semântica verifica nomes, tipos conhecidos e o contexto dos comandos
 depois que o parser monta a [AST](../ast.md). A implementação fica em
-`Semantica/semantico.c` e usa a tabela de símbolos de `Semantica/Tabela/`.
+`src/semantico/semantico.c` e usa a tabela de símbolos de `src/semantico/tabela.c`.
 
 A função `semantico_analisar` percorre a árvore, emite diagnósticos, libera a
 tabela e devolve a quantidade de erros. O modo padrão chama o interpretador

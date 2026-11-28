@@ -4,7 +4,7 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Semantica/Tabela/tabela.h
+ * Arquivo: src/semantico/tabela.h
  * Descrição: definição da estrutura e das categorias dos símbolos
  *            e interface de gerenciamento da tabela e dos escopos.
  */

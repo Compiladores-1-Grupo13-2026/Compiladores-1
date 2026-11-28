@@ -4,13 +4,13 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Interpretador/valor.c
+ * Arquivo: src/interpretador/valor.c
  * Descrição: construtores de valores simples e referências a
  *            funções, cópia, liberação, impressão e nomes dos tipos.
  */
 
-#include "Interpretador/valor.h"
-#include "Interpretador/interpretador.h"
+#include "interpretador/valor.h"
+#include "interpretador/interpretador.h"
 
 #include <limits.h>
 #include <math.h>

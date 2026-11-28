@@ -4,7 +4,7 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Interpretador/valor.h
+ * Arquivo: src/interpretador/valor.h
  * Descrição: definição dos tipos de valores e da estrutura de
  *            listas, com as operações de criação e gerenciamento.
  */
@@ -12,7 +12,7 @@
 #ifndef MINIPY_VALOR_H
 #define MINIPY_VALOR_H
 
-#include "Semantica/Ast/ast.h"
+#include "ast/ast.h"
 
 typedef enum {
     VAL_NONE, VAL_INT, VAL_REAL, VAL_BOOL, VAL_STR, VAL_LISTA, VAL_FUNCAO

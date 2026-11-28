@@ -4,7 +4,7 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Semantica/otimizador.c
+ * Arquivo: src/otimizador/otimizador.c
  * Descrição: percurso da AST para dobrar somas, subtrações e
  *            multiplicações de literais inteiros cujo resultado cabe em int.
  */

@@ -4,7 +4,7 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Semantica/Ast/ast.h
+ * Arquivo: src/ast/ast.h
  * Descrição: definição dos tipos e da estrutura dos nós da AST
  *            e interface para construção, leitura, impressão e liberação.
  */

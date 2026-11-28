@@ -1,6 +1,6 @@
 # Analisador léxico
 
-O scanner em `Lexico/scanner.l` transforma o código de entrada em tokens para o parser.
+O scanner em `src/lexico/scanner.l` transforma o código de entrada em tokens para o parser.
 A [organização dos fontes](../src.md) descreve como ele participa do build.
 
 | Token | Lexema / expressão regular |
@@ -24,7 +24,7 @@ A [organização dos fontes](../src.md) descreve como ele participa do build.
 | ignorado | `#.*` (comentário); `[ \t\r]+` (espaços) |
 | YYUNDEF | `.` (caractere não reconhecido) |
 
-Catálogo extraído de `Lexico/scanner.l`. A regra de STRING é
+Catálogo extraído de `src/lexico/scanner.l`. A regra de STRING é
 `\"([^\"\\\n]|\\[^\n])*\"` para aspas duplas; a versão com aspas simples é análoga.
 `FIM`, de código 0, representa EOF internamente; não é palavra reservada.
 `print` e `range` são `ID`. O modo tokens exibe `CARACTERE_INVALIDO` para `YYUNDEF`.

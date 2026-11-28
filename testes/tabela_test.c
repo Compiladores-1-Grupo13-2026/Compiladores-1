@@ -10,7 +10,7 @@
  */
 
 /* ===== [P4] Testes da tabela de simbolos ===== */
-#include "Semantica/Tabela/tabela.h"
+#include "semantico/tabela.h"
 
 #include <assert.h>
 #include <stdio.h>

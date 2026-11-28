@@ -10,7 +10,7 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Lexico/scanner.l
+ * Arquivo: src/lexico/scanner.l
  * Descrição: regras Flex da análise léxica, com reconhecimento
  *            de tokens, rastreamento de posições e diagnóstico léxico.
  */

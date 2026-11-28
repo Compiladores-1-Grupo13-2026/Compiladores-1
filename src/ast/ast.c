@@ -4,7 +4,7 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Semantica/Ast/ast.c
+ * Arquivo: src/ast/ast.c
  * Descrição: construção, encadeamento, impressão e liberação de
  *            nós da AST, com armazenamento de literais numéricos reais.
  */

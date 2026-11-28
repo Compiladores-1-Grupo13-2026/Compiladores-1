@@ -1,6 +1,6 @@
 # Analisador sintático
 
-O parser em `Sintatica/parser.y`, gerado pelo Bison, organiza os tokens do
+O parser em `src/sintatico/parser.y`, gerado pelo Bison, organiza os tokens do
 scanner em uma [árvore sintática abstrata](../ast.md). Cada comando, expressão
 e bloco produz nós que preservam a linha do código-fonte.
 

@@ -13,8 +13,8 @@
 /* Contrato de execucao da Pessoa A. Liga as implementacoes reais;
  * nao substitui valores, expressoes, lacos nem funcoes da Pessoa B. */
 
-#include "Interpretador/ambiente.h"
-#include "Interpretador/interpretador.h"
+#include "interpretador/ambiente.h"
+#include "interpretador/interpretador.h"
 
 #include <assert.h>
 #include <math.h>

@@ -4,13 +4,13 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Interpretador/ambiente.c
+ * Arquivo: src/interpretador/ambiente.c
  * Descrição: gerenciamento dos quadros global e de chamadas,
  *            com definição, busca e liberação de variáveis.
  */
 
-#include "Interpretador/ambiente.h"
-#include "Interpretador/interpretador.h"
+#include "interpretador/ambiente.h"
+#include "interpretador/interpretador.h"
 
 #include <stdlib.h>
 #include <string.h>

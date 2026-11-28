@@ -38,7 +38,7 @@ def main():
     parser.add_argument("--memcheck", action="store_true", help="executa os testes com Valgrind")
     parser.add_argument("--runtime", action="store_true", help="inclui testes de execucao; exige os modulos da Pessoa B")
     args = parser.parse_args()
-    runtime_sources = [ROOT / "Interpretador" / name for name in (
+    runtime_sources = [ROOT / "src/interpretador" / name for name in (
         "interpretador.c", "valor.c", "exec_expressoes.c", "exec_condicoes.c",
         "exec_lacos.c", "ambiente.c", "lista.c", "exec_atribuicao.c", "exec_funcoes.c",
     )]
@@ -51,17 +51,17 @@ def main():
     if args.memcheck and not shutil.which("valgrind"):
         raise SystemExit("Valgrind ausente; execute --memcheck em Linux com Valgrind instalado.")
     extension = ".exe" if os.name == "nt" else ""
-    flags = ["gcc", "-std=c11", "-Wall", "-Wextra", "-Werror", "-g", "-I", ROOT]
-    tabela = ROOT / "Semantica/Tabela/tabela.c"
+    flags = ["gcc", "-std=c11", "-Wall", "-Wextra", "-Werror", "-g", "-I", ROOT, "-I", ROOT / "src"]
+    tabela = ROOT / "src/semantico/tabela.c"
     jobs = [
         ("tabela_test", [tabela]),
         ("semantico_test", [
-            tabela, ROOT / "Semantica/Ast/ast.c",
-            ROOT / "Semantica/semantico.c",
+            tabela, ROOT / "src/ast/ast.c",
+            ROOT / "src/semantico/semantico.c",
         ]),
     ]
     if args.runtime:
-        jobs.append(("runtime_a_test", [ROOT / "Semantica/Ast/ast.c", *runtime_sources]))
+        jobs.append(("runtime_a_test", [ROOT / "src/ast/ast.c", *runtime_sources]))
     valgrind = [
         "valgrind", "--quiet", "--leak-check=full", "--show-leak-kinds=all",
         "--errors-for-leak-kinds=all", "--error-exitcode=99",

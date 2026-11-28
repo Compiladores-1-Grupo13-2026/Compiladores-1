@@ -12,9 +12,9 @@
 /* ===== [P4] Testes de atribuicao, listas e indexacao =====
  * Testa os arquivos compartilhados com a AST de producao.
  * O callback fornece metadados de teste; nao analisa expressoes da P1. */
-#include "Semantica/Ast/ast.h"
-#include "Semantica/Tabela/tabela.h"
-#include "Semantica/semantico.h"
+#include "ast/ast.h"
+#include "semantico/tabela.h"
+#include "semantico/semantico.h"
 
 #include <assert.h>
 #include <stdarg.h>

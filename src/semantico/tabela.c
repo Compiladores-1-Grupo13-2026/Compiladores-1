@@ -4,7 +4,7 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Semantica/Tabela/tabela.c
+ * Arquivo: src/semantico/tabela.c
  * Descrição: implementação da tabela de símbolos por hash, com
  *            gerenciamento de escopos, inserção, busca e impressão.
  */

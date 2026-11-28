@@ -4,7 +4,7 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Interpretador/ambiente.h
+ * Arquivo: src/interpretador/ambiente.h
  * Descrição: interface do ambiente de execução para gerenciar
  *            quadros e definir, localizar e liberar valores associados a nomes.
  */
@@ -12,7 +12,7 @@
 #ifndef MINIPY_AMBIENTE_H
 #define MINIPY_AMBIENTE_H
 
-#include "Interpretador/valor.h"
+#include "interpretador/valor.h"
 
 /* Pilha de quadros. Quadro 0 = global. Cada chamada de funcao empilha um.
  * A busca olha o quadro atual e depois o global (como o Python). */

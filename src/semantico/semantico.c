@@ -4,14 +4,14 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Semantica/semantico.c
+ * Arquivo: src/semantico/semantico.c
  * Descrição: percurso da AST para verificar tipos, nomes, escopos
  *            e regras de controle de fluxo e emitir diagnósticos semânticos.
  */
 
 
 #include "semantico.h"
-#include "Tabela/tabela.h"
+#include "tabela.h"
 
 #include <math.h>
 #include <stdarg.h>

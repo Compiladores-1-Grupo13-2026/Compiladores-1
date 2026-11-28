@@ -1,28 +1,45 @@
 # Código-fonte e build
 
-O projeto usa C, Flex e Bison. O `main` está em `Sintatica/parser.y` e
+O projeto usa C, Flex e Bison. O `main` está em `src/sintatico/parser.y` e
 coordena o parser, a análise semântica, a execução e a liberação dos recursos.
 
 ## Organização do código
 
+Todo o código-fonte fica em `src/`, com uma pasta para cada fase do pipeline,
+na ordem em que o programa passa por elas:
+
+```text
+src/
+├── lexico/         scanner.l (Flex)
+├── sintatico/      parser.y (Bison) e o main
+├── ast/            nós da árvore, compartilhados por todas as fases
+├── semantico/      análise semântica e tabela de símbolos
+├── otimizador/     dobramento de constantes sobre a AST já validada
+└── interpretador/  execução da AST, valores, listas e ambiente
+```
+
+Os `#include` partem de `src/`, por exemplo `#include "ast/ast.h"`; o Makefile
+compila com `-I. -Isrc`.
+
 | Caminho | Função |
 | --- | --- |
-| `Lexico/scanner.l` | Tokens, comentários, terminadores, localização e diagnóstico léxico |
-| `Sintatica/parser.y` | Gramática, AST, recuperação sintática e modos de operação |
-| `Semantica/Ast/ast.c` e `ast.h` | Nós, construtores, acesso numérico, impressão e liberação da AST |
-| `Semantica/Tabela/tabela.c` e `tabela.h` | Símbolos, categorias, tipos e escopos estáticos |
-| `Semantica/semantico.c` e `semantico.h` | Percurso semântico, nomes, tipos, chamadas e controle de fluxo |
-| `Interpretador/interpretador.c` e `interpretador.h` | Despacho, blocos, sinais e interrupção de erros |
-| `Interpretador/valor.c` e `valor.h` | Representação, cópia, liberação e impressão de valores |
-| `Interpretador/exec_expressoes.c` | Literais, escapes, operações numéricas e de strings |
-| `Interpretador/exec_condicoes.c` | Comparações, curto-circuito e condicionais |
-| `Interpretador/exec_lacos.c` | Iteração, laços, `break` e `continue` |
-| `Interpretador/ambiente.c` e `ambiente.h` | Quadros de variáveis da execução |
-| `Interpretador/lista.c` | Vetor dinâmico de valores e liberação de listas |
-| `Interpretador/exec_atribuicao.c` | Variáveis, atribuições, listas e indexação |
-| `Interpretador/exec_funcoes.c` | Definições, chamadas, parâmetros, retorno, `print` e `range` |
+| `src/lexico/scanner.l` | Tokens, comentários, terminadores, localização e diagnóstico léxico |
+| `src/sintatico/parser.y` | Gramática, AST, recuperação sintática e modos de operação |
+| `src/ast/ast.c` e `ast.h` | Nós, construtores, acesso numérico, impressão e liberação da AST |
+| `src/semantico/tabela.c` e `tabela.h` | Símbolos, categorias, tipos e escopos estáticos |
+| `src/semantico/semantico.c` e `semantico.h` | Percurso semântico, nomes, tipos, chamadas e controle de fluxo |
+| `src/otimizador/otimizador.c` e `otimizador.h` | Dobramento de constantes inteiras na AST, depois da análise semântica |
+| `src/interpretador/interpretador.c` e `interpretador.h` | Despacho, blocos, sinais e interrupção de erros |
+| `src/interpretador/valor.c` e `valor.h` | Representação, cópia, liberação e impressão de valores |
+| `src/interpretador/exec_expressoes.c` | Literais, escapes, operações numéricas e de strings |
+| `src/interpretador/exec_condicoes.c` | Comparações, curto-circuito e condicionais |
+| `src/interpretador/exec_lacos.c` | Iteração, laços, `break` e `continue` |
+| `src/interpretador/ambiente.c` e `ambiente.h` | Quadros de variáveis da execução |
+| `src/interpretador/lista.c` | Vetor dinâmico de valores e liberação de listas |
+| `src/interpretador/exec_atribuicao.c` | Variáveis, atribuições, listas e indexação |
+| `src/interpretador/exec_funcoes.c` | Definições, chamadas, parâmetros, retorno, `print` e `range` |
 | `testes/` | Entradas, referências e verificadores de unidades, integração e memória |
-| `docs/`, `mkdocs.yml`, `requirements-docs.txt` | Conteúdo, navegação e dependências da documentação |
+| `docs/`, `mkdocs.yml`, `docs/requirements.txt` | Conteúdo, navegação e dependências da documentação |
 
 Veja a [AST](ast.md), a [análise semântica](analisador_semantico/analisador-semantico.md)
 e o [interpretador](interpretador.md) para os contratos entre as etapas.
@@ -113,7 +130,7 @@ Na raiz do repositório:
 
 ```sh
 python3 -m venv .venv-docs
-.venv-docs/bin/python -m pip install -r requirements-docs.txt
+.venv-docs/bin/python -m pip install -r docs/requirements.txt
 .venv-docs/bin/mkdocs build --strict
 ```
 

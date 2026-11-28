@@ -4,13 +4,13 @@
  * Universidade de Brasília (UnB)
  * Equipe 13 - MiniPy
  *
- * Arquivo: Interpretador/exec_lacos.c
+ * Arquivo: src/interpretador/exec_lacos.c
  * Descrição: execução de while e for, iteração sobre listas
  *            e textos e controle de break, continue e limite de iterações.
  */
 
-#include "Interpretador/interpretador.h"
-#include "Interpretador/ambiente.h"
+#include "interpretador/interpretador.h"
+#include "interpretador/ambiente.h"
 
 #include <stddef.h>
 
